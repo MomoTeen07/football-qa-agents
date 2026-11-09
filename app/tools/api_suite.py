@@ -768,6 +768,10 @@ class ApiSuite:
         assets = build_api_suite(self.settings, mission_id)
         directory = assets.suite_path.parent
 
+        # Ne jamais réutiliser le rapport d'une exécution précédente.
+        junit_path = directory / "junit.xml"
+        junit_path.unlink(missing_ok=True)
+
         blocked_reason = self._preflight(
             base_url,
             self.settings.api_probe_timeout_seconds,

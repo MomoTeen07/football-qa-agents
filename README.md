@@ -31,9 +31,11 @@ tests/                Tests du système multi-agents
 - `.venv` recréé et dépendances `requirements.txt` installées.
 - `.env` recréé depuis `.env.example` : **clés Gemini/Telegram vides**,
   `REAL_AGENTS_ENABLED=false` → repli déterministe.
-- `.venv\Scripts\python.exe -m pytest` → **41 passed**.
+- `.venv\Scripts\python.exe -m pytest` → **64 passed**.
+- `playwright==1.64.1` installé ; le navigateur Chromium n'est **pas** installé
+  sur ce PC (nécessaire uniquement à l'exécution UI réelle).
 
-Sans clés, les 41 tests passent et les agents basculent sur leur repli
+Sans clés, les 64 tests passent et les agents basculent sur leur repli
 déterministe. Pour réactiver Gemini et Telegram, renseigner
 `GEMINI_API_KEY` et `TELEGRAM_BOT_TOKEN` dans `.env`, sans jamais les afficher.
 
@@ -48,7 +50,7 @@ régression : il faut d'abord identifier la machine.
 | Projet cible `football-qa` | présent | **absent** |
 | Stack de test Docker | opérationnelle | non construite |
 | Clés Gemini / Telegram | présentes dans `.env` | **absentes** |
-| Tests unitaires | 41 passed | 41 passed |
+| Tests unitaires | 41 passed (phase 5, à resynchroniser) | **64 passed** |
 
 Le PC personnel permet le développement hors ligne et les tests unitaires ;
 les missions réelles se font sur le PC professionnel ou après copie du projet
@@ -87,6 +89,12 @@ Copy-Item .env.example .env
 
 # Lancer les tests du système QA
 .venv\Scripts\python.exe -m pytest
+
+# Installer Chromium (nécessaire uniquement pour l'exécution UI réelle)
+.venv\Scripts\python.exe -m playwright install chromium
+
+# Lancer explicitement une mission phase 6 API + UI
+.venv\Scripts\python.exe scripts\run_phase6_mission.py
 
 # Démarrer la stack de test
 docker compose -f infra/docker-compose.test.yml -p football-qa-test up --build -d --wait
@@ -149,15 +157,46 @@ reproductibles sont écrites dans `workspace/missions/<mission_id>/api/`.
 Résultat de référence : mission `b745b4a199b7`, 21/21 sondes réussies,
 0 anomalie. Voir `reports/phase-5-agents-1-3.md`.
 
+## Automatisation API et UI (phase 6)
+
+Les agents 4 et 5 sont réels et activés par `REAL_AGENTS_ENABLED=true` :
+
+- **API Automation** : génère une suite pytest à partir des GET sûrs de la
+  collection Postman et des preuves de la phase 5, l'exécute sur
+  `http://localhost:8002`, puis produit un rapport JUnit, un journal expurgé,
+  un JSON et un Markdown.
+- **UI Automation** : génère et exécute des scénarios Playwright/Chromium sur
+  `http://localhost:5175`, avec préflight du frontend **et** de l'API, résultats
+  JSON, rapport Markdown et captures en cas d'échec.
+
+Garde-fous :
+
+- cible API limitée à `localhost:8002`, cible UI limitée à `localhost:5175` ;
+- l'application réelle (`8001`/`5174`) est refusée avant toute requête ;
+- cible ou navigateur indisponible ⇒ statut `blocked`, **aucune anomalie** ;
+- aucune preuve d'une exécution précédente n'est réutilisée.
+
+Le reporter lit désormais les preuves des phases 5 et 6 et n'agrège que les
+anomalies réellement présentes.
+
+```powershell
+# Installer Chromium puis lancer une mission phase 6 explicite
+.venv\Scripts\python.exe -m playwright install chromium
+.venv\Scripts\python.exe scripts\run_phase6_mission.py
+```
+
+Validation hors ligne : **64 tests passent**. L'exécution réelle API + UI reste
+à faire sur le PC professionnel. Voir `reports/phase-6-agents-4-5.md`.
+
 ## État d'avancement
 
-- [x] Environnement local reconstruit sur le PC personnel — Python 3.12.10, `.venv`, `.env` sans clés, **41 tests passent**
+- [x] Environnement local reconstruit sur le PC personnel — Python 3.12.10, `.venv`, `.env` sans clés, **64 tests passent**
 - [x] Phase 1 — baseline de l'application existante
 - [x] Phase 2 — stack de test isolée
 - [x] Phase 3 — socle du Manager
 - [x] Phase 4 — connexion Telegram
 - [x] Phase 5 — agents 1 à 3
-- [ ] Phase 6 — agents 4 et 5
+- [x] Phase 6 — agents 4 et 5 (code + validation hors ligne ; exécution réelle à faire sur le PC professionnel)
 - [ ] Phase 7 — agents 6 et 7
 - [ ] Phase 8 — bureau virtuel
 - [ ] Phase 9 — durcissement

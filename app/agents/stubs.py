@@ -129,9 +129,24 @@ class QAReporterAgent(BaseAgent):
 
     def run(self, task: Task, mission: Mission, context: dict | None = None) -> AgentResult:
         tasks = (context or {}).get("tasks", [])
-        probe = self._probe_results(mission.id)
-        anomalies = probe.get("anomalies", []) if probe else []
-        checks = probe.get("checks", []) if probe else []
+        probe = self._load_results(mission.id, "api/probe-results.json")
+        api_auto = self._load_results(
+            mission.id, "api-automation/api-automation-results.json"
+        )
+        ui_auto = self._load_results(
+            mission.id, "ui-automation/ui-automation-results.json"
+        )
+
+        anomalies: list[tuple[str, dict]] = []
+        for source, payload in (
+            ("Sonde API", probe),
+            ("Automatisation API", api_auto),
+            ("Automatisation UI", ui_auto),
+        ):
+            if payload:
+                anomalies.extend(
+                    (source, item) for item in payload.get("anomalies", [])
+                )
 
         lines = [
             f"# Rapport de mission — {mission.id}",
@@ -149,9 +164,9 @@ class QAReporterAgent(BaseAgent):
             lines.append(
                 f"- **{item['agent']}** — {item['title']} : `{item['status']}`"
             )
-        lines.extend(["", "## Résultats", ""])
 
-        if probe is None:
+        lines.extend(["", "## Résultats", ""])
+        if not (probe or api_auto or ui_auto):
             lines.extend(
                 [
                     "Les agents ont produit des plans et des livrables à exécuter. "
@@ -160,78 +175,73 @@ class QAReporterAgent(BaseAgent):
                 ]
             )
         else:
-            executed = [check for check in checks if not check.get("skipped")]
-            passed = [check for check in executed if check.get("passed")]
-            status = probe.get("status", "inconnu")
             lines.extend(
                 [
-                    "Des sondes API réelles ont été exécutées sur la stack de test.",
-                    "",
-                    f"- Statut des sondes : `{status}`",
-                    f"- Vérifications exécutées : {len(executed)}",
-                    f"- Réussies : {len(passed)}",
-                    f"- Anomalies : {len(anomalies)}",
-                    f"- Preuves : `workspace/missions/{mission.id}/api/`",
+                    "Des exécutions réelles ont été réalisées ; les preuves sont "
+                    "conservées localement.",
                     "",
                 ]
             )
+            if probe:
+                lines.extend(self._probe_lines(mission.id, probe))
+            if api_auto:
+                lines.extend(
+                    self._automation_lines(
+                        "Automatisation API pytest (phase 6)",
+                        mission.id,
+                        "api-automation",
+                        "tests",
+                        api_auto,
+                    )
+                )
+            if ui_auto:
+                lines.extend(
+                    self._automation_lines(
+                        "Automatisation UI Playwright (phase 6)",
+                        mission.id,
+                        "ui-automation",
+                        "checks",
+                        ui_auto,
+                    )
+                )
 
         lines.extend(["## Anomalies", ""])
         if anomalies:
-            for index, anomaly in enumerate(anomalies, start=1):
+            for index, (source, anomaly) in enumerate(anomalies, start=1):
                 lines.extend(
                     [
-                        f"### {index}. {anomaly.get('check', 'Anomalie')}",
+                        f"### {index}. [{source}] {anomaly.get('check', 'Anomalie')}",
                         "",
-                        f"- Reproduction : `{anomaly.get('reproduction', '')}`",
-                        f"- Attendu : {anomaly.get('expected', '')}",
-                        f"- Obtenu : {anomaly.get('actual', '')}",
-                        "- Preuve : "
-                        f"`workspace/missions/{mission.id}/api/probe-results.json`",
-                        "",
+                        f"- Reproduction : `{anomaly.get('reproduction', 'non fournie')}`",
+                        f"- Attendu : {anomaly.get('expected', 'non précisé')}",
+                        f"- Obtenu : {anomaly.get('actual', 'non précisé')}",
                     ]
                 )
-        elif probe is not None and probe.get("status") == "completed":
-            lines.extend(
-                [
-                    "Aucune anomalie déclarée : les sondes réelles n'ont révélé "
-                    "aucun écart avec les résultats attendus.",
-                    "",
-                ]
-            )
-        elif probe is not None:
-            lines.extend(
-                [
-                    "Aucune anomalie déclarée : les sondes n'ont pas pu être "
-                    "exécutées.",
-                    "",
-                ]
+                evidence = anomaly.get("evidence") or anomaly.get("screenshot")
+                if evidence:
+                    lines.append(f"- Preuve : `{evidence}`")
+                lines.append("")
+        else:
+            lines.extend(self._no_anomaly_lines(probe, api_auto, ui_auto))
+
+        lines.extend(["", "## Prochaine étape", ""])
+        if probe or api_auto or ui_auto:
+            lines.append(
+                "Consolider les preuves et préparer le rapport Allure (phase 7)."
             )
         else:
-            lines.extend(
-                [
-                    "Aucune anomalie déclarée : aucune exécution réelle n'a eu lieu.",
-                    "",
-                ]
+            lines.append(
+                "Exécuter les suites sur la stack de test isolée et joindre les preuves."
             )
-
-        lines.extend(
-            [
-                "## Prochaine étape",
-                "",
-                "Exécuter les suites sur la stack de test isolée et joindre les preuves.",
-                "",
-            ]
-        )
+        lines.append("")
         return AgentResult(agent=self.name, summary="\n".join(lines), artifacts=[])
 
-    def _probe_results(self, mission_id: str) -> dict | None:
+    def _load_results(self, mission_id: str, relative_path: str) -> dict | None:
         path = (
             Path(self.settings.workspace_dir)
             / "missions"
             / mission_id
-            / "api"
-            / "probe-results.json"
+            / relative_path
         )
         if not path.is_file():
             return None
@@ -239,3 +249,74 @@ class QAReporterAgent(BaseAgent):
             return json.loads(path.read_text(encoding="utf-8"))
         except (OSError, ValueError):
             return None
+
+    @staticmethod
+    def _probe_lines(mission_id: str, probe: dict) -> list[str]:
+        checks = probe.get("checks", [])
+        executed = [check for check in checks if not check.get("skipped")]
+        passed = [check for check in executed if check.get("passed")]
+        return [
+            "### Sondes API réelles (phase 5)",
+            "",
+            "Des sondes API réelles ont été exécutées sur la stack de test.",
+            "",
+            f"- Statut des sondes : `{probe.get('status', 'inconnu')}`",
+            f"- Vérifications exécutées : {len(executed)}",
+            f"- Réussies : {len(passed)}",
+            f"- Anomalies : {len(probe.get('anomalies', []))}",
+            f"- Preuves : `workspace/missions/{mission_id}/api/`",
+            "",
+        ]
+
+    @staticmethod
+    def _automation_lines(
+        title: str,
+        mission_id: str,
+        folder: str,
+        count_key: str,
+        payload: dict,
+    ) -> list[str]:
+        summary = payload.get("summary") or {}
+        total = int(summary.get(count_key, 0) or 0)
+        skipped = int(summary.get("skipped", 0) or 0)
+        lines = [
+            f"### {title}",
+            "",
+            f"- Statut : `{payload.get('status', 'inconnu')}`",
+            f"- Exécutés : {max(total - skipped, 0)}",
+            f"- Réussis : {summary.get('passed', 0)}",
+            f"- Échecs : {summary.get('failed', 0)}",
+            f"- Ignorés : {skipped}",
+            f"- Anomalies : {summary.get('anomalies', len(payload.get('anomalies', [])))}",
+            f"- Preuves : `workspace/missions/{mission_id}/{folder}/`",
+        ]
+        blocked_reason = payload.get("blocked_reason")
+        if blocked_reason:
+            lines.append(f"- Non exécution : {blocked_reason}")
+        lines.append("")
+        return lines
+
+    @staticmethod
+    def _no_anomaly_lines(
+        probe: dict | None,
+        api_auto: dict | None,
+        ui_auto: dict | None,
+    ) -> list[str]:
+        payloads = [payload for payload in (probe, api_auto, ui_auto) if payload]
+        if not payloads:
+            return [
+                "Aucune anomalie déclarée : aucune exécution réelle n'a eu lieu.",
+                "",
+            ]
+        if all(payload.get("status") == "completed" for payload in payloads):
+            return [
+                "Aucune anomalie déclarée : les exécutions réelles n'ont révélé "
+                "aucun écart avec les résultats attendus.",
+                "",
+            ]
+        return [
+            "Aucune anomalie déclarée : au moins une exécution n'a pas pu être "
+            "réalisée.",
+            "",
+        ]
+

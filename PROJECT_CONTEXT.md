@@ -1,8 +1,8 @@
 # PROJECT_CONTEXT — Football QA Agents
 
 Date du point de reprise : 9 novembre 2026  
-Dernière action terminée : environnement local reconstruit sur le **PC personnel** (Python 3.12.10 natif, `.venv`, `.env` recréé sans clés) — **41 tests sur 41 réussis**. La phase 5 reste la dernière phase terminée (agents 1 à 3 réels, mission `b745b4a199b7` : 21/21 sondes, 0 anomalie).  
-État global : **phases 1 à 5 terminées côté code**. Le travail se fait sur **deux PC** (personnel et professionnel) ; sur le PC personnel actuel, le projet cible à jour (`football-qa`) et les clés sont absents : les missions réelles y sont bloquées. Le projet n’est pas terminé.
+Dernière action terminée : phase 6 (agents 4 et 5) implémentée et validée **hors ligne** sur le PC personnel — **64 tests sur 64 réussis**. L'environnement local a été reconstruit (Python 3.12.10 natif, `.venv`, `.env` sans clés). La phase 5 reste la dernière phase validée en réel (mission `b745b4a199b7` : 21/21 sondes, 0 anomalie).  
+État global : **phases 1 à 6 terminées côté code**. L'exécution réelle de la phase 6 reste à faire sur le PC professionnel, avec le projet cible, la stack de test et les clés. Le projet n'est pas terminé.
 
 ---
 
@@ -72,7 +72,9 @@ Construire un système multi-agents QA local pour l’application `football-qa`,
   installées.
 - `.env` recréé depuis `.env.example` : **clés Gemini et Telegram vides**,
   `REAL_AGENTS_ENABLED=false`.
-- Suite de tests : `.venv\Scripts\python.exe -m pytest` → **41 passed**.
+- Suite de tests : `.venv\Scripts\python.exe -m pytest` → **64 passed**.
+- `playwright==1.64.1` installé (paquet Python). Les navigateurs Playwright ne
+  sont **pas** installés sur ce PC ; l'exécution UI reste bloquée ici.
 - Dépôt Git initialisé sur la branche `main` (commit initial `2a3c929`) ;
   `.env` et `.venv` sont ignorés par Git.
 
@@ -91,7 +93,7 @@ on travaille.**
 | `.env` | clés Gemini + Telegram présentes | recréé **sans clés** |
 | Python | 3.12 avec `.venv` existant | 3.12.10 installé le 9 novembre 2026 |
 | `.venv` | présent | recréé |
-| Tests | **41 passed** | **41 passed** |
+| Tests | **41 passed** (phase 5, à resynchroniser) | **64 passed** |
 
 Conséquences :
 
@@ -154,7 +156,7 @@ Déjà fait :
 - [x] Ajouter des tests d’allowlist et d’absence de mission automatique : **23 tests réussis**.
 - [x] Documenter la phase 4 dans `reports/phase-4-telegram.md`.
 - [x] Mettre à jour `README.md` (phase 4).
-- [ ] Test réel du bot désormais possible (token présent), mais non exécuté.
+- [ ] Test réel du bot : token absent sur le PC personnel ; à exécuter sur le PC professionnel.
 
 ### Phase 5 — agents 1 à 3 : terminée côté code et validée réellement
 
@@ -171,15 +173,44 @@ Déjà fait :
 - [x] Anomalies uniquement sur échec réel, avec reproduction et extrait.
 - [x] Agents 1 à 3 réels avec repli déterministe ; agents 4 à 7 inchangés.
 - [x] Reporter branché sur `probe-results.json`.
-- [x] Suite complète : **41 tests réussis**.
+- [x] Suite complète à l’issue de la phase 5 : **41 tests réussis**.
 - [x] Mission réelle `b745b4a199b7` : 21/21 sondes, 0 anomalie.
 - [x] Documentation : `reports/phase-5-agents-1-3.md`.
 - [x] mise à jour `README.md` (phase 5).
-- [ ] Test réel du bot Telegram avec le token désormais présent (optionnel).
+- [ ] Test réel du bot Telegram : token absent sur le PC personnel, à faire sur le PC professionnel.
+
+### Phase 6 — agents 4 et 5 : terminée côté code, validée hors ligne
+
+Déjà fait :
+
+- [x] Agent 4 `api_automation` : génération d’une suite pytest depuis la
+      collection Postman et les preuves de la phase 5, exécution réelle,
+      parsing JUnit, preuves JSON/Markdown et anomalies reproductibles.
+- [x] Agent 5 `ui_automation` : génération et exécution de scénarios
+      Playwright, résultats JSON, captures d’écran et anomalies reproductibles.
+- [x] Garde-fous : cibles limitées à `localhost:8002` et `localhost:5175` ;
+      l’application réelle `8001`/`5174` est refusée.
+- [x] Préflight API **et** UI avant Playwright : une stack arrêtée produit
+      `blocked`, sans fausse anomalie.
+- [x] Suppression des preuves périmées (JUnit, résultats UI, captures) avant
+      chaque exécution.
+- [x] Reporter étendu : lit `probe-results.json`,
+      `api-automation-results.json` et `ui-automation-results.json`, agrège les
+      anomalies réellement présentes.
+- [x] `scripts/run_phase6_mission.py` : lanceur explicite d’une mission
+      phase 6.
+- [x] `playwright==1.64.1` ajouté aux dépendances (navigateur à installer sur
+      le PC professionnel).
+- [x] Tests hors ligne : `tests/test_api_suite.py`,
+      `tests/test_ui_suite.py`, `tests/test_phase6_agents.py`.
+- [x] Suite complète : **64 tests réussis**.
+- [x] Documentation : `reports/phase-6-agents-4-5.md`.
+- [x] Mise à jour `README.md` (phase 6).
+- [ ] Exécution réelle API + UI sur la stack de test : **à faire sur le PC
+      professionnel**.
 
 ### Phases restantes
 
-- [ ] **Phase 6 — agents 4 et 5** : automatisation API pytest et UI Playwright réelles.
 - [ ] **Phase 7 — agents 6 et 7** : DevOps (branche + PR) et reporting Allure/Markdown/JSON.
 - [ ] **Phase 8 — bureau virtuel 2D** : frontend séparé, SSE, personnages SVG, événements réels.
 - [ ] **Phase 9 — durcissement** : sécurité, robustesse, documentation finale.
@@ -201,18 +232,22 @@ Telegram (polling, allowlist)  ou  CLI
                 │
    ┌────────────┼─────────────┬──────────────┬─────────────┐
    ▼            ▼             ▼              ▼             ▼
-QA Analyst  Test Designer  API Tester   Agents 4–7    QA Reporter
-(Gemini)    (Gemini)       (OpenAPI +   (stubs)       (preuves réelles)
-                           Postman +
-                           sondes HTTP)
+QA Analyst  Test Designer  API Tester   API Auto +    QA Reporter
+(Gemini)    (Gemini)       (OpenAPI +   UI Auto       (preuves réelles
+                           Postman +    (pytest +     phases 5 et 6)
+                           sondes HTTP)  Playwright)
 ```
 
 - Le **Manager** crée la mission, planifie les tâches, applique
   l’approbation/l’annulation et publie les événements.
 - Le **graphe LangGraph** exécute les tâches dans l’ordre des dépendances et
   transmet au reporter les résultats et preuves de chaque tâche.
-- Les **agents 1 à 3** sont réels depuis la phase 5 ; les **agents 4 à 7**
-  restent des stubs de planification.
+- Les **agents 1 à 3** sont réels depuis la phase 5.
+- Les **agents 4 et 5** (API Automation, UI Automation) sont réels depuis la
+  phase 6 et validés hors ligne.
+- L’**agent 6 (DevOps)** reste un stub ; l’**agent 7 (reporter)** est réel et
+  agrège désormais les preuves des phases 5 et 6. Le reporting Allure complet
+  relève de la phase 7.
 - L’**EventBus** et le **store SQLite** journalisent missions, tâches et
   événements localement.
 
@@ -259,6 +294,44 @@ QA Analyst  Test Designer  API Tester   Agents 4–7    QA Reporter
 - `app/orchestrator/graph.py`
   - Le contexte du reporter transporte désormais `result` et `evidence`.
 
+### Phase 6 — agents 4 et 5
+
+- `app/agents/phase6.py`
+  - `APIAutomationAgent` et `UIAutomationAgent`, avec repli déterministe si
+    `REAL_AGENTS_ENABLED=false`.
+  - Une cible interdite ou indisponible produit un statut bloqué, sans
+    anomalie applicative.
+
+- `app/tools/api_suite.py`
+  - Génère `api-automation/test_api_suite.py` depuis la collection Postman
+    (uniquement les GET sûrs) et les preuves de la phase 5.
+  - Préflight `GET /health` sur `localhost:8002`.
+  - Exécution pytest, parsing JUnit, journal expurgé, résultats JSON et rapport
+    Markdown.
+  - Suppression du JUnit périmé avant chaque exécution.
+  - Anomalie uniquement pour un test réellement en échec, avec reproduction et
+    preuve.
+
+- `app/tools/ui_suite.py`
+  - Génère `ui-automation/run_ui_checks.py` (Playwright/Chromium).
+  - Préflight du frontend **et** de l’API avant lancement.
+  - Résultats JSON, rapport Markdown, captures d’écran en cas d’échec.
+  - Suppression des résultats et captures périmés avant chaque exécution.
+  - Cibles limitées à `localhost:5175` et `localhost:8002`.
+
+- `app/agents/stubs.py`
+  - Le reporter lit désormais `probe-results.json`,
+    `api-automation-results.json` et `ui-automation-results.json`.
+  - Il agrège les anomalies réellement présentes et conserve les phrases de
+    repli quand aucune exécution n’a eu lieu.
+
+- `scripts/run_phase6_mission.py`
+  - Lanceur explicite d’une mission API + UI sur la stack de test.
+
+- `requirements.txt`
+  - `playwright==1.64.1` (le navigateur Chromium s’installe séparément avec
+    `python -m playwright install chromium`).
+
 ### Gateway Telegram (phase 4, inchangé)
 
 - Polling uniquement, aucun scheduler, aucun `JobQueue`.
@@ -272,7 +345,7 @@ QA Analyst  Test Designer  API Tester   Agents 4–7    QA Reporter
 
 ```powershell
 .venv\Scripts\python.exe -m pytest
-# 41 passed
+# 64 passed
 ```
 
 ---
@@ -288,7 +361,7 @@ QA Analyst  Test Designer  API Tester   Agents 4–7    QA Reporter
 | `.env.example` | Modèle de configuration sans secrets |
 | `.env.test.example` | Modèle de configuration de test |
 | `.env` | Configuration locale réelle, **ignorée par Git** |
-| `requirements.txt` | Dépendances Python, Telegram inclus |
+| `requirements.txt` | Dépendances Python, Telegram et Playwright inclus |
 | `pyproject.toml` | Configuration pytest |
 | `PROJECT_CONTEXT.md` | Ce point de reprise |
 | `app/__init__.py` | Package principal |
@@ -298,13 +371,16 @@ QA Analyst  Test Designer  API Tester   Agents 4–7    QA Reporter
 | `app/events/bus.py` | EventBus réel avec abonnés |
 | `app/agents/base.py` | Interface `BaseAgent` |
 | `app/agents/phase5.py` | Agents 1 à 3 réels (Gemini, OpenAPI, Postman, sondes) |
-| `app/agents/stubs.py` | Agents 4 à 7 (stubs) et reporter basé sur les preuves |
+| `app/agents/stubs.py` | Agent DevOps (stub) et reporter étendu phases 5/6 |
 | `app/llm/__init__.py` | Package d’intégration LLM |
 | `app/llm/gemini.py` | Client Gemini free tier REST, sans fuite de clé |
 | `app/tools/__init__.py` | Package des outils réels |
 | `app/tools/workspace.py` | Écriture UTF-8 des preuves de mission |
 | `app/tools/openapi_postman.py` | Analyse OpenAPI et génération Postman |
 | `app/tools/api_probe.py` | Sondes API réelles, garde-fou 8002, preuves, anomalies |
+| `app/tools/api_suite.py` | Suite pytest API générée, exécution, JUnit, preuves |
+| `app/tools/ui_suite.py` | Scénarios Playwright générés, exécution, captures, preuves |
+| `app/agents/phase6.py` | Agents 4 et 5 (API Automation, UI Automation) |
 | `app/orchestrator/planner.py` | Planification déterministe et détection d’approbation |
 | `app/orchestrator/state.py` | `MissionState` LangGraph |
 | `app/orchestrator/graph.py` | Graphe plan → execute → review → report → finalize |
@@ -320,9 +396,13 @@ QA Analyst  Test Designer  API Tester   Agents 4–7    QA Reporter
 | `tests/test_openapi_postman.py` | 3 tests OpenAPI et Postman |
 | `tests/test_api_probe.py` | 4 tests des sondes, du garde-fou et des anomalies |
 | `tests/test_phase5_agents.py` | 6 tests des agents phase 5 et du reporter |
+| `tests/test_api_suite.py` | 6 tests de la suite pytest API générée |
+| `tests/test_ui_suite.py` | 9 tests de la suite Playwright et des garde-fous |
+| `tests/test_phase6_agents.py` | 8 tests des agents 4/5 et du reporter |
 | `infra/docker-compose.test.yml` | Stack de test isolée |
 | `scripts/seed_test_data.py` | Création des comptes de test |
 | `scripts/run_phase5_mission.py` | Lanceur explicite d’une mission phase 5 |
+| `scripts/run_phase6_mission.py` | Lanceur explicite d’une mission phase 6 API + UI |
 | `postman/collections/football-qa.json` | Collection Postman réelle (11 requêtes) |
 | `postman/environments/football-qa-test.json` | Environnement Postman de test |
 | `reports/baseline.md` | Baseline |
@@ -330,6 +410,7 @@ QA Analyst  Test Designer  API Tester   Agents 4–7    QA Reporter
 | `reports/phase-3-manager-core.md` | Validation socle Manager |
 | `reports/phase-4-telegram.md` | Validation connexion Telegram |
 | `reports/phase-5-agents-1-3.md` | Validation phase 5 |
+| `reports/phase-6-agents-4-5.md` | Validation phase 6 hors ligne |
 | `reports/missions/4e1c01636615.md` | Rapport de mission de démonstration |
 | `reports/missions/b745b4a199b7.md` | Rapport de la mission phase 5 de référence |
 | `workspace/missions/b745b4a199b7/` | Preuves de la mission phase 5 |
@@ -362,7 +443,10 @@ Le dépôt `football-qa` est resté propre.
 - **Bureau virtuel** : frontend séparé, SSE, personnages SVG.
 - **Jira/Xray/Squash** : non retenus.
 - **Git** : branche + PR uniquement, merge humain.
-- **Agents actuels** : agents 1 à 3 réels ; agents 4 à 7 encore en stubs. Aucune anomalie inventée.
+- **Agents actuels** : agents 1 à 3 réels (phase 5), agents 4 et 5 réels et validés hors ligne (phase 6), agent 6 (DevOps) encore stub, agent 7 (reporter) réel mais sans Allure. Aucune anomalie inventée.
+- **Automatisation API** : suite pytest générée depuis les GET sûrs de la collection Postman ; JUnit + JSON + Markdown ; cible limitée à `localhost:8002`.
+- **Automatisation UI** : Playwright/Chromium, cible limitée à `localhost:5175` et API `localhost:8002` ; préflight UI + API ; captures en cas d’échec.
+- **Playwright** : `playwright==1.64.1` ; le navigateur s’installe séparément (`python -m playwright install chromium`).
 - **Sondes API** : cible strictement limitée à `localhost`/`127.0.0.1:8002` ; l’application réelle `8001` est refusée.
 - **Anomalies** : uniquement sur échec réel, avec reproduction et extrait de preuve.
 - **Postman** : collection générée depuis l’OpenAPI réel, pas de collection écrite à la main.
@@ -391,7 +475,7 @@ reproduite dans ce document.
 | `TEST_USER1_EMAIL` / `TEST_USER2_EMAIL` | comptes de test locaux |
 | `GROQ_API_KEY` / `MISTRAL_API_KEY` | non utilisés par la phase 5 |
 
-Sans clé, le système reste utilisable : les 41 tests passent et les agents
+Sans clé, le système reste utilisable : les 64 tests passent et les agents
 réels basculent sur leur repli déterministe. Il suffira de renseigner
 `GEMINI_API_KEY` et `TELEGRAM_BOT_TOKEN` dans `.env` pour réactiver les appels
 réels, sans modification de code.
@@ -457,6 +541,9 @@ Si `.venv` est absent (nouvelle machine) :
 # Python 3.12 requis (pyproject.toml : requires-python >= 3.12)
 python -m venv .venv
 .venv\Scripts\python.exe -m pip install -r requirements.txt
+
+# Uniquement pour l'exécution UI réelle (pas nécessaire pour pytest)
+.venv\Scripts\python.exe -m playwright install chromium
 ```
 
 Si `.env` est absent : le recréer depuis `.env.example`
@@ -480,7 +567,7 @@ Invoke-WebRequest -UseBasicParsing http://localhost:8002/health
 Invoke-WebRequest -UseBasicParsing http://localhost:5175/
 ```
 
-Attendu : `41 passed` et stack `healthy` sur `8002`, `5434` et `5175`.
+Attendu : `64 passed` et stack `healthy` sur `8002`, `5434` et `5175`.
 Ne jamais sonder `8001` avec les outils du projet.
 
 ### Étape 1 — vérifier l’état livré
@@ -511,6 +598,22 @@ mission explicite, exécute les agents 1 à 3, écrit les preuves et affiche
 > Sur cette machine, cette étape est **bloquée** : le projet cible/la stack de
 > test sont absents et `.env` ne contient pas encore de clé Gemini.
 
+### Étape 2 bis — relancer une mission phase 6 API + UI (optionnel)
+
+```powershell
+.venv\Scripts\python.exe -m playwright install chromium
+.venv\Scripts\python.exe scripts\run_phase6_mission.py
+```
+
+Le script refuse de s’exécuter si `REAL_AGENTS_ENABLED=false`. Il génère et
+exécute la suite pytest API puis les scénarios Playwright, écrit les preuves et
+affiche `API_STATUS`, `API_TESTS`, `API_PASSED`, `API_FAILED`,
+`API_ANOMALIES` et l’équivalent UI.
+
+> Sur cette machine, cette étape est **bloquée** : projet cible, stack de test
+> et navigateur Playwright absents. Les tests hors ligne couvrent néanmoins
+> toute la logique.
+
 ### Étape 3 — tester réellement le bot Telegram (optionnel)
 
 ```powershell
@@ -525,9 +628,10 @@ Puis, depuis le compte autorisé : `/start`, un texte libre, `/status <id>`,
 
 ### Étape 4 — prochaine phase de développement
 
-**Phase 6 — agents 4 et 5** : automatisation API pytest et UI Playwright
-réelles, en réutilisant les preuves et la collection Postman de la phase 5.
-Ne pas démarrer cette phase sans demande explicite.
+**Phase 7 — agents 6 et 7** : agent DevOps (branche + PR, sans push direct sur
+`main`) et reporting Allure/Markdown/JSON enrichi. La phase 6 est terminée côté
+code et validée hors ligne ; son exécution réelle reste à faire sur le PC
+professionnel. Ne pas démarrer la phase 7 sans demande explicite.
 
 ### En cas de problème connu
 
@@ -536,6 +640,9 @@ Ne pas démarrer cette phase sans demande explicite.
 | `Gemini a répondu HTTP 404` | modèle obsolète | garder `LLM_MODEL=gemini-3.5-flash` |
 | `GEMINI_API_KEY absente` | clé dans le mauvais `.env` | vérifier `football-qa-agents\.env`, ne pas afficher la valeur |
 | `UnsafeTargetError` | cible autre que `localhost:8002` | corriger `TEST_API_URL`, ne pas viser `8001` |
+| `UnsafeUiTargetError` | cible UI autre que `localhost:5175` | corriger `TEST_UI_URL` |
+| `Playwright n'a produit aucun résultat` | navigateur Chromium absent | `python -m playwright install chromium` |
+| `API_STATUS=blocked` en phase 6 | API de test arrêtée | démarrer la stack `football-qa-test` |
 | tests lents ou appels réels | `REAL_AGENTS_ENABLED=true` dans l’environnement | les tests forcent déjà `false` ; vérifier les overrides |
 | accents illisibles en console | rendu PowerShell | les fichiers sont UTF-8 ; lire avec Python si besoin |
 
@@ -549,6 +656,12 @@ Ne pas démarrer cette phase sans demande explicite.
 
 # Mission réelle phase 5 (explicite, sur la stack de test)
 .venv\Scripts\python.exe scripts\run_phase5_mission.py
+
+# Navigateur requis pour l'exécution UI réelle
+.venv\Scripts\python.exe -m playwright install chromium
+
+# Mission réelle phase 6 API + UI (explicite, sur la stack de test)
+.venv\Scripts\python.exe scripts\run_phase6_mission.py
 
 # Gateway Telegram (polling, allowlist)
 .venv\Scripts\python.exe -m app.telegram.gateway
@@ -592,7 +705,9 @@ Ne pas démarrer cette phase sans demande explicite.
 - Le travail se fait sur **deux PC** : PC professionnel (`stgadmin`) et PC personnel (`MAbdo`, actuel). L’absence du projet cible ou des clés sur le PC personnel est **normale**, pas une régression.
 - Le projet cible à jour (`football-qa`) **n’est pas présent** sur le PC personnel ; `Football-project\MyFinalProject` n’est **pas** la bonne version et ne doit pas servir de cible.
 - Sur le PC personnel, `.env` a été recréé **sans clés** : Gemini et Telegram sont inactifs, le repli déterministe s’applique.
-- Les agents 4 à 7 sont encore des stubs de planification.
+- Les agents 4 et 5 (API Automation, UI Automation) sont réels et validés **hors ligne** ; leur exécution réelle reste à faire sur le PC professionnel.
+- L’agent 6 (DevOps) reste un stub ; l’agent 7 (reporter) est réel mais le reporting Allure complet relève de la phase 7.
+- Le navigateur Playwright/Chromium n’est pas installé sur le PC personnel ; l’agent UI y renvoie `blocked` sans anomalie.
 - Les agents 1 à 3 sont réels mais dépendent de la stack de test et du free tier Gemini ; un repli déterministe reste actif en cas d’indisponibilité.
 - Le test réel du bot Telegram n’a pas été exécuté (token absent).
 - Aucune nouvelle phase ne doit démarrer sans demande explicite.
@@ -602,11 +717,13 @@ Ne pas démarrer cette phase sans demande explicite.
 ## 11. Résumé en une phrase
 
 Le socle QA local (baseline, isolation, Manager, gateway Telegram, rapports,
-approbation, annulation) et la phase 5 (agents 1 à 3 réels avec Gemini
-`gemini-3.5-flash`, collection Postman générée depuis l’OpenAPI réel, sondes
-API limitées à `localhost:8002`) fonctionnent dans un environnement Python
-3.12.10 natif et les **41 tests passent** ; la mission de référence
-`b745b4a199b7` a réussi 21/21 sondes avec 0 anomalie. Le travail se fait sur
-deux PC : sur le PC personnel actuel, le projet cible et les clés sont absents,
-donc les missions réelles y sont suspendues ; elles restent possibles sur le PC
-professionnel. La suite du projet reprend à la phase 6 (agents 4 et 5).
+approbation, annulation), la phase 5 (agents 1 à 3 réels avec Gemini
+`gemini-3.5-flash`, collection Postman, sondes API limitées à `localhost:8002`)
+et la phase 6 (agents 4 et 5 : suite pytest API et scénarios Playwright,
+validés hors ligne) fonctionnent dans un environnement Python 3.12.10 natif et
+les **64 tests passent** ; la mission de référence `b745b4a199b7` a réussi
+21/21 sondes avec 0 anomalie. Le travail se fait sur deux PC : sur le PC
+personnel actuel, le projet cible, les clés et le navigateur Playwright sont
+absents, donc les missions réelles y sont suspendues ; elles restent possibles
+sur le PC professionnel. La suite du projet reprend à la phase 7 (agent DevOps
+et reporting Allure).
