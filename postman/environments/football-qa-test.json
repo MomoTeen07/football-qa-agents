@@ -1,0 +1,37 @@
+{
+  "id": "40303101-038b-47b2-a2cc-d1d1a2af6b2d",
+  "name": "Football QA — test (8002)",
+  "_postman_variable_scope": "environment",
+  "values": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8002",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "testUserEmail",
+      "value": "qa.user1@example.com",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "testUserPassword",
+      "value": "QaTest123!",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "secret",
+      "enabled": true
+    },
+    {
+      "key": "favoriteId",
+      "value": "",
+      "type": "default",
+      "enabled": true
+    }
+  ]
+}
