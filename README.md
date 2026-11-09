@@ -59,8 +59,8 @@ cible et des clés.
 ## Reprise sur le PC professionnel
 
 La branche `chore/reconstruct-local-env` est poussée sur GitHub et contient la
-phase 6 (commit `9ee9de4`). Sur le PC professionnel, ne pas travailler
-directement sur `main` :
+phase 6 (commit `9ee9de4` et les mises à jour suivantes). Sur le PC
+professionnel, ne pas travailler directement sur `main` :
 
 ```powershell
 cd C:\Users\stgadmin\Desktop\football-qa-agents

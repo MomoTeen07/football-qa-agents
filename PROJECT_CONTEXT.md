@@ -4,6 +4,20 @@ Date du point de reprise : 9 novembre 2026
 Dernière action terminée : phase 6 (agents 4 et 5) implémentée et validée **hors ligne** sur le PC personnel — **64 tests sur 64 réussis**. L'environnement local a été reconstruit (Python 3.12.10 natif, `.venv`, `.env` sans clés). La phase 5 reste la dernière phase validée en réel (mission `b745b4a199b7` : 21/21 sondes, 0 anomalie).  
 État global : **phases 1 à 6 terminées côté code**. L'exécution réelle de la phase 6 reste à faire sur le PC professionnel, avec le projet cible, la stack de test et les clés. Le projet n'est pas terminé.
 
+> **Point de reprise — lire ceci en premier**
+>
+> - Branche à utiliser : **`chore/reconstruct-local-env`** (dernier commit : `git log -1 --oneline`).
+> - Sur **`main`**, ce fichier est **en retard** (phase 5) : la phase 6 n'y est pas encore fusionnée. Ne pas conclure que la phase 6 manque.
+> - Ordre de reprise sur le PC professionnel :
+>   1. `git fetch origin`
+>   2. `git switch chore/reconstruct-local-env` (ou `git switch -c chore/reconstruct-local-env origin/chore/reconstruct-local-env`)
+>   3. `git pull --ff-only origin chore/reconstruct-local-env`
+>   4. `.venv\Scripts\python.exe -m pip install -r requirements.txt`
+>   5. `.venv\Scripts\python.exe -m pytest` → attendu **`64 passed`**
+>   6. `.venv\Scripts\python.exe -m playwright install chromium`
+>   7. démarrer la stack `football-qa-test`, puis `.venv\Scripts\python.exe scripts\run_phase6_mission.py`
+> - Détail et précautions : section **« Reprise sur le PC professionnel »** ci-dessous.
+
 ---
 
 ## 1. Objectif du projet
@@ -109,7 +123,7 @@ Conséquences :
 ### Reprise sur le PC professionnel
 
 La branche `chore/reconstruct-local-env` est poussée sur GitHub et contient la
-phase 6 (commit `9ee9de4`). Procédure de reprise :
+phase 6 (commit `9ee9de4` et les mises à jour suivantes). Procédure de reprise :
 
 ```powershell
 cd C:\Users\stgadmin\Desktop\football-qa-agents
