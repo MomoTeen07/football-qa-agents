@@ -47,6 +47,11 @@ retard. En cas de doute, mettre à jour les trois.
 - `CHANGELOG.md` : historique consolidé, ajout des commits `d958314` et
   `992d007` à la table de correspondance.
 
+### Pull request
+
+- **PR #2** : <https://github.com/MomoTeen07/football-qa-agents/pull/2>
+  (documentation uniquement).
+
 ---
 
 ## [0.6.0] — 2026-11-09 — Phase 6 : automatisation API et UI
