@@ -1,8 +1,8 @@
 # PROJECT_CONTEXT — Football QA Agents
 
 Date du point de reprise : 9 novembre 2026  
-Dernière action terminée : phase 5 (agents 1 à 3 réels, Gemini, Postman, sondes API) — **41 tests sur 41 réussis**, mission `b745b4a199b7` avec 21/21 sondes réussies et 0 anomalie.  
-État global : **phases 1 à 5 terminées côté code ; test réel du bot Telegram encore optionnel**. Le projet n’est pas terminé.
+Dernière action terminée : environnement local reconstruit (Python 3.12.10 natif, `.venv`, `.env` recréé sans clés) — **41 tests sur 41 réussis**. La phase 5 reste la dernière phase terminée (agents 1 à 3 réels, mission `b745b4a199b7` : 21/21 sondes, 0 anomalie).  
+État global : **phases 1 à 5 terminées côté code**. Le projet cible à jour (`football-qa`) **n’est pas présent** sur cette machine : les missions réelles sont bloquées jusqu’à sa fourniture. Le projet n’est pas terminé.
 
 ---
 
@@ -49,14 +49,32 @@ Construire un système multi-agents QA local pour l’application `football-qa`,
 | Base | `footballqa` | `footballqa_test` |
 | Projet Compose | `football-qa` | `football-qa-test` |
 
-- L’application réelle est dans `C:\Users\stgadmin\Desktop\football-qa`.
-- Le projet QA est dans `C:\Users\stgadmin\Desktop\football-qa-agents`.
+- Le projet QA actuel est dans `C:\Users\MAbdo\Desktop\Football-Agent\football-qa-agents`.
+- Le projet cible à jour (`football-qa`) **n’est pas présent** sur cette machine.
+  Le dossier `C:\Users\MAbdo\Desktop\Football-project\MyFinalProject` n’est
+  **pas** la bonne version : ne pas l’utiliser.
+- `infra/docker-compose.test.yml` référence `../../football-qa/backend` et
+  `../../football-qa/frontend`, absents → la stack de test ne peut pas être
+  construite tant que le projet cible n’est pas fourni.
+- Docker Desktop est installé et le moteur tourne, mais **aucun conteneur**
+  `football-qa-test` n’est actif.
 - La stack de test utilise `MOCK_FOOTBALL_API=true`.
-- La stack de test était démarrée au moment du point de reprise.
 - La base réelle est restée intacte : **5 utilisateurs / 2 favoris**.
 - La base de test contient **2 utilisateurs / 0 favoris**.
 - Comptes de test : `qa.user1@example.com` et `qa.user2@example.com`.
 - Le validateur d’email de l’application refuse les domaines `.test` ; utiliser `example.com`.
+
+### Environnement Python local (vérifié le 9 novembre 2026)
+
+- Python **3.12.10** installé en mode utilisateur via winget
+  (`%LOCALAPPDATA%\Programs\Python\Python312\python.exe`).
+- `.venv` recréé avec Python 3.12.10 ; dépendances `requirements.txt`
+  installées.
+- `.env` recréé depuis `.env.example` : **clés Gemini et Telegram vides**,
+  `REAL_AGENTS_ENABLED=false`.
+- Suite de tests : `.venv\Scripts\python.exe -m pytest` → **41 passed**.
+- Dépôt Git initialisé sur la branche `main` (commit initial `2a3c929`) ;
+  `.env` et `.venv` sont ignorés par Git.
 
 ---
 
@@ -326,45 +344,59 @@ Le dépôt `football-qa` est resté propre.
 
 ## 7. Configuration, secrets et restes à faire
 
-`.env` est présent et ignoré par Git. Il contient les secrets locaux. Aucune
-valeur de secret n’est reproduite dans ce document.
+`.env` est présent et ignoré par Git. Il a été **recréé depuis
+`.env.example`** le 9 novembre 2026, **sans aucune clé** : les secrets locaux
+ne sont pas disponibles sur cette machine. Aucune valeur de secret n’est
+reproduite dans ce document.
 
 État vérifié au moment du point de reprise :
 
 | Variable | État |
 |---|---|
 | `TELEGRAM_ALLOWED_USER_ID` | renseigné dans `.env` (identifiant non reproduit ici) |
-| `TELEGRAM_BOT_TOKEN` | **présent** dans `.env` ; bot validé par `getMe` (`Quaresma_QA_bot`) |
-| `GEMINI_API_KEY` | **présent** dans `.env` ; API et génération validées |
-| `LLM_MODEL` | `gemini-3.5-flash` |
-| `REAL_AGENTS_ENABLED` | `true` |
+| `TELEGRAM_BOT_TOKEN` | **absent** (clé non disponible) → test réel du bot impossible |
+| `GEMINI_API_KEY` | **absente** → repli déterministe des agents 1 à 3 |
+| `LLM_MODEL` | `gemini-3.5-flash` (prêt pour le jour où la clé sera fournie) |
+| `REAL_AGENTS_ENABLED` | `false` |
 | `TEST_API_URL` | `http://localhost:8002` |
 | `TEST_UI_URL` | `http://localhost:5175` |
 | `TEST_USER1_EMAIL` / `TEST_USER2_EMAIL` | comptes de test locaux |
 | `GROQ_API_KEY` / `MISTRAL_API_KEY` | non utilisés par la phase 5 |
+
+Sans clé, le système reste utilisable : les 41 tests passent et les agents
+réels basculent sur leur repli déterministe. Il suffira de renseigner
+`GEMINI_API_KEY` et `TELEGRAM_BOT_TOKEN` dans `.env` pour réactiver les appels
+réels, sans modification de code.
 
 Historique utile :
 
 - Les deux clés avaient d’abord été déposées dans
   `C:\Users\stgadmin\Desktop\football-qa\.env` (application cible), puis
   copiées dans `football-qa-agents\.env` sans affichage.
+- Sur la machine actuelle (`C:\Users\MAbdo\...`), ces clés **ne sont pas
+  disponibles** : `.env` a été recréé sans elles le 9 novembre 2026.
 - Ne jamais afficher, journaliser ou coller ces valeurs dans le chat, un
   rapport ou une preuve.
 
 ### Configuration Telegram restant à effectuer
 
-- Aucune configuration obligatoire ne reste : le token et l’allowlist sont
-  présents.
-- Il reste seulement le **test réel du bot** (démarrage du gateway, `/start`,
-  texte libre, `/status`, `/approve`, `/stop`). Ce test n’a pas été exécuté
-  pendant la phase 5 et n’est pas nécessaire à la validation des agents.
+- `TELEGRAM_BOT_TOKEN` est **absent** : le token n’est pas disponible sur cette
+  machine. Le gateway ne peut pas être testé réellement tant qu’il n’est pas
+  fourni.
+- `TELEGRAM_ALLOWED_USER_ID` est déjà renseigné dans `.env`.
+- Pour réactiver le bot : déposer le token dans `.env` (sans l’afficher), puis
+  lancer `.venv\Scripts\python.exe -m app.telegram.gateway` et tester
+  `/start`, un texte libre, `/status`, `/approve`, `/stop`.
 - Vérifier que le token n’a jamais été publié ; en cas de doute, le régénérer
   via BotFather et mettre à jour `.env` sans afficher la nouvelle valeur.
 
 ### Configuration Gemini restant à effectuer
 
-- Aucune configuration obligatoire ne reste : la clé est présente et
-  `gemini-3.5-flash` répond.
+- `GEMINI_API_KEY` est **absente** : les agents 1 à 3 utilisent leur repli
+  déterministe. Aucune mission n’est bloquée, mais les analyses enrichies par
+  LLM sont inactives.
+- Pour réactiver Gemini : déposer la clé dans `.env` et passer
+  `REAL_AGENTS_ENABLED=true`, sans afficher la valeur.
 - Surveiller le quota du free tier ; en cas de dépassement, le repli
   déterministe s’applique sans bloquer la mission.
 - Ne pas revenir à `gemini-2.5-flash` ni `gemini-2.5-flash-lite` : HTTP 404
@@ -378,20 +410,36 @@ Historique utile :
 ### Étape 0 — vérifier l’environnement
 
 ```powershell
-cd C:\Users\stgadmin\Desktop\football-qa-agents
+cd C:\Users\MAbdo\Desktop\Football-Agent\football-qa-agents
 
 # Tests du système QA
 .venv\Scripts\python.exe -m pytest
 
-# Stack de test
+# Stack de test (nécessite le projet cible football-qa)
 docker compose -f infra/docker-compose.test.yml -p football-qa-test ps
 ```
+
+Si `.venv` est absent (nouvelle machine) :
+
+```powershell
+# Python 3.12 requis (pyproject.toml : requires-python >= 3.12)
+python -m venv .venv
+.venv\Scripts\python.exe -m pip install -r requirements.txt
+```
+
+Si `.env` est absent : le recréer depuis `.env.example`
+(`Copy-Item .env.example .env`). Les clés peuvent rester vides.
 
 Si la stack n’est pas démarrée :
 
 ```powershell
 docker compose -f infra/docker-compose.test.yml -p football-qa-test up --build -d --wait
 ```
+
+> **Prérequis** : le projet cible à jour doit être présent dans un dossier
+> `football-qa` voisin (le compose référence `../../football-qa/backend` et
+> `../../football-qa/frontend`). Sur cette machine, il est **absent** : la
+> stack ne peut pas être construite tant qu’il n’est pas fourni.
 
 Vérifier :
 
@@ -428,6 +476,9 @@ Le script refuse de s’exécuter si `REAL_AGENTS_ENABLED=false`. Il crée une
 mission explicite, exécute les agents 1 à 3, écrit les preuves et affiche
 `PROBE_CHECKS`, `PROBE_PASSED`, `PROBE_ANOMALIES`.
 
+> Sur cette machine, cette étape est **bloquée** : le projet cible/la stack de
+> test sont absents et `.env` ne contient pas encore de clé Gemini.
+
 ### Étape 3 — tester réellement le bot Telegram (optionnel)
 
 ```powershell
@@ -436,6 +487,9 @@ mission explicite, exécute les agents 1 à 3, écrit les preuves et affiche
 
 Puis, depuis le compte autorisé : `/start`, un texte libre, `/status <id>`,
 `/approve <id>` si demandé, `/stop <id>`. Aucun scheduler ne doit démarrer.
+
+> Sur cette machine, cette étape est **bloquée** tant que
+> `TELEGRAM_BOT_TOKEN` n’est pas fourni dans `.env`.
 
 ### Étape 4 — prochaine phase de développement
 
@@ -502,10 +556,12 @@ Ne pas démarrer cette phase sans demande explicite.
 - Ne pas pousser directement sur `main`.
 - Ne pas afficher, journaliser ou envoyer les secrets Telegram/Gemini.
 - Les sondes refusent toute cible autre que `localhost:8002`.
-- Le projet `football-qa-agents` n’est **pas encore initialisé en Git**.
+- Le projet `football-qa-agents` est initialisé en Git sur `main` (commit initial `2a3c929`).
+- Le projet cible à jour (`football-qa`) **n’est pas présent** sur cette machine ; `Football-project\MyFinalProject` n’est **pas** la bonne version et ne doit pas servir de cible.
+- `.env` a été recréé **sans clés** : Gemini et Telegram sont inactifs, le repli déterministe s’applique.
 - Les agents 4 à 7 sont encore des stubs de planification.
 - Les agents 1 à 3 sont réels mais dépendent de la stack de test et du free tier Gemini ; un repli déterministe reste actif en cas d’indisponibilité.
-- Le test réel du bot Telegram n’a pas été exécuté pendant la phase 5.
+- Le test réel du bot Telegram n’a pas été exécuté (token absent).
 - Aucune nouvelle phase ne doit démarrer sans demande explicite.
 
 ---
@@ -515,6 +571,8 @@ Ne pas démarrer cette phase sans demande explicite.
 Le socle QA local (baseline, isolation, Manager, gateway Telegram, rapports,
 approbation, annulation) et la phase 5 (agents 1 à 3 réels avec Gemini
 `gemini-3.5-flash`, collection Postman générée depuis l’OpenAPI réel, sondes
-API limitées à `localhost:8002`) fonctionnent et les 41 tests passent ; la
-mission de référence `b745b4a199b7` a réussi 21/21 sondes avec 0 anomalie, et
+API limitées à `localhost:8002`) fonctionnent dans un environnement Python
+3.12.10 natif et les **41 tests passent** ; la mission de référence
+`b745b4a199b7` a réussi 21/21 sondes avec 0 anomalie. Le projet cible à jour
+étant absent et les clés non disponibles, les missions réelles sont suspendues ;
 la suite du projet reprend à la phase 6 (agents 4 et 5).

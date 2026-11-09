@@ -25,6 +25,28 @@ reports/              Rapports de baseline, Allure et synthèses
 tests/                Tests du système multi-agents
 ```
 
+## État de l'environnement local (9 novembre 2026)
+
+- Python **3.12.10** natif (obligatoire : `requires-python >= 3.12`).
+- `.venv` recréé et dépendances `requirements.txt` installées.
+- `.env` recréé depuis `.env.example` : **clés Gemini/Telegram vides**,
+  `REAL_AGENTS_ENABLED=false` → repli déterministe.
+- `.venv\Scripts\python.exe -m pytest` → **41 passed**.
+
+Sans clés, les 41 tests passent et les agents basculent sur leur repli
+déterministe. Pour réactiver Gemini et Telegram, renseigner
+`GEMINI_API_KEY` et `TELEGRAM_BOT_TOKEN` dans `.env`, sans jamais les afficher.
+
+## Prérequis pour les missions réelles
+
+Le projet cible à jour (`football-qa`) **n'est pas présent** sur cette machine.
+`C:\Users\MAbdo\Desktop\Football-project\MyFinalProject` n'est **pas** la bonne
+version et ne doit pas être utilisé.
+
+Le compose de test référence `../../football-qa/backend` et
+`../../football-qa/frontend` : sans ce dossier, la stack `8002`/`5175` ne peut
+pas être construite et les missions réelles sont bloquées.
+
 ## Stack de test
 
 | Service | URL locale |
@@ -39,6 +61,16 @@ La stack utilise `MOCK_FOOTBALL_API=true` pour des tests déterministes.
 ## Commandes prévues
 
 ```powershell
+# Créer l'environnement Python (une fois)
+python -m venv .venv
+.venv\Scripts\python.exe -m pip install -r requirements.txt
+
+# Créer la configuration locale sans secrets
+Copy-Item .env.example .env
+
+# Lancer les tests du système QA
+.venv\Scripts\python.exe -m pytest
+
 # Démarrer la stack de test
 docker compose -f infra/docker-compose.test.yml -p football-qa-test up --build -d --wait
 
@@ -102,6 +134,7 @@ Résultat de référence : mission `b745b4a199b7`, 21/21 sondes réussies,
 
 ## État d'avancement
 
+- [x] Environnement local reconstruit — Python 3.12.10, `.venv`, `.env` sans clés, **41 tests passent**
 - [x] Phase 1 — baseline de l'application existante
 - [x] Phase 2 — stack de test isolée
 - [x] Phase 3 — socle du Manager
