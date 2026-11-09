@@ -62,7 +62,7 @@ régression : il faut d'abord identifier la machine.
 | Projet cible `football-qa` | présent | **absent** |
 | Stack de test Docker | opérationnelle | non construite |
 | Clés Gemini / Telegram | présentes dans `.env` | **absentes** |
-| Tests unitaires | 41 passed (phase 5) — à mettre à jour en tirant `chore/reconstruct-local-env` | **64 passed** |
+| Tests unitaires | 41 passed (phase 5) — sera **64 passed** après `git pull` sur `main` | **64 passed** |
 
 Le PC personnel permet le développement hors ligne et les tests unitaires ;
 les missions réelles se font sur le PC professionnel ou après copie du projet
@@ -70,11 +70,11 @@ cible et des clés.
 
 ## Pull request et reprise sur le PC professionnel
 
-La phase 6 est proposée dans la **PR #1** :
-https://github.com/MomoTeen07/football-qa-agents/pull/1
-(`chore/reconstruct-local-env` → `main`, merge humain).
+La phase 6 a été **fusionnée** via la **PR #1** (merge commit `992d007`,
+9 novembre 2026) : `main` contient désormais l'automatisation API/UI, le
+reporter étendu et toute la documentation.
 
-### Après merge (recommandé)
+### Depuis `main` (recommandé)
 
 ```powershell
 cd C:\Users\stgadmin\Desktop\football-qa-agents
@@ -87,22 +87,11 @@ git pull --ff-only origin main
 .venv\Scripts\python.exe -m playwright install chromium
 ```
 
-### Avant merge (travailler sur la branche)
-
-```powershell
-cd C:\Users\stgadmin\Desktop\football-qa-agents
-git status                                  # vérifier l'absence de modifications locales
-git fetch origin
-git switch chore/reconstruct-local-env      # ou créer la branche locale depuis origin
-git pull --ff-only origin chore/reconstruct-local-env
-
-.venv\Scripts\python.exe -m pip install -r requirements.txt
-.venv\Scripts\python.exe -m pytest          # attendu : 64 passed
-.venv\Scripts\python.exe -m playwright install chromium
-```
-
 Démarrer ensuite la stack de test, puis lancer
 `scripts\run_phase6_mission.py`.
+
+> La branche `chore/reconstruct-local-env` est conservée pour l'historique :
+> ne plus y ajouter de commits ; tout nouveau travail part de `main`.
 
 Précautions :
 
