@@ -10,9 +10,19 @@ Système multi-agents QA pour tester l'application locale `football-qa`.
 - Secrets stockés dans `.env`, exclus de Git.
 - Rapports et preuves conservés localement.
 
+## Suivi des modifications
+
+- **`CHANGELOG.md`** est la source de vérité chronologique : chaque
+  modification notable y ajoute une entrée datée.
+- Toute modification doit aussi mettre à jour **`README.md`** et
+  **`PROJECT_CONTEXT.md`**. Une PR n'est pas terminée si l'un des trois fichiers
+  est en retard.
+- Dernière entrée : **0.6.0 — phase 6** (automatisation API/UI, PR #1).
+
 ## Structure
 
 ```text
+CHANGELOG.md          Historique daté des modifications
 app/                  Manager, agents, outils, événements
 app/llm/              Client Gemini free tier
 app/tools/            OpenAPI, Postman, sondes API, workspace
@@ -24,6 +34,96 @@ workspace/            Espaces de travail par mission
 reports/              Rapports de baseline, Allure et synthèses
 tests/                Tests du système multi-agents
 ```
+
+## État de l'environnement local (9 novembre 2026)
+
+- Python **3.12.10** natif (obligatoire : `requires-python >= 3.12`).
+- `.venv` recréé et dépendances `requirements.txt` installées.
+- `.env` recréé depuis `.env.example` : **clés Gemini/Telegram vides**,
+  `REAL_AGENTS_ENABLED=false` → repli déterministe.
+- `.venv\Scripts\python.exe -m pytest` → **64 passed**.
+- `playwright==1.64.1` installé ; le navigateur Chromium n'est **pas** installé
+  sur ce PC (nécessaire uniquement à l'exécution UI réelle).
+- **GitHub CLI** `gh` 2.103.3 installé via winget et authentifié via le
+  navigateur ; le jeton reste dans le keyring Windows, jamais dans le projet.
+
+Sans clés, les 64 tests passent et les agents basculent sur leur repli
+déterministe. Pour réactiver Gemini et Telegram, renseigner
+`GEMINI_API_KEY` et `TELEGRAM_BOT_TOKEN` dans `.env`, sans jamais les afficher.
+
+## Deux machines de travail
+
+Le projet est utilisé sur deux PC. Un élément manquant sur l'un n'est pas une
+régression : il faut d'abord identifier la machine.
+
+| Élément | PC professionnel | PC personnel (actuel) |
+|---|---|---|
+| Utilisateur | `stgadmin` | `MAbdo` |
+| Projet cible `football-qa` | présent | **absent** |
+| Stack de test Docker | opérationnelle | non construite |
+| Clés Gemini / Telegram | présentes dans `.env` | **absentes** |
+| Tests unitaires | 41 passed (phase 5) — à mettre à jour en tirant `chore/reconstruct-local-env` | **64 passed** |
+
+Le PC personnel permet le développement hors ligne et les tests unitaires ;
+les missions réelles se font sur le PC professionnel ou après copie du projet
+cible et des clés.
+
+## Pull request et reprise sur le PC professionnel
+
+La phase 6 est proposée dans la **PR #1** :
+https://github.com/MomoTeen07/football-qa-agents/pull/1
+(`chore/reconstruct-local-env` → `main`, merge humain).
+
+### Après merge (recommandé)
+
+```powershell
+cd C:\Users\stgadmin\Desktop\football-qa-agents
+git status                                  # vérifier l'absence de modifications locales
+git switch main
+git pull --ff-only origin main
+
+.venv\Scripts\python.exe -m pip install -r requirements.txt
+.venv\Scripts\python.exe -m pytest          # attendu : 64 passed
+.venv\Scripts\python.exe -m playwright install chromium
+```
+
+### Avant merge (travailler sur la branche)
+
+```powershell
+cd C:\Users\stgadmin\Desktop\football-qa-agents
+git status                                  # vérifier l'absence de modifications locales
+git fetch origin
+git switch chore/reconstruct-local-env      # ou créer la branche locale depuis origin
+git pull --ff-only origin chore/reconstruct-local-env
+
+.venv\Scripts\python.exe -m pip install -r requirements.txt
+.venv\Scripts\python.exe -m pytest          # attendu : 64 passed
+.venv\Scripts\python.exe -m playwright install chromium
+```
+
+Démarrer ensuite la stack de test, puis lancer
+`scripts\run_phase6_mission.py`.
+
+Précautions :
+
+- Si `git status` montre des modifications locales, les committer ou les
+  remiser **avant** de changer de branche.
+- `.env` et `.venv` ne sont pas synchronisés par Git : les clés restent locales
+  au PC professionnel et les dépendances sont à réinstaller.
+- Ne pas pousser sur `main` : la fusion se fait par pull request.
+- **GitHub CLI** (`gh` 2.103.3) est installé sur le PC personnel pour créer les
+  PR ; l'authentification est stockée dans le keyring Windows. Aucun secret
+  n'est documenté ni journalisé.
+
+## Prérequis pour les missions réelles
+
+Le projet cible à jour (`football-qa`) **n'est pas présent** sur le PC personnel
+actuel. `C:\Users\MAbdo\Desktop\Football-project\MyFinalProject` n'est **pas**
+la bonne version et ne doit pas être utilisé.
+
+Le compose de test référence `../../football-qa/backend` et
+`../../football-qa/frontend` : sans ce dossier, la stack `8002`/`5175` ne peut
+pas être construite et les missions réelles sont bloquées.
 
 ## Stack de test
 
@@ -39,6 +139,22 @@ La stack utilise `MOCK_FOOTBALL_API=true` pour des tests déterministes.
 ## Commandes prévues
 
 ```powershell
+# Créer l'environnement Python (une fois)
+python -m venv .venv
+.venv\Scripts\python.exe -m pip install -r requirements.txt
+
+# Créer la configuration locale sans secrets
+Copy-Item .env.example .env
+
+# Lancer les tests du système QA
+.venv\Scripts\python.exe -m pytest
+
+# Installer Chromium (nécessaire uniquement pour l'exécution UI réelle)
+.venv\Scripts\python.exe -m playwright install chromium
+
+# Lancer explicitement une mission phase 6 API + UI
+.venv\Scripts\python.exe scripts\run_phase6_mission.py
+
 # Démarrer la stack de test
 docker compose -f infra/docker-compose.test.yml -p football-qa-test up --build -d --wait
 
@@ -100,14 +216,47 @@ reproductibles sont écrites dans `workspace/missions/<mission_id>/api/`.
 Résultat de référence : mission `b745b4a199b7`, 21/21 sondes réussies,
 0 anomalie. Voir `reports/phase-5-agents-1-3.md`.
 
+## Automatisation API et UI (phase 6)
+
+Les agents 4 et 5 sont réels et activés par `REAL_AGENTS_ENABLED=true` :
+
+- **API Automation** : génère une suite pytest à partir des GET sûrs de la
+  collection Postman et des preuves de la phase 5, l'exécute sur
+  `http://localhost:8002`, puis produit un rapport JUnit, un journal expurgé,
+  un JSON et un Markdown.
+- **UI Automation** : génère et exécute des scénarios Playwright/Chromium sur
+  `http://localhost:5175`, avec préflight du frontend **et** de l'API, résultats
+  JSON, rapport Markdown et captures en cas d'échec.
+
+Garde-fous :
+
+- cible API limitée à `localhost:8002`, cible UI limitée à `localhost:5175` ;
+- l'application réelle (`8001`/`5174`) est refusée avant toute requête ;
+- cible ou navigateur indisponible ⇒ statut `blocked`, **aucune anomalie** ;
+- aucune preuve d'une exécution précédente n'est réutilisée.
+
+Le reporter lit désormais les preuves des phases 5 et 6 et n'agrège que les
+anomalies réellement présentes.
+
+```powershell
+# Installer Chromium puis lancer une mission phase 6 explicite
+.venv\Scripts\python.exe -m playwright install chromium
+.venv\Scripts\python.exe scripts\run_phase6_mission.py
+```
+
+Validation hors ligne : **64 tests passent**. L'exécution réelle API + UI reste
+à faire sur le PC professionnel. Voir `reports/phase-6-agents-4-5.md`.
+
 ## État d'avancement
 
+- [x] Environnement local reconstruit sur le PC personnel — Python 3.12.10, `.venv`, `.env` sans clés, **64 tests passent**
+- [x] Journal des modifications `CHANGELOG.md` et règle de mise à jour documentaire
 - [x] Phase 1 — baseline de l'application existante
 - [x] Phase 2 — stack de test isolée
 - [x] Phase 3 — socle du Manager
 - [x] Phase 4 — connexion Telegram
 - [x] Phase 5 — agents 1 à 3
-- [ ] Phase 6 — agents 4 et 5
+- [x] Phase 6 — agents 4 et 5 (code + validation hors ligne ; exécution réelle à faire sur le PC professionnel)
 - [ ] Phase 7 — agents 6 et 7
 - [ ] Phase 8 — bureau virtuel
 - [ ] Phase 9 — durcissement

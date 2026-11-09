@@ -483,10 +483,12 @@ class UiSuite:
         executor: Callable[[Path, Path, dict], subprocess.CompletedProcess]
         | None = None,
         preflight: Callable[[str, float], str | None] | None = None,
+        api_preflight: Callable[[str, float], str | None] | None = None,
     ) -> None:
         self.settings = settings or get_settings()
         self._executor = executor or self._default_executor
         self._preflight = preflight or self._default_preflight
+        self._api_preflight = api_preflight or self._default_api_preflight
 
     def _default_executor(
         self,
@@ -518,6 +520,24 @@ class UiSuite:
             return f"Frontend de test en erreur (HTTP {response.status_code})."
         return None
 
+    def _default_api_preflight(self, api_url: str, timeout: float) -> str | None:
+        try:
+            response = httpx.get(
+                f"{api_url.rstrip('/')}/health",
+                timeout=timeout,
+                follow_redirects=False,
+            )
+        except httpx.HTTPError as exc:
+            return f"API de test injoignable ({type(exc).__name__})."
+        if response.status_code != 200:
+            return f"API de test en erreur (HTTP {response.status_code})."
+        try:
+            if response.json().get("status") != "ok":
+                return "API de test sans statut de santé valide."
+        except ValueError:
+            return "API de test avec une réponse de santé non JSON."
+        return None
+
     def run(self, mission_id: str) -> UiSuiteOutcome:
         ensure_test_ui_url(self.settings.test_ui_url)
         ensure_test_api_url(self.settings.test_api_url)
@@ -531,10 +551,20 @@ class UiSuite:
         screenshots.mkdir(parents=True, exist_ok=True)
         raw_results = directory / "ui-playwright-results.json"
 
+        # Ne jamais réutiliser des preuves d'une exécution précédente.
+        raw_results.unlink(missing_ok=True)
+        for stale in screenshots.glob("*.png"):
+            stale.unlink()
+
         blocked_reason = self._preflight(
             ui_url,
             self.settings.api_probe_timeout_seconds,
         )
+        if not blocked_reason:
+            blocked_reason = self._api_preflight(
+                self.settings.test_api_url,
+                self.settings.api_probe_timeout_seconds,
+            )
         if blocked_reason:
             return self._write_outcome(
                 mission_id,
