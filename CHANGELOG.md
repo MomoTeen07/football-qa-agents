@@ -46,7 +46,8 @@ retard. En cas de doute, mettre à jour les trois.
 
 ### Pull request
 
-- PR dédiée (documentation uniquement).
+- **PR #3** : <https://github.com/MomoTeen07/football-qa-agents/pull/3>
+  (documentation uniquement).
 
 ---
 
