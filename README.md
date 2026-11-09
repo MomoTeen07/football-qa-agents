@@ -10,9 +10,19 @@ Système multi-agents QA pour tester l'application locale `football-qa`.
 - Secrets stockés dans `.env`, exclus de Git.
 - Rapports et preuves conservés localement.
 
+## Suivi des modifications
+
+- **`CHANGELOG.md`** est la source de vérité chronologique : chaque
+  modification notable y ajoute une entrée datée.
+- Toute modification doit aussi mettre à jour **`README.md`** et
+  **`PROJECT_CONTEXT.md`**. Une PR n'est pas terminée si l'un des trois fichiers
+  est en retard.
+- Dernière entrée : **0.6.0 — phase 6** (automatisation API/UI, PR #1).
+
 ## Structure
 
 ```text
+CHANGELOG.md          Historique daté des modifications
 app/                  Manager, agents, outils, événements
 app/llm/              Client Gemini free tier
 app/tools/            OpenAPI, Postman, sondes API, workspace
@@ -240,6 +250,7 @@ Validation hors ligne : **64 tests passent**. L'exécution réelle API + UI rest
 ## État d'avancement
 
 - [x] Environnement local reconstruit sur le PC personnel — Python 3.12.10, `.venv`, `.env` sans clés, **64 tests passent**
+- [x] Journal des modifications `CHANGELOG.md` et règle de mise à jour documentaire
 - [x] Phase 1 — baseline de l'application existante
 - [x] Phase 2 — stack de test isolée
 - [x] Phase 3 — socle du Manager

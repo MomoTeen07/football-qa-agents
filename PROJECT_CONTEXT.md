@@ -19,6 +19,8 @@ Dernière action terminée : phase 6 (agents 4 et 5) implémentée et validée *
 >   3. `.venv\Scripts\python.exe -m playwright install chromium`
 >   4. démarrer la stack `football-qa-test`, puis `.venv\Scripts\python.exe scripts\run_phase6_mission.py`
 > - Détail et précautions : section **« Reprise sur le PC professionnel »** ci-dessous.
+> - **Documentation** : toute modification met à jour `README.md`,
+>   `PROJECT_CONTEXT.md` et `CHANGELOG.md`.
 
 ---
 
@@ -47,6 +49,8 @@ Construire un système multi-agents QA local pour l’application `football-qa`,
   - publication externe ;
   - validation finale d’une anomalie.
 - Git : branche + PR uniquement, jamais de push direct sur `main` ; merge humain.
+- Documentation : toute modification met à jour `README.md`,
+  `PROJECT_CONTEXT.md` et `CHANGELOG.md`.
 - Tests de sécurité actifs non destructifs autorisés.
 - Bureau virtuel simple en 2D avec personnages SVG et événements réels.
 - Projet QA natif Windows dans un venv Python.
@@ -431,6 +435,7 @@ QA Analyst  Test Designer  API Tester   API Auto +    QA Reporter
 | `requirements.txt` | Dépendances Python, Telegram et Playwright inclus |
 | `pyproject.toml` | Configuration pytest |
 | `PROJECT_CONTEXT.md` | Ce point de reprise |
+| `CHANGELOG.md` | Historique daté des modifications et règle de mise à jour |
 | `app/__init__.py` | Package principal |
 | `app/config.py` | Settings Pydantic, chemins, secrets |
 | `app/domain/models.py` | Mission, Task, Event, AgentResult, statuts |
