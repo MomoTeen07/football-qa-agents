@@ -35,6 +35,21 @@ retard. En cas de doute, mettre à jour les trois.
 
 ---
 
+## [0.6.2] — 2026-11-09 — Nettoyage des branches fusionnées
+
+### Modifié
+
+- Suppression de `chore/reconstruct-local-env` (PR #1) et
+  `docs/post-merge-status` (PR #2), en local et sur GitHub, après fusion.
+- Seule la branche `main` subsiste ; tout nouveau travail part de `main`.
+- `README.md` et `PROJECT_CONTEXT.md` alignés sur cet état.
+
+### Pull request
+
+- PR dédiée (documentation uniquement).
+
+---
+
 ## [0.6.1] — 2026-11-09 — Synchronisation documentaire post-merge
 
 ### Modifié
@@ -226,3 +241,6 @@ retard. En cas de doute, mettre à jour les trois.
 | `9fd6db5` | 2026-11-09 | Documentation de la PR #1, de `gh` et de la reprise après merge |
 | `d958314` | 2026-11-09 | Création de `CHANGELOG.md` et règle de mise à jour documentaire |
 | `992d007` | 2026-11-09 | Merge de la PR #1 dans `main` (phase 6 fusionnée) |
+| `2661c62` | 2026-11-09 | Synchronisation documentaire après le merge de la PR #1 |
+| `e8a8dd0` | 2026-11-09 | Référence de la PR #2 dans le changelog |
+| `8e33177` | 2026-11-09 | Merge de la PR #2 dans `main` |

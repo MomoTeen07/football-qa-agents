@@ -90,8 +90,9 @@ git pull --ff-only origin main
 Démarrer ensuite la stack de test, puis lancer
 `scripts\run_phase6_mission.py`.
 
-> La branche `chore/reconstruct-local-env` est conservée pour l'historique :
-> ne plus y ajouter de commits ; tout nouveau travail part de `main`.
+> Les branches `chore/reconstruct-local-env` (PR #1) et
+> `docs/post-merge-status` (PR #2) ont été supprimées après leur fusion.
+> Seule `main` subsiste ; tout nouveau travail part de `main`.
 
 Précautions :
 
