@@ -37,11 +37,28 @@ Sans clés, les 41 tests passent et les agents basculent sur leur repli
 déterministe. Pour réactiver Gemini et Telegram, renseigner
 `GEMINI_API_KEY` et `TELEGRAM_BOT_TOKEN` dans `.env`, sans jamais les afficher.
 
+## Deux machines de travail
+
+Le projet est utilisé sur deux PC. Un élément manquant sur l'un n'est pas une
+régression : il faut d'abord identifier la machine.
+
+| Élément | PC professionnel | PC personnel (actuel) |
+|---|---|---|
+| Utilisateur | `stgadmin` | `MAbdo` |
+| Projet cible `football-qa` | présent | **absent** |
+| Stack de test Docker | opérationnelle | non construite |
+| Clés Gemini / Telegram | présentes dans `.env` | **absentes** |
+| Tests unitaires | 41 passed | 41 passed |
+
+Le PC personnel permet le développement hors ligne et les tests unitaires ;
+les missions réelles se font sur le PC professionnel ou après copie du projet
+cible et des clés.
+
 ## Prérequis pour les missions réelles
 
-Le projet cible à jour (`football-qa`) **n'est pas présent** sur cette machine.
-`C:\Users\MAbdo\Desktop\Football-project\MyFinalProject` n'est **pas** la bonne
-version et ne doit pas être utilisé.
+Le projet cible à jour (`football-qa`) **n'est pas présent** sur le PC personnel
+actuel. `C:\Users\MAbdo\Desktop\Football-project\MyFinalProject` n'est **pas**
+la bonne version et ne doit pas être utilisé.
 
 Le compose de test référence `../../football-qa/backend` et
 `../../football-qa/frontend` : sans ce dossier, la stack `8002`/`5175` ne peut
@@ -134,7 +151,7 @@ Résultat de référence : mission `b745b4a199b7`, 21/21 sondes réussies,
 
 ## État d'avancement
 
-- [x] Environnement local reconstruit — Python 3.12.10, `.venv`, `.env` sans clés, **41 tests passent**
+- [x] Environnement local reconstruit sur le PC personnel — Python 3.12.10, `.venv`, `.env` sans clés, **41 tests passent**
 - [x] Phase 1 — baseline de l'application existante
 - [x] Phase 2 — stack de test isolée
 - [x] Phase 3 — socle du Manager

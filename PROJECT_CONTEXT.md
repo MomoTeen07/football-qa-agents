@@ -1,8 +1,8 @@
 # PROJECT_CONTEXT — Football QA Agents
 
 Date du point de reprise : 9 novembre 2026  
-Dernière action terminée : environnement local reconstruit (Python 3.12.10 natif, `.venv`, `.env` recréé sans clés) — **41 tests sur 41 réussis**. La phase 5 reste la dernière phase terminée (agents 1 à 3 réels, mission `b745b4a199b7` : 21/21 sondes, 0 anomalie).  
-État global : **phases 1 à 5 terminées côté code**. Le projet cible à jour (`football-qa`) **n’est pas présent** sur cette machine : les missions réelles sont bloquées jusqu’à sa fourniture. Le projet n’est pas terminé.
+Dernière action terminée : environnement local reconstruit sur le **PC personnel** (Python 3.12.10 natif, `.venv`, `.env` recréé sans clés) — **41 tests sur 41 réussis**. La phase 5 reste la dernière phase terminée (agents 1 à 3 réels, mission `b745b4a199b7` : 21/21 sondes, 0 anomalie).  
+État global : **phases 1 à 5 terminées côté code**. Le travail se fait sur **deux PC** (personnel et professionnel) ; sur le PC personnel actuel, le projet cible à jour (`football-qa`) et les clés sont absents : les missions réelles y sont bloquées. Le projet n’est pas terminé.
 
 ---
 
@@ -76,9 +76,37 @@ Construire un système multi-agents QA local pour l’application `football-qa`,
 - Dépôt Git initialisé sur la branche `main` (commit initial `2a3c929`) ;
   `.env` et `.venv` sont ignorés par Git.
 
+### Deux machines de travail
+
+Le projet est utilisé sur deux PC. **Ne pas conclure à une régression ou à une
+perte de projet quand un élément manque : vérifier d’abord sur quelle machine
+on travaille.**
+
+| Élément | PC professionnel | PC personnel (actuel) |
+|---|---|---|
+| Utilisateur Windows | `stgadmin` | `MAbdo` |
+| Projet QA | `C:\Users\stgadmin\Desktop\football-qa-agents` | `C:\Users\MAbdo\Desktop\Football-Agent\football-qa-agents` |
+| Projet cible `football-qa` | présent (`C:\Users\stgadmin\Desktop\football-qa`) | **absent** |
+| Stack de test Docker | était démarrée au dernier point | **non construite** |
+| `.env` | clés Gemini + Telegram présentes | recréé **sans clés** |
+| Python | 3.12 avec `.venv` existant | 3.12.10 installé le 9 novembre 2026 |
+| `.venv` | présent | recréé |
+| Tests | **41 passed** | **41 passed** |
+
+Conséquences :
+
+- Le **PC personnel** permet le développement hors ligne, la lecture, les tests
+  unitaires et les modifications de code, mais **pas** les missions réelles.
+- Les **missions réelles** (sondes API, UI Playwright, bot Telegram, Gemini)
+  se font sur le **PC professionnel**, ou sur le PC personnel après y avoir
+  copié le projet cible à jour et renseigné les clés.
+- Les documents `reports/baseline.md` et les preuves historiques mentionnent
+  des chemins `stgadmin` : ce sont des traces du PC professionnel, pas une
+  configuration à reproduire sur le PC personnel.
+
 ---
 
-## 3. État d’avancement
+## 3. État d'avancement
 
 ### Phases terminées
 
@@ -407,7 +435,11 @@ Historique utile :
 
 ## 8. Comment reprendre dans une nouvelle conversation
 
-### Étape 0 — vérifier l’environnement
+### Étape 0 — vérifier l’environnement et la machine
+
+Identifier d’abord la machine : `stgadmin` = PC professionnel (projet cible et
+clés disponibles) ; `MAbdo` = PC personnel (pas de projet cible ni de clés, mais
+tests hors ligne possibles).
 
 ```powershell
 cd C:\Users\MAbdo\Desktop\Football-Agent\football-qa-agents
@@ -557,8 +589,9 @@ Ne pas démarrer cette phase sans demande explicite.
 - Ne pas afficher, journaliser ou envoyer les secrets Telegram/Gemini.
 - Les sondes refusent toute cible autre que `localhost:8002`.
 - Le projet `football-qa-agents` est initialisé en Git sur `main` (commit initial `2a3c929`).
-- Le projet cible à jour (`football-qa`) **n’est pas présent** sur cette machine ; `Football-project\MyFinalProject` n’est **pas** la bonne version et ne doit pas servir de cible.
-- `.env` a été recréé **sans clés** : Gemini et Telegram sont inactifs, le repli déterministe s’applique.
+- Le travail se fait sur **deux PC** : PC professionnel (`stgadmin`) et PC personnel (`MAbdo`, actuel). L’absence du projet cible ou des clés sur le PC personnel est **normale**, pas une régression.
+- Le projet cible à jour (`football-qa`) **n’est pas présent** sur le PC personnel ; `Football-project\MyFinalProject` n’est **pas** la bonne version et ne doit pas servir de cible.
+- Sur le PC personnel, `.env` a été recréé **sans clés** : Gemini et Telegram sont inactifs, le repli déterministe s’applique.
 - Les agents 4 à 7 sont encore des stubs de planification.
 - Les agents 1 à 3 sont réels mais dépendent de la stack de test et du free tier Gemini ; un repli déterministe reste actif en cas d’indisponibilité.
 - Le test réel du bot Telegram n’a pas été exécuté (token absent).
@@ -573,6 +606,7 @@ approbation, annulation) et la phase 5 (agents 1 à 3 réels avec Gemini
 `gemini-3.5-flash`, collection Postman générée depuis l’OpenAPI réel, sondes
 API limitées à `localhost:8002`) fonctionnent dans un environnement Python
 3.12.10 natif et les **41 tests passent** ; la mission de référence
-`b745b4a199b7` a réussi 21/21 sondes avec 0 anomalie. Le projet cible à jour
-étant absent et les clés non disponibles, les missions réelles sont suspendues ;
-la suite du projet reprend à la phase 6 (agents 4 et 5).
+`b745b4a199b7` a réussi 21/21 sondes avec 0 anomalie. Le travail se fait sur
+deux PC : sur le PC personnel actuel, le projet cible et les clés sont absents,
+donc les missions réelles y sont suspendues ; elles restent possibles sur le PC
+professionnel. La suite du projet reprend à la phase 6 (agents 4 et 5).
