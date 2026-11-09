@@ -34,6 +34,8 @@ tests/                Tests du système multi-agents
 - `.venv\Scripts\python.exe -m pytest` → **64 passed**.
 - `playwright==1.64.1` installé ; le navigateur Chromium n'est **pas** installé
   sur ce PC (nécessaire uniquement à l'exécution UI réelle).
+- **GitHub CLI** `gh` 2.103.3 installé via winget et authentifié via le
+  navigateur ; le jeton reste dans le keyring Windows, jamais dans le projet.
 
 Sans clés, les 64 tests passent et les agents basculent sur leur repli
 déterministe. Pour réactiver Gemini et Telegram, renseigner
@@ -56,11 +58,26 @@ Le PC personnel permet le développement hors ligne et les tests unitaires ;
 les missions réelles se font sur le PC professionnel ou après copie du projet
 cible et des clés.
 
-## Reprise sur le PC professionnel
+## Pull request et reprise sur le PC professionnel
 
-La branche `chore/reconstruct-local-env` est poussée sur GitHub et contient la
-phase 6 (commit `9ee9de4` et les mises à jour suivantes). Sur le PC
-professionnel, ne pas travailler directement sur `main` :
+La phase 6 est proposée dans la **PR #1** :
+https://github.com/MomoTeen07/football-qa-agents/pull/1
+(`chore/reconstruct-local-env` → `main`, merge humain).
+
+### Après merge (recommandé)
+
+```powershell
+cd C:\Users\stgadmin\Desktop\football-qa-agents
+git status                                  # vérifier l'absence de modifications locales
+git switch main
+git pull --ff-only origin main
+
+.venv\Scripts\python.exe -m pip install -r requirements.txt
+.venv\Scripts\python.exe -m pytest          # attendu : 64 passed
+.venv\Scripts\python.exe -m playwright install chromium
+```
+
+### Avant merge (travailler sur la branche)
 
 ```powershell
 cd C:\Users\stgadmin\Desktop\football-qa-agents
@@ -70,11 +87,11 @@ git switch chore/reconstruct-local-env      # ou créer la branche locale depuis
 git pull --ff-only origin chore/reconstruct-local-env
 
 .venv\Scripts\python.exe -m pip install -r requirements.txt
-.venv\Scripts\python.exe -m pytest
+.venv\Scripts\python.exe -m pytest          # attendu : 64 passed
 .venv\Scripts\python.exe -m playwright install chromium
 ```
 
-Attendu : `64 passed`. Démarrer ensuite la stack de test, puis lancer
+Démarrer ensuite la stack de test, puis lancer
 `scripts\run_phase6_mission.py`.
 
 Précautions :
@@ -84,6 +101,9 @@ Précautions :
 - `.env` et `.venv` ne sont pas synchronisés par Git : les clés restent locales
   au PC professionnel et les dépendances sont à réinstaller.
 - Ne pas pousser sur `main` : la fusion se fait par pull request.
+- **GitHub CLI** (`gh` 2.103.3) est installé sur le PC personnel pour créer les
+  PR ; l'authentification est stockée dans le keyring Windows. Aucun secret
+  n'est documenté ni journalisé.
 
 ## Prérequis pour les missions réelles
 

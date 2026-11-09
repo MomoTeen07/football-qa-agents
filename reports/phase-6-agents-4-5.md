@@ -119,6 +119,26 @@ Le script affiche `MISSION_ID`, `FINAL_STATUS`, les preuves puis
 `API_STATUS`, `API_TESTS`, `API_PASSED`, `API_FAILED`, `API_ANOMALIES` et
 l'équivalent UI.
 
+## Pull request
+
+La phase 6 est proposée dans la **PR #1** :
+https://github.com/MomoTeen07/football-qa-agents/pull/1
+
+- Branche source : `chore/reconstruct-local-env`
+- Branche cible : `main`
+- Merge : **humain**, jamais de push direct sur `main`
+- Outil : GitHub CLI `gh` 2.103.3, installé via winget et authentifié via le
+  navigateur (jeton dans le keyring Windows, jamais dans le dépôt)
+
+Après merge, la reprise sur le PC professionnel se fait depuis `main` :
+
+```powershell
+git switch main
+git pull --ff-only origin main
+.venv\Scripts\python.exe -m pip install -r requirements.txt
+.venv\Scripts\python.exe -m pytest          # attendu : 64 passed
+```
+
 ## Limites connues
 
 - La validation réelle API/UI n'a pas encore été exécutée sur cette machine
