@@ -93,7 +93,7 @@ on travaille.**
 | `.env` | clés Gemini + Telegram présentes | recréé **sans clés** |
 | Python | 3.12 avec `.venv` existant | 3.12.10 installé le 9 novembre 2026 |
 | `.venv` | présent | recréé |
-| Tests | **41 passed** (phase 5, à resynchroniser) | **64 passed** |
+| Tests | **41 passed** (phase 5) — à mettre à jour en tirant `chore/reconstruct-local-env` | **64 passed** |
 
 Conséquences :
 
@@ -105,6 +105,34 @@ Conséquences :
 - Les documents `reports/baseline.md` et les preuves historiques mentionnent
   des chemins `stgadmin` : ce sont des traces du PC professionnel, pas une
   configuration à reproduire sur le PC personnel.
+
+### Reprise sur le PC professionnel
+
+La branche `chore/reconstruct-local-env` est poussée sur GitHub et contient la
+phase 6 (commit `9ee9de4`). Procédure de reprise :
+
+```powershell
+cd C:\Users\stgadmin\Desktop\football-qa-agents
+git status                                  # vérifier l'absence de modifications locales
+git fetch origin
+git switch chore/reconstruct-local-env      # ou créer la branche locale depuis origin
+git pull --ff-only origin chore/reconstruct-local-env
+
+.venv\Scripts\python.exe -m pip install -r requirements.txt
+.venv\Scripts\python.exe -m pytest
+.venv\Scripts\python.exe -m playwright install chromium
+```
+
+Attendu : `64 passed`. Démarrer ensuite la stack de test, puis lancer
+`scripts\run_phase6_mission.py`.
+
+Précautions :
+
+- Si `git status` montre des modifications locales, les committer ou les
+  remiser **avant** de changer de branche.
+- `.env` et `.venv` ne sont pas synchronisés par Git : les clés restent locales
+  au PC professionnel et les dépendances sont à réinstaller.
+- Ne pas pousser sur `main` : la fusion se fait par pull request.
 
 ---
 
@@ -284,9 +312,10 @@ QA Analyst  Test Designer  API Tester   API Auto +    QA Reporter
     si la clé est absente ou si Gemini échoue.
 
 - `app/agents/stubs.py`
-  - Le `QAReporterAgent` lit `probe-results.json` et n’énonce que des
-    anomalies réellement présentes.
-  - Les agents 4 à 7 restent inchangés.
+  - À l’issue de la phase 5, le `QAReporterAgent` lit `probe-results.json` et
+    n’énonce que des anomalies réellement présentes.
+  - Les agents 4 à 7 étaient encore inchangés à ce stade ; voir la phase 6
+    ci-dessous pour l’état actuel.
 
 - `app/orchestrator/manager.py`
   - Injecte `GeminiClient` et `ApiProbe` dans les agents réels.

@@ -50,11 +50,40 @@ régression : il faut d'abord identifier la machine.
 | Projet cible `football-qa` | présent | **absent** |
 | Stack de test Docker | opérationnelle | non construite |
 | Clés Gemini / Telegram | présentes dans `.env` | **absentes** |
-| Tests unitaires | 41 passed (phase 5, à resynchroniser) | **64 passed** |
+| Tests unitaires | 41 passed (phase 5) — à mettre à jour en tirant `chore/reconstruct-local-env` | **64 passed** |
 
 Le PC personnel permet le développement hors ligne et les tests unitaires ;
 les missions réelles se font sur le PC professionnel ou après copie du projet
 cible et des clés.
+
+## Reprise sur le PC professionnel
+
+La branche `chore/reconstruct-local-env` est poussée sur GitHub et contient la
+phase 6 (commit `9ee9de4`). Sur le PC professionnel, ne pas travailler
+directement sur `main` :
+
+```powershell
+cd C:\Users\stgadmin\Desktop\football-qa-agents
+git status                                  # vérifier l'absence de modifications locales
+git fetch origin
+git switch chore/reconstruct-local-env      # ou créer la branche locale depuis origin
+git pull --ff-only origin chore/reconstruct-local-env
+
+.venv\Scripts\python.exe -m pip install -r requirements.txt
+.venv\Scripts\python.exe -m pytest
+.venv\Scripts\python.exe -m playwright install chromium
+```
+
+Attendu : `64 passed`. Démarrer ensuite la stack de test, puis lancer
+`scripts\run_phase6_mission.py`.
+
+Précautions :
+
+- Si `git status` montre des modifications locales, les committer ou les
+  remiser **avant** de changer de branche.
+- `.env` et `.venv` ne sont pas synchronisés par Git : les clés restent locales
+  au PC professionnel et les dépendances sont à réinstaller.
+- Ne pas pousser sur `main` : la fusion se fait par pull request.
 
 ## Prérequis pour les missions réelles
 
