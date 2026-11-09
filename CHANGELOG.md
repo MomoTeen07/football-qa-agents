@@ -26,19 +26,26 @@ retard. En cas de doute, mettre à jour les trois.
 
 ## [Non publié]
 
-### Ajouté
-
-- **`CHANGELOG.md`** : historique daté des modifications, avec correspondance
-  des commits.
-- **Règle de mise à jour documentaire** : toute modification met à jour
-  `README.md`, `PROJECT_CONTEXT.md` et `CHANGELOG.md`.
-
 ### À venir
 
 - **Phase 7** — agents 6 et 7 : agent DevOps (branche + PR) et reporting
   Allure/Markdown/JSON enrichi.
 - **Phase 8** — bureau virtuel 2D : frontend séparé, SSE, personnages SVG.
 - **Phase 9** — durcissement : sécurité, robustesse, documentation finale.
+
+---
+
+## [0.6.1] — 2026-11-09 — Synchronisation documentaire post-merge
+
+### Modifié
+
+- **PR #1 marquée fusionnée** (merge commit `992d007`, 9 novembre 2026) :
+  `main` devient la référence et contient la phase 6.
+- `README.md` et `PROJECT_CONTEXT.md` : suppression du mode « avant merge »,
+  reprise simplifiée en `git switch main` + `git pull`.
+- `PROJECT_CONTEXT.md` : état Git et checklist de la phase 6 mis à jour.
+- `CHANGELOG.md` : historique consolidé, ajout des commits `d958314` et
+  `992d007` à la table de correspondance.
 
 ---
 
@@ -58,8 +65,8 @@ retard. En cas de doute, mettre à jour les trois.
 - **Lanceur** `scripts/run_phase6_mission.py` : mission explicite API + UI.
 - **Tests** : `tests/test_api_suite.py` (6), `tests/test_ui_suite.py` (9),
   `tests/test_phase6_agents.py` (8).
-- **Documentation** : `reports/phase-6-agents-4-5.md` et section dédiée dans
-  `README.md`.
+- **Documentation** : `reports/phase-6-agents-4-5.md`, section dédiée dans
+  `README.md`, `CHANGELOG.md` et règle de mise à jour documentaire.
 - **Dépendance** : `playwright==1.64.1` (navigateur Chromium installé
   séparément).
 - **Outillage** : GitHub CLI `gh` 2.103.3 installé via winget et authentifié
@@ -96,7 +103,9 @@ retard. En cas de doute, mettre à jour les trois.
 ### Pull request
 
 - **PR #1** : <https://github.com/MomoTeen07/football-qa-agents/pull/1>
-- Branche `chore/reconstruct-local-env` → `main`, merge humain.
+- Branche `chore/reconstruct-local-env` → `main`.
+- **Fusionnée le 9 novembre 2026** par `MomoTeen07`
+  (merge commit `992d007`).
 
 ---
 
@@ -210,3 +219,5 @@ retard. En cas de doute, mettre à jour les trois.
 | `39dd4e9` | 2026-11-09 | Procédure de reprise et de synchronisation pour le PC professionnel |
 | `0df3a6c` | 2026-11-09 | Point de reprise explicite en tête de `PROJECT_CONTEXT.md` |
 | `9fd6db5` | 2026-11-09 | Documentation de la PR #1, de `gh` et de la reprise après merge |
+| `d958314` | 2026-11-09 | Création de `CHANGELOG.md` et règle de mise à jour documentaire |
+| `992d007` | 2026-11-09 | Merge de la PR #1 dans `main` (phase 6 fusionnée) |

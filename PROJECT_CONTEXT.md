@@ -2,22 +2,20 @@
 
 Date du point de reprise : 9 novembre 2026  
 Dernière action terminée : phase 6 (agents 4 et 5) implémentée et validée **hors ligne** sur le PC personnel — **64 tests sur 64 réussis**. L'environnement local a été reconstruit (Python 3.12.10 natif, `.venv`, `.env` sans clés). La phase 5 reste la dernière phase validée en réel (mission `b745b4a199b7` : 21/21 sondes, 0 anomalie).  
-État global : **phases 1 à 6 terminées côté code**. La phase 6 est proposée dans la **PR #1** ; l'exécution réelle reste à faire sur le PC professionnel, avec le projet cible, la stack de test et les clés. Le projet n'est pas terminé.
+État global : **phases 1 à 6 terminées côté code**. La phase 6 a été fusionnée via la **PR #1** (merge `992d007`) ; l'exécution réelle reste à faire sur le PC professionnel, avec le projet cible, la stack de test et les clés. Le projet n'est pas terminé.
 
 > **Point de reprise — lire ceci en premier**
 >
-> - **PR #1** : https://github.com/MomoTeen07/football-qa-agents/pull/1
->   (`chore/reconstruct-local-env` → `main`, merge humain).
-> - **Après merge** : `git switch main` puis `git pull --ff-only origin main`.
-> - **Avant merge** : `git switch chore/reconstruct-local-env` puis
->   `git pull --ff-only origin chore/reconstruct-local-env`. Tant que la PR
->   n'est pas fusionnée, `main` est en retard (phase 5) : ne pas conclure que
->   la phase 6 manque.
-> - Puis, dans les deux cas :
+> - **PR #1 : fusionnée** le 9 novembre 2026 (merge commit `992d007`).
+>   `main` est désormais la référence et contient la phase 6.
+> - Reprise : `git switch main` puis `git pull --ff-only origin main`.
+> - Puis :
 >   1. `.venv\Scripts\python.exe -m pip install -r requirements.txt`
 >   2. `.venv\Scripts\python.exe -m pytest` → attendu **`64 passed`**
 >   3. `.venv\Scripts\python.exe -m playwright install chromium`
 >   4. démarrer la stack `football-qa-test`, puis `.venv\Scripts\python.exe scripts\run_phase6_mission.py`
+> - La branche `chore/reconstruct-local-env` est conservée pour l'historique :
+>   ne plus y ajouter de commits, tout nouveau travail part de `main`.
 > - Détail et précautions : section **« Reprise sur le PC professionnel »** ci-dessous.
 > - **Documentation** : toute modification met à jour `README.md`,
 >   `PROJECT_CONTEXT.md` et `CHANGELOG.md`.
@@ -96,6 +94,7 @@ Construire un système multi-agents QA local pour l’application `football-qa`,
 - `playwright==1.64.1` installé (paquet Python). Les navigateurs Playwright ne
   sont **pas** installés sur ce PC ; l'exécution UI reste bloquée ici.
 - Dépôt Git initialisé sur la branche `main` (commit initial `2a3c929`) ;
+  `main` contient la phase 6 après le merge de la PR #1 (commit `992d007`).
   `.env` et `.venv` sont ignorés par Git.
 - **GitHub CLI** `gh` 2.103.3 installé via winget et authentifié via le
   navigateur (jeton dans le keyring Windows). Aucun secret n'apparaît dans les
@@ -131,11 +130,8 @@ Conséquences :
 
 ### Reprise sur le PC professionnel
 
-La phase 6 est proposée dans la **PR #1** :
-https://github.com/MomoTeen07/football-qa-agents/pull/1
-(`chore/reconstruct-local-env` → `main`, merge humain).
-
-**Après merge (recommandé)** :
+La phase 6 a été **fusionnée** via la **PR #1** (merge commit `992d007`,
+9 novembre 2026). `main` est la référence :
 
 ```powershell
 cd C:\Users\stgadmin\Desktop\football-qa-agents
@@ -148,22 +144,11 @@ git pull --ff-only origin main
 .venv\Scripts\python.exe -m playwright install chromium
 ```
 
-**Avant merge (travailler sur la branche)** :
-
-```powershell
-cd C:\Users\stgadmin\Desktop\football-qa-agents
-git status                                  # vérifier l'absence de modifications locales
-git fetch origin
-git switch chore/reconstruct-local-env      # ou créer la branche locale depuis origin
-git pull --ff-only origin chore/reconstruct-local-env
-
-.venv\Scripts\python.exe -m pip install -r requirements.txt
-.venv\Scripts\python.exe -m pytest          # attendu : 64 passed
-.venv\Scripts\python.exe -m playwright install chromium
-```
-
 Démarrer ensuite la stack de test, puis lancer
 `scripts\run_phase6_mission.py`.
+
+> La branche `chore/reconstruct-local-env` est conservée pour l'historique :
+> ne plus y ajouter de commits ; tout nouveau travail part de `main`.
 
 Précautions :
 
@@ -276,6 +261,7 @@ Déjà fait :
 - [x] Suite complète : **64 tests réussis**.
 - [x] Documentation : `reports/phase-6-agents-4-5.md`.
 - [x] Mise à jour `README.md` (phase 6).
+- [x] **PR #1 fusionnée** dans `main` (merge `992d007`).
 - [ ] Exécution réelle API + UI sur la stack de test : **à faire sur le PC
       professionnel**.
 
