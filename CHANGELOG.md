@@ -74,6 +74,13 @@ retard. En cas de doute, mettre à jour les trois.
 - `.env` local complété (Gemini et Telegram disponibles,
   `REAL_AGENTS_ENABLED=true`). Aucune valeur de secret n'est documentée.
 - Chromium Playwright installé sur le PC personnel.
+- Projet cible copié vers `C:\Users\MAbdo\Desktop\Football-Agent\football-qa`
+  (chemin attendu par le compose de test).
+
+### Pull request
+
+- **PR #4** : <https://github.com/MomoTeen07/football-qa-agents/pull/4>
+  (correctifs et documentation, merge humain).
 
 ---
 
