@@ -42,6 +42,58 @@ retard. En cas de doute, mettre à jour les trois.
 
 ---
 
+## [0.6.5] — 2026-11-10 — Test réel du bot Telegram
+
+### Ajouté
+
+- **Validation réelle du gateway Telegram** sur le PC personnel avec
+  `@Quaresma_QA_bot` (`TELEGRAM_BOT_TOKEN` renseigné, allowlist active,
+  `REAL_AGENTS_ENABLED=true`). Aucun autre processus ne faisait de polling :
+  démarrage sans `409 Conflict`.
+- Commandes validées en réel : `/start`, `/help`, texte libre, `/status`,
+  `/missions`, `/approve`, `/stop`.
+- **Mission réelle créée et exécutée depuis Telegram** : `8c568cce0ef4`,
+  6/6 tâches `completed`, 21/21 sondes API, 27/27 tests pytest API,
+  11/11 scénarios Playwright, **0 anomalie**, durée 92 s.
+- **Garde-fou d'approbation validé** : la mission `8d7a1f40274d`
+  (« Publie le rapport de la mission dans Jira ») reste à l'état `created`
+  avec 0 tâche jusqu'à `/approve`, puis s'exécute.
+- **Annulation validée** : `/stop c5d08e7742e2` puis `/approve` tardif
+  laissent la mission en `cancelled` (3 événements, 0 tâche) — une approbation
+  tardive ne relance pas une mission annulée.
+- **Filtre de rédaction des secrets** (`SecretRedactionFilter` dans
+  `app/telegram/gateway.py`) installé au démarrage : le jeton Telegram est
+  remplacé par `[redacted]` dans **tous** les logs, y compris ceux d'`httpx`.
+- Test `test_log_records_never_contain_the_token` : vérifie qu'un log contenant
+  le jeton ne le laisse jamais apparaître.
+- `logs/` ajouté au `.gitignore` (journaux locaux du gateway).
+
+### Corrigé
+
+- **Fuite du jeton dans les logs** : au premier lancement réel, `httpx`
+  journalisait l'URL complète `https://api.telegram.org/bot<token>/getMe`, donc
+  le secret apparaissait en clair dans le fichier de log. Le log a été purgé et
+  le filtre de rédaction empêche toute récidive. Aucune valeur de jeton n'est
+  documentée, journalisée ou publiée.
+
+### Modifié
+
+- Suite complète : **69 tests réussis** (68 avant).
+- `reports/phase-4-telegram.md` : ajout de la section de validation réelle.
+
+### Limites connues
+
+- Le test d'un **compte Telegram non autorisé** (message refusé
+  « Accès refusé. ») n'a pas été exécuté en réel faute de second compte
+  disponible pendant la session ; il est couvert par les 5 tests unitaires de
+  `tests/test_telegram_auth.py` et par le test de garde du gateway. À rejouer
+  dès qu'un second compte est disponible.
+- `python-telegram-bot` traite les updates séquentiellement : pendant une
+  mission longue, les commandes suivantes attendent la fin de l'exécution.
+  Comportement attendu (pas de `concurrent_updates`), non corrigé en phase 4.
+
+---
+
 ## [0.6.4] — 2026-11-10 — CI GitHub Actions et reprise sur erreurs Gemini
 
 ### Ajouté

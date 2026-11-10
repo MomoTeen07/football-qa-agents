@@ -35,3 +35,6 @@ postman/**/generated/
 # Divers
 .DS_Store
 Thumbs.db
+
+# Logs locaux du gateway Telegram
+logs/

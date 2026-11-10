@@ -79,6 +79,10 @@ Le warning `PTBUserWarning: No JobQueue set up` est attendu : le test
 `test_gateway_has_no_job_queue` le capture et vérifie qu'aucune file de tâches
 n'est configurée.
 
+> Chiffres du 9 novembre 2026. Au 10 novembre 2026, après les phases 5 et 6 et
+> le test réel du bot, la suite compte **69 tests** (dont **14** pour
+> `tests/test_telegram_gateway.py`).
+
 Vérification du point d'entrée avec le token vide :
 
 ```powershell
@@ -91,13 +95,15 @@ Le processus s'arrête avant de créer un Manager ou une mission.
 
 ## Limites actuelles
 
-- `TELEGRAM_BOT_TOKEN` est vide : le bot ne peut pas être testé réellement.
-- `GEMINI_API_KEY` est vide : cela ne bloque pas la phase 4, car le gateway
-  n'effectue encore aucun appel LLM. L'intégration Gemini concerne la phase 5.
-- Les tests réels de bout en bout avec Telegram restent à faire après
-  renseignement du token dans `.env`.
-- Les agents restent des stubs de planification : aucun test réel n'est exécuté
-  et aucune anomalie n'est déclarée.
+- ~~`TELEGRAM_BOT_TOKEN` est vide : le bot ne peut pas être testé réellement.~~
+  **Levée le 10 novembre 2026** : le jeton est renseigné et le bot a été validé
+  en réel (voir la section suivante).
+- ~~Les tests réels de bout en bout avec Telegram restent à faire après
+  renseignement du token dans `.env`.~~ **Levée le 10 novembre 2026.**
+- `GEMINI_API_KEY` est désormais renseignée : les agents 1 à 3 sont réels
+  (phases 5 et 6), le gateway n'effectue lui-même aucun appel LLM.
+- Les agents restent pilotés par des instructions explicites : aucun test réel
+  n'est déclenché sans message Telegram de l'utilisateur autorisé.
 
 ## Garde-fous vérifiés
 
@@ -109,3 +115,95 @@ Le processus s'arrête avant de créer un Manager ou une mission.
 - Aucune écriture dans la base réelle `footballqa`.
 - La base SQLite de pilotage reste locale.
 - Une mission sensible reste bloquée tant qu'elle n'est pas approuvée.
+
+---
+
+## Test réel du bot — 10 novembre 2026
+
+Environnement : PC personnel (`MAbdo`), bot `@Quaresma_QA_bot`, gateway lancé
+avec `.venv\Scripts\python.exe -m app.telegram.gateway`, logs locaux dans
+`logs/telegram-gateway.log` (ignoré par Git), stack `football-qa-test` saine
+(`8002`/`5175`/`5434`), `REAL_AGENTS_ENABLED=true`.
+
+### Pré-vérifications
+
+| Contrôle | Résultat |
+|---|---|
+| Jeton chargé depuis `.env` | `True` (booléen seulement, valeur jamais affichée) |
+| `TELEGRAM_ALLOWED_USER_ID` renseigné | `True` |
+| Autre processus de polling | aucun → **aucun `409 Conflict`** Telegram |
+| `getMe` | `200`, `is_bot: true`, `@Quaresma_QA_bot` |
+| Démarrage | `Application started`, `getUpdates` `200` |
+| `JobQueue` / scheduler | **aucun** (vérifié dans les logs et par test unitaire) |
+
+### Déroulé validé
+
+1. **`/start`** → texte identique à `START_TEXT` (rappel : aucune mission
+   automatique).
+2. **`/help`** → texte identique à `HELP_TEXT`.
+3. **Texte libre** → mission réelle `8c568cce0ef4` créée puis exécutée :
+   6/6 tâches `completed`, 21/21 sondes, 27/27 tests API, 11/11 scénarios UI,
+   **0 anomalie**, durée 92 s. Rapport
+   `reports/missions/8c568cce0ef4.md`.
+4. **`/status 8c568cce0ef4`** → mission, statut, instruction, rapport, les
+   6 tâches et le dernier événement `mission_completed`.
+5. **`/missions`** → 5 missions, la plus récente en tête.
+6. **Garde-fou d'approbation** → « Publie le rapport de la mission dans Jira »
+   crée `8d7a1f40274d` avec `requires_approval=1`
+   (`publication dans un outil externe`) et **0 tâche** exécutée.
+7. **`/approve 8d7a1f40274d`** → événement `mission_approved`, 3 tâches
+   (`qa_analyst`, `test_designer`, `qa_reporter`), mission `completed`.
+8. **`/stop c5d08e7742e2`** puis `/approve` tardif → mission `cancelled`,
+   événements `mission_cancel_requested` → `mission_cancelled`, **0 tâche**,
+   approbation tardive ignorée.
+
+### Vérifications en base SQLite (`workspace/missions.db`)
+
+| Contrôle | Résultat |
+|---|---|
+| Missions / tâches / événements après test | 7 / 33 / 106 |
+| Mission `8c568cce0ef4` | `completed`, 6 tâches, preuves présentes |
+| Mission `8d7a1f40274d` | `created` (0 tâche) puis `completed` après `/approve` |
+| Mission `c5d08e7742e2` | `cancelled`, 0 tâche |
+| `PRAGMA integrity_check` après arrêt | `ok` |
+| Base réelle `footballqa` | **non touchée** |
+
+### Incident de sécurité trouvé et corrigé
+
+Au premier lancement, `httpx` a journalisé l'URL complète de l'API Bot, qui
+contient le jeton : le secret est apparu en clair dans le fichier de log local.
+Correctif immédiat :
+
+- gateway arrêté, log purgé puis recréé ;
+- `SecretRedactionFilter` ajouté dans `app/telegram/gateway.py` et installé au
+  démarrage sur le logger racine **et** ses handlers : toute occurrence du
+  jeton est remplacée par `[redacted]`, y compris dans les logs d'`httpx` ;
+- test `test_log_records_never_contain_the_token` ajouté ;
+- `logs/` ignoré par Git.
+
+Après relance, la vérification `TOKEN_IN_LOG = False` est passée. Aucune valeur
+de secret n'apparaît dans ce rapport.
+
+### Arrêt du gateway
+
+Processus arrêté (le shell d'arrière-plan ne permet pas de délivrer `Ctrl+C`
+au processus caché), puis vérifié :
+
+- plus aucun processus `app.telegram.gateway` ;
+- `getUpdates` répond `200` sans `409` → plus aucun polling résiduel ;
+- `PRAGMA integrity_check` = `ok` (écritures SQLite déjà validées, une
+  transaction par opération).
+
+### Limite restante
+
+Le refus d'un **compte non autorisé** n'a pas pu être rejoué en réel faute de
+second compte Telegram disponible dans la session. Il reste couvert par
+`tests/test_telegram_auth.py` (5 tests) et par le test de garde du gateway
+(`test_unknown_user_is_denied_without_manager_access`,
+`test_missing_user_is_denied`).
+
+### Résultat
+
+Bot Telegram **validé en réel** sur les commandes, la création et l'exécution
+d'une mission réelle, l'approbation, l'annulation et l'absence de scheduler.
+Suite du système : **69 tests réussis**.

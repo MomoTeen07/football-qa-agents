@@ -19,8 +19,7 @@ Système multi-agents QA pour tester l'application locale `football-qa`.
 - Toute modification doit aussi mettre à jour **`README.md`** et
   **`PROJECT_CONTEXT.md`**. Une PR n'est pas terminée si l'un des trois fichiers
   est en retard.
-- Dernière entrée : **0.6.4 — CI GitHub Actions et reprise sur erreurs
-  Gemini**.
+- Dernière entrée : **0.6.5 — Test réel du bot Telegram**.
 
 ## Intégration continue
 
@@ -53,7 +52,7 @@ tests/                Tests du système multi-agents
 - `.env` complété : **clés Gemini et Telegram disponibles**,
   `REAL_AGENTS_ENABLED=true` → agents réels actifs. Les valeurs ne sont
   jamais affichées ni versionnées.
-- `.venv\Scripts\python.exe -m pytest` → **68 passed**.
+- `.venv\Scripts\python.exe -m pytest` → **69 passed**.
 - `playwright==1.64.1` installé et **Chromium présent** dans
   `%LOCALAPPDATA%\ms-playwright` : l'exécution UI réelle est possible.
 - Projet cible `football-qa` présent à côté du projet QA
@@ -77,7 +76,7 @@ régression : il faut d'abord identifier la machine.
 | Projet cible `football-qa` | présent | présent |
 | Stack de test Docker | opérationnelle | opérationnelle |
 | Clés Gemini / Telegram | présentes dans `.env` | présentes dans `.env` |
-| Tests unitaires | à jour après `git pull` sur `main` | **68 passed** |
+| Tests unitaires | à jour après `git pull` sur `main` | **69 passed** |
 
 Les deux PC permettent désormais les missions réelles. Sur le PC personnel, le
 projet cible est une copie de travail du dépôt `MyFinalProject` ; en cas de
@@ -100,7 +99,7 @@ git switch main
 git pull --ff-only origin main
 
 .venv\Scripts\python.exe -m pip install -r requirements.txt
-.venv\Scripts\python.exe -m pytest          # attendu : 68 passed
+.venv\Scripts\python.exe -m pytest          # attendu : 69 passed
 .venv\Scripts\python.exe -m playwright install chromium
 ```
 
@@ -197,6 +196,25 @@ présent dans l'allowlist. Aucun scheduler ni mission automatique.
 | `/stop <mission_id>` | Demande d'annulation |
 | Texte libre | Création puis exécution d'une mission |
 
+Validation **en réel** (10 novembre 2026, bot `@Quaresma_QA_bot`, sans
+`409 Conflict`) :
+
+- `/start`, `/help`, `/status <id>`, `/missions`, `/approve <id>`,
+  `/stop <id>` répondent conformément ;
+- un texte libre a créé **et exécuté** une mission réelle :
+  `8c568cce0ef4`, 6/6 tâches, 21/21 sondes, 27/27 tests API,
+  11/11 scénarios UI, **0 anomalie** ;
+- une instruction sensible (`… dans Jira`, mission `8d7a1f40274d`) est restée
+  à `created` sans exécution jusqu'à `/approve` ;
+- `/stop c5d08e7742e2` a annulé la mission, et une approbation tardive ne l'a
+  pas relancée (`cancelled`) ;
+- aucun scheduler, aucun `JobQueue`, aucun `409` ; logs locaux dans `logs/`
+  (ignoré par Git) avec le jeton masqué (`[redacted]`).
+
+Détail : `reports/phase-4-telegram.md`. Reste à rejouer : le refus d'un
+**compte non autorisé** (« Accès refusé. »), faute de second compte pendant la
+session.
+
 Les secrets restent dans `.env`, ignoré par Git. Ne jamais coller un secret dans
 une conversation ou un rapport.
 
@@ -269,19 +287,19 @@ Validation **en réel** (10 novembre 2026, mission `7e30889c18cd`) :
 | Scénarios Playwright | 11/11, 0 échec |
 | Anomalies applicatives | 0 |
 
-Suite du système : **68 tests passent**. Voir `reports/phase-6-agents-4-5.md`
+Suite du système : **69 tests passent**. Voir `reports/phase-6-agents-4-5.md`
 et `PROJECT_CONTEXT.md` pour le détail des correctifs de cette validation
 (littéraux Python dans la suite générée, scénario de connexion, identifiant
 Postman stable).
 
 ## État d'avancement
 
-- [x] Environnement local complet sur le PC personnel — Python 3.12.10, `.venv`, `.env` avec clés, Chromium, stack de test, **68 tests passent**
+- [x] Environnement local complet sur le PC personnel — Python 3.12.10, `.venv`, `.env` avec clés, Chromium, stack de test, **69 tests passent**
 - [x] Journal des modifications `CHANGELOG.md` et règle de mise à jour documentaire
 - [x] Phase 1 — baseline de l'application existante
 - [x] Phase 2 — stack de test isolée
 - [x] Phase 3 — socle du Manager
-- [x] Phase 4 — connexion Telegram
+- [x] Phase 4 — connexion Telegram (code **et test réel** le 10 novembre 2026 : commandes validées, mission `8c568cce0ef4` à 0 anomalie, approbation et annulation vérifiées, aucun scheduler)
 - [x] Phase 5 — agents 1 à 3
 - [x] Phase 6 — agents 4 et 5 (code + validation hors ligne **et** exécution réelle : 27/27 API, 11/11 UI, 0 anomalie)
 - [ ] Phase 7 — agents 6 et 7
