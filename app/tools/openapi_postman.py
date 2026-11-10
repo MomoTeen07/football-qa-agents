@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from uuid import uuid4
+from uuid import NAMESPACE_URL, uuid5
 
 import httpx
 
@@ -132,7 +132,9 @@ def build_postman_environment(
     test_user_password: str,
 ) -> dict:
     return {
-        "id": str(uuid4()),
+        # Identifiant stable : un UUID aléatoire salissait le dépôt à chaque
+        # mission (l'environnement Postman est versionné).
+        "id": str(uuid5(NAMESPACE_URL, "football-qa-agents/environment/football-qa-test")),
         "name": "Football QA — test (8002)",
         "_postman_variable_scope": "environment",
         "values": [

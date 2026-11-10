@@ -8,7 +8,12 @@ import pytest
 
 from app.config import Settings
 from app.tools.api_probe import UnsafeTargetError
-from app.tools.ui_suite import UiSuite, UnsafeUiTargetError, ensure_test_ui_url
+from app.tools.ui_suite import (
+    UI_RUNNER_SCRIPT,
+    UiSuite,
+    UnsafeUiTargetError,
+    ensure_test_ui_url,
+)
 
 
 def make_settings(
@@ -261,3 +266,13 @@ def test_ui_suite_refuses_the_real_application_api(tmp_path: Path) -> None:
 
     with pytest.raises(UnsafeTargetError):
         UiSuite(settings).run("mission-unsafe-api")
+
+
+def test_ui_runner_is_valid_python_and_logs_in_from_a_clean_page() -> None:
+    # Un reload de /login conserve `history.state` : l'application renverrait
+    # vers /favorites au lieu de /championships. Le scénario doit donc repasser
+    # par une page publique avant d'ouvrir /login.
+    compile(UI_RUNNER_SCRIPT, "run_ui_checks.py", "exec")
+    public_goto = UI_RUNNER_SCRIPT.index('page.goto("/championships"')
+    login_goto = UI_RUNNER_SCRIPT.index('page.goto("/login"')
+    assert public_goto < login_goto

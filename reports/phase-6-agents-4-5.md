@@ -15,9 +15,9 @@ résultat ni d'anomalie :
 ## État
 
 - Code des agents 4 et 5 : **présent et câblé** dans le Manager et le planner.
-- Tests hors ligne : **23 nouveaux tests**, suite complète à **64 tests**.
-- Exécution réelle : **à faire sur le PC professionnel**, lorsque le projet
-  cible et la stack de test sont disponibles.
+- Tests hors ligne : **23 nouveaux tests**, suite complète à **65 tests**.
+- Exécution réelle : **faite le 10 novembre 2026** (mission `7e30889c18cd`),
+  sur une stack de test saine et avec les clés réelles.
 - Aucune clé n'est nécessaire pour les tests hors ligne.
 
 ## Composants
@@ -99,25 +99,55 @@ anomalie applicative.
 
 ```powershell
 .venv\Scripts\python.exe -m pytest
-# 64 passed
+# 65 passed
 ```
 
 Les tests utilisent des exécuteurs et des preflights injectés : aucun appel
 réseau, aucune stack cible, aucune clé.
 
-## Exécution réelle prévue
+## Exécution réelle — 10 novembre 2026
 
-Sur le PC professionnel, avec le projet cible et la stack de test démarrée :
+Machine : PC personnel (`MAbdo`), projet cible
+`C:\Users\MAbdo\Desktop\Football-Agent\football-qa`, stack `football-qa-test`
+saine, Chromium installé, `REAL_AGENTS_ENABLED=true`.
 
 ```powershell
 docker compose -f infra/docker-compose.test.yml -p football-qa-test up --build -d --wait
-.venv\Scripts\python.exe -m playwright install chromium
+.venv\Scripts\python.exe scripts\seed_test_data.py
 .venv\Scripts\python.exe scripts\run_phase6_mission.py
 ```
 
-Le script affiche `MISSION_ID`, `FINAL_STATUS`, les preuves puis
-`API_STATUS`, `API_TESTS`, `API_PASSED`, `API_FAILED`, `API_ANOMALIES` et
-l'équivalent UI.
+Mission de référence `7e30889c18cd` :
+
+| Vérification | Résultat |
+|---|---|
+| Sondes API (phase 5) | 21/21, 0 anomalie |
+| Tests pytest API générés | 27/27 réussis |
+| Scénarios Playwright | 11/11 réussis |
+| Anomalies applicatives | 0 |
+| Statut de la mission | `completed` |
+
+Les rapports et preuves sont locaux :
+`workspace/missions/7e30889c18cd/` et `reports/missions/7e30889c18cd.md`.
+
+### Défauts d'outillage trouvés et corrigés pendant cette exécution
+
+1. **Suite pytest générée non collectable** — les cas Postman étaient injectés
+   avec `json.dumps`, donc `false`/`true`/`null` apparaissaient dans un fichier
+   Python. Résultat observé : `NameError: name 'false' is not defined` et un
+   unique faux échec de collecte. Correction : `pformat` (littéraux Python).
+   Vérifié après correctif : **27/27**.
+2. **Scénario de connexion UI** — le scénario enchaînait sur `/login` après la
+   redirection `/favorites → /login`, dont `history.state.from` renvoie
+   légitimement vers `/favorites` (comportement correct de l'application).
+   Correction : repasser par une page publique avant `/login`. Vérifié après
+   correctif : **11/11**.
+3. **Identifiant d'environnement Postman instable** — UUID aléatoire à chaque
+   génération, donc diff parasite sur un fichier versionné. Correction :
+   `uuid5` déterministe.
+
+Aucun de ces défauts n'était une anomalie applicative : ils sont corrigés côté
+outillage QA, sans modifier l'application cible.
 
 ## Pull request
 
@@ -130,18 +160,22 @@ https://github.com/MomoTeen07/football-qa-agents/pull/1
 - Outil : GitHub CLI `gh` 2.103.3, installé via winget et authentifié via le
   navigateur (jeton dans le keyring Windows, jamais dans le dépôt)
 
-Après merge, la reprise sur le PC professionnel se fait depuis `main` :
+Après merge, la reprise se fait depuis `main` :
 
 ```powershell
 git switch main
 git pull --ff-only origin main
 .venv\Scripts\python.exe -m pip install -r requirements.txt
-.venv\Scripts\python.exe -m pytest          # attendu : 64 passed
+.venv\Scripts\python.exe -m pytest          # attendu : 65 passed
 ```
+
+La validation réelle et les correctifs associés sont proposés dans la **PR #4**
+(`fix/phase6-real-run`, 10 novembre 2026).
 
 ## Limites connues
 
-- La validation réelle API/UI n'a pas encore été exécutée sur cette machine
-  (projet cible absent).
+- Le test réel du bot Telegram n'a pas encore été exécuté (token présent).
 - Le reporting Allure complet reste prévu en phase 7.
 - L'agent DevOps (branche + PR) reste un stub de planification.
+- Les missions réelles utilisent le free tier Gemini : une erreur de quota
+  déclenche le repli déterministe, sans anomalie applicative.

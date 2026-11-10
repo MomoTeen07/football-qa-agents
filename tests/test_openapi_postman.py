@@ -142,6 +142,15 @@ def test_environment_and_written_assets(tmp_path: Path) -> None:
     assert values["testUserEmail"] == "qa.user1@example.com"
     assert values["token"] == ""
 
+    # L'environnement est versionné : son identifiant doit être stable d'une
+    # génération à l'autre, sinon chaque mission produit un diff inutile.
+    again = build_postman_environment(
+        "http://localhost:8002",
+        test_user_email="qa.user1@example.com",
+        test_user_password="QaTest123!",
+    )
+    assert environment["id"] == again["id"]
+
     settings = Settings(
         _env_file=None,
         postman_dir=tmp_path / "postman",

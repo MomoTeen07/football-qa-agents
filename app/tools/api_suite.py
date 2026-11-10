@@ -18,6 +18,7 @@ import xml.etree.ElementTree as ET
 from collections.abc import Callable
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
+from pprint import pformat
 
 import httpx
 
@@ -593,12 +594,14 @@ def build_api_suite(
     probe, probe_source = _load_probe_results(settings, mission_id)
     postman_cases = postman_safe_cases(collection) if collection else []
 
+    # Les cas sont injectés comme littéraux Python (True/False/None), pas JSON :
+    # json.dumps produisait `false`/`true`, invalides dans le fichier généré.
     suite_text = SUITE_TEMPLATE.replace(
         "__POSTMAN_CASES__",
-        json.dumps(postman_cases, indent=2, ensure_ascii=False),
+        pformat(postman_cases, width=100, sort_dicts=False),
     ).replace(
         "__TEST_CATALOG__",
-        json.dumps(API_TEST_CATALOG, indent=2, ensure_ascii=False),
+        pformat(API_TEST_CATALOG, width=100, sort_dicts=False),
     )
 
     directory = mission_workspace(settings, mission_id) / "api-automation"

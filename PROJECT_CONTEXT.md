@@ -1,22 +1,23 @@
 # PROJECT_CONTEXT — Football QA Agents
 
-Date du point de reprise : 9 novembre 2026  
-Dernière action terminée : phase 6 (agents 4 et 5) implémentée et validée **hors ligne** sur le PC personnel — **64 tests sur 64 réussis**. L'environnement local a été reconstruit (Python 3.12.10 natif, `.venv`, `.env` sans clés). La phase 5 reste la dernière phase validée en réel (mission `b745b4a199b7` : 21/21 sondes, 0 anomalie).  
-État global : **phases 1 à 6 terminées côté code**. La phase 6 a été fusionnée via la **PR #1** (merge `992d007`) ; l'exécution réelle reste à faire sur le PC professionnel, avec le projet cible, la stack de test et les clés. Le projet n'est pas terminé.
+Date du point de reprise : 10 novembre 2026  
+Dernière action terminée : **phase 6 validée en réel** sur le PC personnel. La mission de référence `7e30889c18cd` a réussi **21/21 sondes**, **27/27 tests pytest API** et **11/11 scénarios Playwright**, avec **0 anomalie**. Trois défauts d'outillage ont été corrigés au passage. Suite du système : **65 tests sur 65 réussis**.  
+État global : **phases 1 à 6 terminées et validées en réel**. Le projet n'est pas terminé : les phases 7 à 9 restent à faire.
 
 > **Point de reprise — lire ceci en premier**
 >
-> - **PR #1 : fusionnée** le 9 novembre 2026 (merge commit `992d007`).
->   `main` est désormais la référence et contient la phase 6.
+> - `main` contient les phases 1 à 6 (PR #1, #2, #3 fusionnées).
+>   La validation réelle et les correctifs arrivent par la **PR #4**
+>   (`fix/phase6-real-run`, 10 novembre 2026).
 > - Reprise : `git switch main` puis `git pull --ff-only origin main`.
 > - Puis :
 >   1. `.venv\Scripts\python.exe -m pip install -r requirements.txt`
->   2. `.venv\Scripts\python.exe -m pytest` → attendu **`64 passed`**
+>   2. `.venv\Scripts\python.exe -m pytest` → attendu **`65 passed`**
 >   3. `.venv\Scripts\python.exe -m playwright install chromium`
 >   4. démarrer la stack `football-qa-test`, puis `.venv\Scripts\python.exe scripts\run_phase6_mission.py`
-> - Les branches `chore/reconstruct-local-env` (PR #1) et
->   `docs/post-merge-status` (PR #2) ont été supprimées après fusion :
->   seule `main` subsiste.
+> - Le projet cible `football-qa`, les clés et la stack de test sont
+>   désormais disponibles sur le PC personnel : les missions réelles y sont
+>   possibles.
 > - Détail et précautions : section **« Reprise sur le PC professionnel »** ci-dessous.
 > - **Documentation** : toute modification met à jour `README.md`,
 >   `PROJECT_CONTEXT.md` et `CHANGELOG.md`.
@@ -69,31 +70,33 @@ Construire un système multi-agents QA local pour l’application `football-qa`,
 | Projet Compose | `football-qa` | `football-qa-test` |
 
 - Le projet QA actuel est dans `C:\Users\MAbdo\Desktop\Football-Agent\football-qa-agents`.
-- Le projet cible à jour (`football-qa`) **n’est pas présent** sur cette machine.
-  Le dossier `C:\Users\MAbdo\Desktop\Football-project\MyFinalProject` n’est
-  **pas** la bonne version : ne pas l’utiliser.
-- `infra/docker-compose.test.yml` référence `../../football-qa/backend` et
-  `../../football-qa/frontend`, absents → la stack de test ne peut pas être
-  construite tant que le projet cible n’est pas fourni.
-- Docker Desktop est installé et le moteur tourne, mais **aucun conteneur**
-  `football-qa-test` n’est actif.
+- Le projet cible est présent sur cette machine :
+  `C:\Users\MAbdo\Desktop\Football-Agent\football-qa` (copie de travail de
+  `C:\Users\MAbdo\Desktop\Football-QA\MyFinalProject`). C’est le chemin
+  attendu par `infra/docker-compose.test.yml` (`../../football-qa/...`).
+- Le dossier `C:\Users\MAbdo\Desktop\Football-project\MyFinalProject` reste à
+  ne pas utiliser.
+- Docker Desktop est installé (`%LOCALAPPDATA%\Programs\DockerDesktop`) et le
+  moteur tourne ; les 3 conteneurs `football-qa-test` (db, backend, frontend)
+  sont **démarrés et sains**.
 - La stack de test utilise `MOCK_FOOTBALL_API=true`.
 - La base réelle est restée intacte : **5 utilisateurs / 2 favoris**.
-- La base de test contient **2 utilisateurs / 0 favoris**.
+- La base de test contient **2 utilisateurs / 0 favoris** (volume recréé le
+  10 novembre 2026, comptes réensemencés via `scripts/seed_test_data.py`).
 - Comptes de test : `qa.user1@example.com` et `qa.user2@example.com`.
 - Le validateur d’email de l’application refuse les domaines `.test` ; utiliser `example.com`.
 
-### Environnement Python local (vérifié le 9 novembre 2026)
+### Environnement Python local (vérifié le 10 novembre 2026)
 
 - Python **3.12.10** installé en mode utilisateur via winget
   (`%LOCALAPPDATA%\Programs\Python\Python312\python.exe`).
 - `.venv` recréé avec Python 3.12.10 ; dépendances `requirements.txt`
   installées.
-- `.env` recréé depuis `.env.example` : **clés Gemini et Telegram vides**,
-  `REAL_AGENTS_ENABLED=false`.
-- Suite de tests : `.venv\Scripts\python.exe -m pytest` → **64 passed**.
-- `playwright==1.64.1` installé (paquet Python). Les navigateurs Playwright ne
-  sont **pas** installés sur ce PC ; l'exécution UI reste bloquée ici.
+- `.env` complété : **clés Gemini et Telegram disponibles**,
+  `REAL_AGENTS_ENABLED=true`. Les valeurs ne sont jamais affichées.
+- Suite de tests : `.venv\Scripts\python.exe -m pytest` → **65 passed**.
+- `playwright==1.64.1` installé et **Chromium présent** dans
+  `%LOCALAPPDATA%\ms-playwright` : l’exécution UI réelle fonctionne.
 - Dépôt Git initialisé sur la branche `main` (commit initial `2a3c929`) ;
   `main` contient la phase 6 après le merge de la PR #1 (commit `992d007`).
   `.env` et `.venv` sont ignorés par Git.
@@ -107,32 +110,32 @@ Le projet est utilisé sur deux PC. **Ne pas conclure à une régression ou à u
 perte de projet quand un élément manque : vérifier d’abord sur quelle machine
 on travaille.**
 
-| Élément | PC professionnel | PC personnel (actuel) |
+| Élément | PC professionnel | PC personnel |
 |---|---|---|
 | Utilisateur Windows | `stgadmin` | `MAbdo` |
 | Projet QA | `C:\Users\stgadmin\Desktop\football-qa-agents` | `C:\Users\MAbdo\Desktop\Football-Agent\football-qa-agents` |
-| Projet cible `football-qa` | présent (`C:\Users\stgadmin\Desktop\football-qa`) | **absent** |
-| Stack de test Docker | était démarrée au dernier point | **non construite** |
-| `.env` | clés Gemini + Telegram présentes | recréé **sans clés** |
-| Python | 3.12 avec `.venv` existant | 3.12.10 installé le 9 novembre 2026 |
-| `.venv` | présent | recréé |
-| Tests | **41 passed** (phase 5) — à mettre à jour en tirant `chore/reconstruct-local-env` | **64 passed** |
+| Projet cible `football-qa` | présent (`C:\Users\stgadmin\Desktop\football-qa`) | présent (`...\Football-Agent\football-qa`) |
+| Stack de test Docker | opérationnelle | opérationnelle |
+| `.env` | clés Gemini + Telegram présentes | clés Gemini + Telegram présentes |
+| Python | 3.12 avec `.venv` existant | 3.12.10, `.venv` prêt |
+| Tests | 65 après `git pull` sur `main` | **65 passed** |
 
 Conséquences :
 
-- Le **PC personnel** permet le développement hors ligne, la lecture, les tests
-  unitaires et les modifications de code, mais **pas** les missions réelles.
-- Les **missions réelles** (sondes API, UI Playwright, bot Telegram, Gemini)
-  se font sur le **PC professionnel**, ou sur le PC personnel après y avoir
-  copié le projet cible à jour et renseigné les clés.
+- Les **deux PC** permettent désormais les missions réelles (sondes API, UI
+  Playwright, Gemini). Seul le test réel du bot Telegram reste à faire.
 - Les documents `reports/baseline.md` et les preuves historiques mentionnent
   des chemins `stgadmin` : ce sont des traces du PC professionnel, pas une
   configuration à reproduire sur le PC personnel.
+- Sur le PC personnel, le projet cible est une **copie** de
+  `MyFinalProject` : si une correction est faite côté application, la reporter
+  aussi dans la copie (ou recopier le dossier) avant de relancer une mission.
 
 ### Reprise sur le PC professionnel
 
-La phase 6 a été **fusionnée** via la **PR #1** (merge commit `992d007`,
-9 novembre 2026). `main` est la référence :
+La phase 6 est sur `main` depuis la **PR #1** (merge commit `992d007`,
+9 novembre 2026). Sa validation réelle et les correctifs associés arrivent par
+la **PR #4** (`fix/phase6-real-run`, 10 novembre 2026).
 
 ```powershell
 cd C:\Users\stgadmin\Desktop\football-qa-agents
@@ -141,23 +144,24 @@ git switch main
 git pull --ff-only origin main
 
 .venv\Scripts\python.exe -m pip install -r requirements.txt
-.venv\Scripts\python.exe -m pytest          # attendu : 64 passed
+.venv\Scripts\python.exe -m pytest          # attendu : 65 passed
 .venv\Scripts\python.exe -m playwright install chromium
 ```
 
 Démarrer ensuite la stack de test, puis lancer
 `scripts\run_phase6_mission.py`.
 
-> Les branches `chore/reconstruct-local-env` (PR #1) et
-> `docs/post-merge-status` (PR #2) ont été supprimées après leur fusion.
-> Seule `main` subsiste ; tout nouveau travail part de `main`.
+> Les branches `chore/reconstruct-local-env` (PR #1),
+> `docs/post-merge-status` (PR #2) et `docs/branch-cleanup` (PR #3) ont été
+> supprimées après leur fusion. Tout nouveau travail part de `main` et passe
+> par une pull request.
 
 Précautions :
 
 - Si `git status` montre des modifications locales, les committer ou les
   remiser **avant** de changer de branche.
 - `.env` et `.venv` ne sont pas synchronisés par Git : les clés restent locales
-  au PC professionnel et les dépendances sont à réinstaller.
+  à chaque PC et les dépendances sont à réinstaller.
 - Ne pas pousser sur `main` : la fusion se fait par pull request.
 - **GitHub CLI** (`gh` 2.103.3) est installé sur le PC personnel pour créer les
   PR ; l'authentification est stockée dans le keyring Windows. Aucun secret
@@ -213,7 +217,8 @@ Déjà fait :
 - [x] Ajouter des tests d’allowlist et d’absence de mission automatique : **23 tests réussis**.
 - [x] Documenter la phase 4 dans `reports/phase-4-telegram.md`.
 - [x] Mettre à jour `README.md` (phase 4).
-- [ ] Test réel du bot : token absent sur le PC personnel ; à exécuter sur le PC professionnel.
+- [ ] Test réel du bot : le token est désormais présent dans `.env` ; le test
+      reste à exécuter (voir section 8, étape 3).
 
 ### Phase 5 — agents 1 à 3 : terminée côté code et validée réellement
 
@@ -234,9 +239,9 @@ Déjà fait :
 - [x] Mission réelle `b745b4a199b7` : 21/21 sondes, 0 anomalie.
 - [x] Documentation : `reports/phase-5-agents-1-3.md`.
 - [x] mise à jour `README.md` (phase 5).
-- [ ] Test réel du bot Telegram : token absent sur le PC personnel, à faire sur le PC professionnel.
+- [ ] Test réel du bot Telegram : token présent, test restant à exécuter.
 
-### Phase 6 — agents 4 et 5 : terminée côté code, validée hors ligne
+### Phase 6 — agents 4 et 5 : terminée et validée en réel
 
 Déjà fait :
 
@@ -256,16 +261,24 @@ Déjà fait :
       anomalies réellement présentes.
 - [x] `scripts/run_phase6_mission.py` : lanceur explicite d’une mission
       phase 6.
-- [x] `playwright==1.64.1` ajouté aux dépendances (navigateur à installer sur
-      le PC professionnel).
+- [x] `playwright==1.64.1` ajouté aux dépendances ; Chromium installé sur le
+      PC personnel.
 - [x] Tests hors ligne : `tests/test_api_suite.py`,
       `tests/test_ui_suite.py`, `tests/test_phase6_agents.py`.
-- [x] Suite complète : **64 tests réussis**.
+- [x] Suite complète : **65 tests réussis**.
 - [x] Documentation : `reports/phase-6-agents-4-5.md`.
 - [x] Mise à jour `README.md` (phase 6).
 - [x] **PR #1 fusionnée** dans `main` (merge `992d007`).
-- [ ] Exécution réelle API + UI sur la stack de test : **à faire sur le PC
-      professionnel**.
+- [x] **Exécution réelle** le 10 novembre 2026 sur le PC personnel, stack de
+      test saine, mission de référence `7e30889c18cd` :
+      21/21 sondes, **27/27 tests pytest API**, **11/11 scénarios
+      Playwright**, **0 anomalie**.
+- [x] Correctifs issus de cette exécution (PR #4) :
+      littéraux Python dans la suite générée (les `false` JSON provoquaient un
+      `NameError`), scénario de connexion repassant par une page publique
+      (`history.state.from` renvoyait vers `/favorites`), identifiant Postman
+      déterministe (`uuid5`) pour éviter un diff à chaque mission.
+- [ ] Test réel du bot Telegram : toujours à faire.
 
 ### Phases restantes
 
@@ -302,7 +315,7 @@ QA Analyst  Test Designer  API Tester   API Auto +    QA Reporter
   transmet au reporter les résultats et preuves de chaque tâche.
 - Les **agents 1 à 3** sont réels depuis la phase 5.
 - Les **agents 4 et 5** (API Automation, UI Automation) sont réels depuis la
-  phase 6 et validés hors ligne.
+  phase 6 et validés **en réel** le 10 novembre 2026.
 - L’**agent 6 (DevOps)** reste un stub ; l’**agent 7 (reporter)** est réel et
   agrège désormais les preuves des phases 5 et 6. Le reporting Allure complet
   relève de la phase 7.
@@ -370,6 +383,8 @@ QA Analyst  Test Designer  API Tester   API Auto +    QA Reporter
   - Suppression du JUnit périmé avant chaque exécution.
   - Anomalie uniquement pour un test réellement en échec, avec reproduction et
     preuve.
+  - Les cas Postman sont injectés en **littéraux Python** (`pformat`) : un
+    `json.dumps` produisait `false`/`true` et rendait la suite non collectable.
 
 - `app/tools/ui_suite.py`
   - Génère `ui-automation/run_ui_checks.py` (Playwright/Chromium).
@@ -377,6 +392,8 @@ QA Analyst  Test Designer  API Tester   API Auto +    QA Reporter
   - Résultats JSON, rapport Markdown, captures d’écran en cas d’échec.
   - Suppression des résultats et captures périmés avant chaque exécution.
   - Cibles limitées à `localhost:5175` et `localhost:8002`.
+  - Le scénario de connexion repasse par une page publique avant `/login` :
+    un reload conserve `history.state.from`, qui renvoie vers `/favorites`.
 
 - `app/agents/stubs.py`
   - Le reporter lit désormais `probe-results.json`,
@@ -404,7 +421,17 @@ QA Analyst  Test Designer  API Tester   API Auto +    QA Reporter
 
 ```powershell
 .venv\Scripts\python.exe -m pytest
-# 64 passed
+# 65 passed
+```
+
+Mission réelle de référence (10 novembre 2026) :
+
+```powershell
+.venv\Scripts\python.exe scripts\seed_test_data.py
+.venv\Scripts\python.exe scripts\run_phase6_mission.py
+# MISSION_ID=7e30889c18cd
+# PROBE 21/21, API_TESTS=27 API_PASSED=27, UI_CHECKS=11 UI_PASSED=11
+# API_ANOMALIES=0, UI_ANOMALIES=0
 ```
 
 ---
@@ -436,7 +463,8 @@ QA Analyst  Test Designer  API Tester   API Auto +    QA Reporter
 | `app/llm/gemini.py` | Client Gemini free tier REST, sans fuite de clé |
 | `app/tools/__init__.py` | Package des outils réels |
 | `app/tools/workspace.py` | Écriture UTF-8 des preuves de mission |
-| `app/tools/openapi_postman.py` | Analyse OpenAPI et génération Postman |
+| `app/tools/redaction.py` | Expurgation des secrets dans les preuves |
+| `app/tools/openapi_postman.py` | Analyse OpenAPI et génération Postman (IDs stables) |
 | `app/tools/api_probe.py` | Sondes API réelles, garde-fou 8002, preuves, anomalies |
 | `app/tools/api_suite.py` | Suite pytest API générée, exécution, JUnit, preuves |
 | `app/tools/ui_suite.py` | Scénarios Playwright générés, exécution, captures, preuves |
@@ -458,7 +486,7 @@ QA Analyst  Test Designer  API Tester   API Auto +    QA Reporter
 | `tests/test_phase5_agents.py` | 6 tests des agents phase 5 et du reporter |
 | `tests/test_api_suite.py` | 6 tests de la suite pytest API générée |
 | `tests/test_ui_suite.py` | 9 tests de la suite Playwright et des garde-fous |
-| `tests/test_phase6_agents.py` | 8 tests des agents 4/5 et du reporter |
+| `tests/test_phase6_agents.py` | 9 tests des agents 4/5 et du reporter |
 | `infra/docker-compose.test.yml` | Stack de test isolée |
 | `scripts/seed_test_data.py` | Création des comptes de test |
 | `scripts/run_phase5_mission.py` | Lanceur explicite d’une mission phase 5 |
@@ -470,10 +498,12 @@ QA Analyst  Test Designer  API Tester   API Auto +    QA Reporter
 | `reports/phase-3-manager-core.md` | Validation socle Manager |
 | `reports/phase-4-telegram.md` | Validation connexion Telegram |
 | `reports/phase-5-agents-1-3.md` | Validation phase 5 |
-| `reports/phase-6-agents-4-5.md` | Validation phase 6 hors ligne |
-| `reports/missions/4e1c01636615.md` | Rapport de mission de démonstration |
-| `reports/missions/b745b4a199b7.md` | Rapport de la mission phase 5 de référence |
-| `workspace/missions/b745b4a199b7/` | Preuves de la mission phase 5 |
+| `reports/phase-6-agents-4-5.md` | Validation phase 6 (hors ligne + réel) |
+| `reports/missions/4e1c01636615.md` | Rapport de mission de démonstration (local, ignoré par Git) |
+| `reports/missions/b745b4a199b7.md` | Rapport de la mission phase 5 de référence (local) |
+| `reports/missions/7e30889c18cd.md` | Rapport de la mission phase 6 validée en réel (local) |
+| `workspace/missions/b745b4a199b7/` | Preuves de la mission phase 5 (locales) |
+| `workspace/missions/7e30889c18cd/` | Preuves de la mission phase 6 réelle (locales) |
 | `workspace/missions.db` | Base SQLite locale des missions |
 | `workspace/missions/.gitkeep` | Maintien du dossier |
 | `reports/missions/.gitkeep` | Maintien du dossier |
@@ -503,9 +533,10 @@ Le dépôt `football-qa` est resté propre.
 - **Bureau virtuel** : frontend séparé, SSE, personnages SVG.
 - **Jira/Xray/Squash** : non retenus.
 - **Git** : branche + PR uniquement, merge humain.
-- **Agents actuels** : agents 1 à 3 réels (phase 5), agents 4 et 5 réels et validés hors ligne (phase 6), agent 6 (DevOps) encore stub, agent 7 (reporter) réel mais sans Allure. Aucune anomalie inventée.
-- **Automatisation API** : suite pytest générée depuis les GET sûrs de la collection Postman ; JUnit + JSON + Markdown ; cible limitée à `localhost:8002`.
-- **Automatisation UI** : Playwright/Chromium, cible limitée à `localhost:5175` et API `localhost:8002` ; préflight UI + API ; captures en cas d’échec.
+- **Agents actuels** : agents 1 à 3 réels (phase 5), agents 4 et 5 réels et validés en réel (phase 6), agent 6 (DevOps) encore stub, agent 7 (reporter) réel mais sans Allure. Aucune anomalie inventée.
+- **Automatisation API** : suite pytest générée depuis les GET sûrs de la collection Postman ; JUnit + JSON + Markdown ; cible limitée à `localhost:8002` ; cas injectés en littéraux Python, jamais en JSON.
+- **Automatisation UI** : Playwright/Chromium, cible limitée à `localhost:5175` et API `localhost:8002` ; préflight UI + API ; captures en cas d’échec ; connexion testée depuis une page publique (pas après une redirection protégée).
+- **Postman (identifiants)** : UUID déterministe (`uuid5`) pour la collection et l’environnement, afin que la régénération ne produise pas de diff parasite.
 - **Playwright** : `playwright==1.64.1` ; le navigateur s’installe séparément (`python -m playwright install chromium`).
 - **Sondes API** : cible strictement limitée à `localhost`/`127.0.0.1:8002` ; l’application réelle `8001` est refusée.
 - **Anomalies** : uniquement sur échec réel, avec reproduction et extrait de preuve.
@@ -516,61 +547,52 @@ Le dépôt `football-qa` est resté propre.
 
 ## 7. Configuration, secrets et restes à faire
 
-`.env` est présent et ignoré par Git. Il a été **recréé depuis
-`.env.example`** le 9 novembre 2026, **sans aucune clé** : les secrets locaux
-ne sont pas disponibles sur cette machine. Aucune valeur de secret n’est
-reproduite dans ce document.
+`.env` est présent et ignoré par Git. Il a été **complété le 10 novembre 2026**
+avec les clés Gemini et Telegram. Aucune valeur de secret n’est reproduite
+dans ce document.
 
 État vérifié au moment du point de reprise :
 
 | Variable | État |
 |---|---|
 | `TELEGRAM_ALLOWED_USER_ID` | renseigné dans `.env` (identifiant non reproduit ici) |
-| `TELEGRAM_BOT_TOKEN` | **absent** (clé non disponible) → test réel du bot impossible |
-| `GEMINI_API_KEY` | **absente** → repli déterministe des agents 1 à 3 |
-| `LLM_MODEL` | `gemini-3.5-flash` (prêt pour le jour où la clé sera fournie) |
-| `REAL_AGENTS_ENABLED` | `false` |
+| `TELEGRAM_BOT_TOKEN` | **renseigné** → test réel du bot possible |
+| `GEMINI_API_KEY` | **renseignée** → agents 1 à 3 réellement enrichis |
+| `LLM_MODEL` | `gemini-3.5-flash` |
+| `REAL_AGENTS_ENABLED` | `true` |
 | `TEST_API_URL` | `http://localhost:8002` |
 | `TEST_UI_URL` | `http://localhost:5175` |
 | `TEST_USER1_EMAIL` / `TEST_USER2_EMAIL` | comptes de test locaux |
-| `GROQ_API_KEY` / `MISTRAL_API_KEY` | non utilisés par la phase 5 |
+| `GROQ_API_KEY` / `MISTRAL_API_KEY` | non utilisés |
 
-Sans clé, le système reste utilisable : les 64 tests passent et les agents
-réels basculent sur leur repli déterministe. Il suffira de renseigner
-`GEMINI_API_KEY` et `TELEGRAM_BOT_TOKEN` dans `.env` pour réactiver les appels
-réels, sans modification de code.
+Sans clé, le système reste utilisable : les 65 tests passent et les agents
+réels basculent sur leur repli déterministe.
 
 Historique utile :
 
 - Les deux clés avaient d’abord été déposées dans
   `C:\Users\stgadmin\Desktop\football-qa\.env` (application cible), puis
   copiées dans `football-qa-agents\.env` sans affichage.
-- Sur la machine actuelle (`C:\Users\MAbdo\...`), ces clés **ne sont pas
-  disponibles** : `.env` a été recréé sans elles le 9 novembre 2026.
+- Elles ont été récupérées sur le PC personnel le 10 novembre 2026 et placées
+  dans `football-qa-agents\.env` (seul fichier lu par `app/config.py`).
 - Ne jamais afficher, journaliser ou coller ces valeurs dans le chat, un
   rapport ou une preuve.
 
 ### Configuration Telegram restant à effectuer
 
-- `TELEGRAM_BOT_TOKEN` est **absent** : le token n’est pas disponible sur cette
-  machine. Le gateway ne peut pas être testé réellement tant qu’il n’est pas
-  fourni.
-- `TELEGRAM_ALLOWED_USER_ID` est déjà renseigné dans `.env`.
-- Pour réactiver le bot : déposer le token dans `.env` (sans l’afficher), puis
-  lancer `.venv\Scripts\python.exe -m app.telegram.gateway` et tester
-  `/start`, un texte libre, `/status`, `/approve`, `/stop`.
+- `TELEGRAM_BOT_TOKEN` est renseigné ; le bot n’a pas encore été testé en réel.
+- Pour le tester : lancer `.venv\Scripts\python.exe -m app.telegram.gateway`
+  puis envoyer `/start`, un texte libre, `/status`, `/approve`, `/stop`.
 - Vérifier que le token n’a jamais été publié ; en cas de doute, le régénérer
   via BotFather et mettre à jour `.env` sans afficher la nouvelle valeur.
 
-### Configuration Gemini restant à effectuer
+### Configuration Gemini
 
-- `GEMINI_API_KEY` est **absente** : les agents 1 à 3 utilisent leur repli
-  déterministe. Aucune mission n’est bloquée, mais les analyses enrichies par
-  LLM sont inactives.
-- Pour réactiver Gemini : déposer la clé dans `.env` et passer
-  `REAL_AGENTS_ENABLED=true`, sans afficher la valeur.
-- Surveiller le quota du free tier ; en cas de dépassement, le repli
-  déterministe s’applique sans bloquer la mission.
+- `GEMINI_API_KEY` est renseignée et `REAL_AGENTS_ENABLED=true` : les agents 1
+  à 3 sont réellement enrichis (constaté sur les missions du 10 novembre 2026).
+- Le free tier peut renvoyer une erreur passagère (429/quota) : le repli
+  déterministe s’applique alors sans bloquer la mission. Ne pas interpréter ce
+  repli comme une anomalie applicative.
 - Ne pas revenir à `gemini-2.5-flash` ni `gemini-2.5-flash-lite` : HTTP 404
   pour ce compte.
 - Ne jamais exposer la clé dans une URL de rapport, un log ou une preuve.
@@ -582,8 +604,8 @@ Historique utile :
 ### Étape 0 — vérifier l’environnement et la machine
 
 Identifier d’abord la machine : `stgadmin` = PC professionnel (projet cible et
-clés disponibles) ; `MAbdo` = PC personnel (pas de projet cible ni de clés, mais
-tests hors ligne possibles).
+clés disponibles) ; `MAbdo` = PC personnel (projet cible, clés, Chromium et
+stack de test également disponibles depuis le 10 novembre 2026).
 
 ```powershell
 cd C:\Users\MAbdo\Desktop\Football-Agent\football-qa-agents
@@ -615,10 +637,10 @@ Si la stack n’est pas démarrée :
 docker compose -f infra/docker-compose.test.yml -p football-qa-test up --build -d --wait
 ```
 
-> **Prérequis** : le projet cible à jour doit être présent dans un dossier
+> **Prérequis** : le projet cible doit être présent dans un dossier
 > `football-qa` voisin (le compose référence `../../football-qa/backend` et
-> `../../football-qa/frontend`). Sur cette machine, il est **absent** : la
-> stack ne peut pas être construite tant qu’il n’est pas fourni.
+> `../../football-qa/frontend`). Sur cette machine, il est présent en
+> `C:\Users\MAbdo\Desktop\Football-Agent\football-qa`.
 
 Vérifier :
 
@@ -627,23 +649,25 @@ Invoke-WebRequest -UseBasicParsing http://localhost:8002/health
 Invoke-WebRequest -UseBasicParsing http://localhost:5175/
 ```
 
-Attendu : `64 passed` et stack `healthy` sur `8002`, `5434` et `5175`.
+Attendu : `65 passed` et stack `healthy` sur `8002`, `5434` et `5175`.
 Ne jamais sonder `8001` avec les outils du projet.
 
 ### Étape 1 — vérifier l’état livré
 
 ```powershell
-# Rapport de la mission de référence
-Get-Content reports\missions\b745b4a199b7.md
+# Comptes de test (base de test recréée)
+.venv\Scripts\python.exe scripts\seed_test_data.py
 
-# Preuves de la mission
-Get-ChildItem workspace\missions\b745b4a199b7 -Recurse
+# Preuves de la mission de référence phase 6 (locales, ignorées par Git)
+Get-ChildItem workspace\missions\7e30889c18cd -Recurse
 
 # Collection Postman
 Get-Content postman\collections\football-qa.json -TotalCount 20
 ```
 
-Attendu : 21/21 sondes, 0 anomalie, 11 requêtes Postman.
+Attendu : 21/21 sondes, 27/27 tests API, 11/11 scénarios UI, 0 anomalie,
+11 requêtes Postman. Les rapports de mission sont **locaux** et absents d’un
+clone frais : c’est normal.
 
 ### Étape 2 — relancer une mission phase 5 (optionnel)
 
@@ -654,9 +678,6 @@ Attendu : 21/21 sondes, 0 anomalie, 11 requêtes Postman.
 Le script refuse de s’exécuter si `REAL_AGENTS_ENABLED=false`. Il crée une
 mission explicite, exécute les agents 1 à 3, écrit les preuves et affiche
 `PROBE_CHECKS`, `PROBE_PASSED`, `PROBE_ANOMALIES`.
-
-> Sur cette machine, cette étape est **bloquée** : le projet cible/la stack de
-> test sont absents et `.env` ne contient pas encore de clé Gemini.
 
 ### Étape 2 bis — relancer une mission phase 6 API + UI (optionnel)
 
@@ -670,9 +691,9 @@ exécute la suite pytest API puis les scénarios Playwright, écrit les preuves 
 affiche `API_STATUS`, `API_TESTS`, `API_PASSED`, `API_FAILED`,
 `API_ANOMALIES` et l’équivalent UI.
 
-> Sur cette machine, cette étape est **bloquée** : projet cible, stack de test
-> et navigateur Playwright absents. Les tests hors ligne couvrent néanmoins
-> toute la logique.
+> Résultat attendu sur une stack saine : `API_TESTS=27`, `API_PASSED=27`,
+> `UI_CHECKS=11`, `UI_PASSED=11`, anomalies à `0`. Un statut `blocked` signifie
+> que la stack est arrêtée, pas qu’une anomalie a été trouvée.
 
 ### Étape 3 — tester réellement le bot Telegram (optionnel)
 
@@ -683,21 +704,22 @@ affiche `API_STATUS`, `API_TESTS`, `API_PASSED`, `API_FAILED`,
 Puis, depuis le compte autorisé : `/start`, un texte libre, `/status <id>`,
 `/approve <id>` si demandé, `/stop <id>`. Aucun scheduler ne doit démarrer.
 
-> Sur cette machine, cette étape est **bloquée** tant que
-> `TELEGRAM_BOT_TOKEN` n’est pas fourni dans `.env`.
+> Le token est désormais présent dans `.env` ; seul le test manuel reste à
+> faire.
 
 ### Étape 4 — prochaine phase de développement
 
 **Phase 7 — agents 6 et 7** : agent DevOps (branche + PR, sans push direct sur
-`main`) et reporting Allure/Markdown/JSON enrichi. La phase 6 est terminée côté
-code et validée hors ligne ; son exécution réelle reste à faire sur le PC
-professionnel. Ne pas démarrer la phase 7 sans demande explicite.
+`main`) et reporting Allure/Markdown/JSON enrichi. Les phases 1 à 6 sont
+terminées et validées en réel. Ne pas démarrer la phase 7 sans demande
+explicite.
 
 ### En cas de problème connu
 
 | Symptôme | Cause probable | Action |
 |---|---|---|
 | `Gemini a répondu HTTP 404` | modèle obsolète | garder `LLM_MODEL=gemini-3.5-flash` |
+| `Conception Gemini indisponible (GeminiError)` | quota/429 du free tier | repli déterministe normal ; relancer plus tard, aucune anomalie applicative |
 | `GEMINI_API_KEY absente` | clé dans le mauvais `.env` | vérifier `football-qa-agents\.env`, ne pas afficher la valeur |
 | `UnsafeTargetError` | cible autre que `localhost:8002` | corriger `TEST_API_URL`, ne pas viser `8001` |
 | `UnsafeUiTargetError` | cible UI autre que `localhost:5175` | corriger `TEST_UI_URL` |
@@ -762,14 +784,15 @@ professionnel. Ne pas démarrer la phase 7 sans demande explicite.
 - Ne pas afficher, journaliser ou envoyer les secrets Telegram/Gemini.
 - Les sondes refusent toute cible autre que `localhost:8002`.
 - Le projet `football-qa-agents` est initialisé en Git sur `main` (commit initial `2a3c929`).
-- Le travail se fait sur **deux PC** : PC professionnel (`stgadmin`) et PC personnel (`MAbdo`, actuel). L’absence du projet cible ou des clés sur le PC personnel est **normale**, pas une régression.
-- Le projet cible à jour (`football-qa`) **n’est pas présent** sur le PC personnel ; `Football-project\MyFinalProject` n’est **pas** la bonne version et ne doit pas servir de cible.
-- Sur le PC personnel, `.env` a été recréé **sans clés** : Gemini et Telegram sont inactifs, le repli déterministe s’applique.
-- Les agents 4 et 5 (API Automation, UI Automation) sont réels et validés **hors ligne** ; leur exécution réelle reste à faire sur le PC professionnel.
+- Le travail se fait sur **deux PC** : PC professionnel (`stgadmin`) et PC personnel (`MAbdo`, actuel). Les deux disposent désormais du projet cible, des clés et de la stack de test.
+- Le projet cible utilisé sur le PC personnel est `Football-Agent\football-qa`, copie de `Football-QA\MyFinalProject`. `Football-project\MyFinalProject` reste à ne pas utiliser.
+- `.env` contient les clés Gemini et Telegram et `REAL_AGENTS_ENABLED=true` ; ne jamais afficher ces valeurs.
+- Les agents 4 et 5 (API Automation, UI Automation) sont réels et validés **en réel** (27/27 API, 11/11 UI, 0 anomalie, mission `7e30889c18cd`).
 - L’agent 6 (DevOps) reste un stub ; l’agent 7 (reporter) est réel mais le reporting Allure complet relève de la phase 7.
-- Le navigateur Playwright/Chromium n’est pas installé sur le PC personnel ; l’agent UI y renvoie `blocked` sans anomalie.
-- Les agents 1 à 3 sont réels mais dépendent de la stack de test et du free tier Gemini ; un repli déterministe reste actif en cas d’indisponibilité.
-- Le test réel du bot Telegram n’a pas été exécuté (token absent).
+- Chromium est installé sur le PC personnel ; l’agent UI y exécute réellement Playwright.
+- Les agents 1 à 3 dépendent du free tier Gemini : une erreur passagère (quota/429) déclenche le repli déterministe sans bloquer la mission ni créer d’anomalie.
+- Le test réel du bot Telegram n’a pas encore été exécuté, mais le token est présent.
+- Les rapports et preuves de mission sont **locaux** (`reports/missions/`, `workspace/missions/`) et ignorés par Git : leur absence après un clone est normale.
 - Aucune nouvelle phase ne doit démarrer sans demande explicite.
 
 ---
@@ -779,11 +802,9 @@ professionnel. Ne pas démarrer la phase 7 sans demande explicite.
 Le socle QA local (baseline, isolation, Manager, gateway Telegram, rapports,
 approbation, annulation), la phase 5 (agents 1 à 3 réels avec Gemini
 `gemini-3.5-flash`, collection Postman, sondes API limitées à `localhost:8002`)
-et la phase 6 (agents 4 et 5 : suite pytest API et scénarios Playwright,
-validés hors ligne) fonctionnent dans un environnement Python 3.12.10 natif et
-les **64 tests passent** ; la mission de référence `b745b4a199b7` a réussi
-21/21 sondes avec 0 anomalie. Le travail se fait sur deux PC : sur le PC
-personnel actuel, le projet cible, les clés et le navigateur Playwright sont
-absents, donc les missions réelles y sont suspendues ; elles restent possibles
-sur le PC professionnel. La suite du projet reprend à la phase 7 (agent DevOps
-et reporting Allure).
+et la phase 6 (agents 4 et 5 : suite pytest API et scénarios Playwright)
+fonctionnent dans un environnement Python 3.12.10 natif, et les **65 tests
+passent**. La mission de référence `7e30889c18cd` (10 novembre 2026) a réussi
+21/21 sondes, 27/27 tests API et 11/11 scénarios UI avec 0 anomalie, sur une
+stack de test saine et avec les clés réelles. Le projet se poursuit à la
+phase 7 (agent DevOps et reporting Allure).

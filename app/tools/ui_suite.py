@@ -313,6 +313,12 @@ def main():
                 "redirection vers /championships et lien favoris visible",
                 "/login",
                 lambda: (
+                    # Repartir d'une page publique avant /login : un simple
+                    # reload conserve le `history.state` de la redirection
+                    # /favorites -> /login, et l'application renverrait alors
+                    # vers /favorites au lieu de /championships.
+                    page.goto("/championships", wait_until="networkidle"),
+                    page.goto("/login", wait_until="networkidle"),
                     page.get_by_test_id("email-input").fill(USER1_EMAIL),
                     page.get_by_test_id("password-input").fill(USER1_PASSWORD),
                     page.get_by_test_id("submit-login").click(),

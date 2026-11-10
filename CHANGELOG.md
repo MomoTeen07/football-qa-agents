@@ -35,6 +35,55 @@ retard. En cas de doute, mettre à jour les trois.
 
 ---
 
+## [0.6.3] — 2026-11-10 — Phase 6 validée en réel et correctifs associés
+
+### Ajouté
+
+- **Exécution réelle complète de la phase 6** sur le PC personnel :
+  stack `football-qa-test` opérationnelle, mission de référence
+  `7e30889c18cd` avec **21/21 sondes API**, **27/27 tests pytest API**,
+  **11/11 scénarios Playwright** et **0 anomalie**.
+
+### Corrigé
+
+- **Suite pytest générée invalide** (`app/tools/api_suite.py`) : les cas
+  Postman étaient injectés via `json.dumps`, produisant `false`/`true`/`null`
+  dans un fichier Python. Résultat : `NameError: name 'false' is not defined`
+  et un unique faux échec de collecte au lieu des 27 tests. Les cas sont
+  désormais injectés en littéraux Python (`pformat`).
+- **Scénario Playwright de connexion** (`app/tools/ui_suite.py`) : le scénario
+  enchaînait sur `/login` après la redirection `/favorites → /login`, dont
+  `history.state.from` renvoie légitimement vers `/favorites`. Le scénario
+  repasse maintenant par une page publique avant d'ouvrir `/login` et attend
+  bien `/championships`.
+- **Identifiant de l'environnement Postman** (`app/tools/openapi_postman.py`) :
+  UUID aléatoire à chaque génération, donc diff parasite sur un fichier
+  versionné. L'identifiant est maintenant déterministe (`uuid5`).
+
+### Modifié
+
+- Tests de non-régression : la suite API générée doit être du Python valide,
+  le scénario UI doit repasser par une page publique, l'identifiant Postman
+  doit être stable.
+- Suite complète : **65 tests réussis** (64 avant).
+
+### Environnement
+
+- Projet cible `football-qa` présent à côté du projet QA ; stack de test
+  `8002`/`5175`/`5434` construite et saine, comptes de test créés.
+- `.env` local complété (Gemini et Telegram disponibles,
+  `REAL_AGENTS_ENABLED=true`). Aucune valeur de secret n'est documentée.
+- Chromium Playwright installé sur le PC personnel.
+- Projet cible copié vers `C:\Users\MAbdo\Desktop\Football-Agent\football-qa`
+  (chemin attendu par le compose de test).
+
+### Pull request
+
+- **PR #4** : <https://github.com/MomoTeen07/football-qa-agents/pull/4>
+  (correctifs et documentation, merge humain).
+
+---
+
 ## [0.6.2] — 2026-11-09 — Nettoyage des branches fusionnées
 
 ### Modifié
