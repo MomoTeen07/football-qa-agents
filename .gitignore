@@ -18,6 +18,8 @@ dist/
 
 # Artefacts de test
 workspace/*.db
+workspace/*.db-wal
+workspace/*.db-shm
 workspace/missions/*
 !workspace/missions/.gitkeep
 reports/missions/*

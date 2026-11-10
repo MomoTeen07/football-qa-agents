@@ -226,6 +226,8 @@ Déjà fait :
       approbation `8d7a1f40274d` bloquée puis approuvée, mission
       `c5d08e7742e2` annulée par `/stop` (approbation tardive ignorée).
       Détail : `reports/phase-4-telegram.md`.
+- [x] Retour d'attente (0.6.6) : message immédiat `⏳ Exécution en cours…`,
+      indicateur `typing` toutes les 4 s et durée finale dans la réponse.
 - [ ] Test du **compte non autorisé** en réel : reporté faute de second compte
       Telegram pendant la session ; couvert par les 5 tests d'allowlist et le
       test de garde du gateway.
@@ -434,6 +436,10 @@ QA Analyst  Test Designer  API Tester   API Auto +    QA Reporter
   l'indicateur « en train d'écrire » (`send_chat_action`, toutes les 4 s)
   pendant tout le traitement, puis envoie le résultat avec la durée réelle.
   Un échec de l'indicateur n'interrompt pas la mission.
+- `python-telegram-bot` traite les updates **séquentiellement** (pas de
+  `concurrent_updates`) : pendant une mission longue, une commande envoyée
+  juste après attend la fin de l'exécution. C'est attendu ; le message d'attente
+  et l'indicateur `typing` évitent toute ambiguïté.
 
 ### Vérification
 
@@ -775,6 +781,8 @@ explicite.
 | `API_STATUS=blocked` en phase 6 | API de test arrêtée | démarrer la stack `football-qa-test` |
 | tests lents ou appels réels | `REAL_AGENTS_ENABLED=true` dans l’environnement | les tests forcent déjà `false` ; vérifier les overrides |
 | accents illisibles en console | rendu PowerShell | les fichiers sont UTF-8 ; lire avec Python si besoin |
+| jeton Telegram dans un log | `httpx` journalise l’URL de l’API Bot | `SecretRedactionFilter` actif depuis 0.6.6 ; vérifier `TOKEN_IN_LOG=False` et ne jamais publier le log |
+| bot muet pendant une mission | exécution longue, updates traités séquentiellement | normal : message d’attente + indicateur `typing` depuis 0.6.6 ; ne pas conclure à un blocage |
 
 ---
 
