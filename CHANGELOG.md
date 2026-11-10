@@ -65,6 +65,13 @@ retard. En cas de doute, mettre à jour les trois.
   (message d'attente avant exécution, indicateur d'activité, tolérance à un
   échec de l'indicateur) et une assertion renforcée sur `/approve`.
 
+### Validé en réel
+
+- Mission `98943bcedbdd` (« Analyse l'application et propose un plan de test »)
+  exécutée depuis Telegram en 83 s : message d'attente immédiat, **21
+  `sendChatAction`** espacés d'environ 4 s, réponse finale avec durée, statut
+  `completed`, 3 tâches, 0 erreur Telegram.
+
 ---
 
 ## [0.6.5] — 2026-11-10 — Test réel du bot Telegram
