@@ -72,3 +72,76 @@ def test_gemini_empty_response_is_rejected() -> None:
     client = GeminiClient(make_settings(), transport=httpx.MockTransport(handler))
     with pytest.raises(GeminiError):
         client.generate("Prompt")
+
+
+def test_gemini_retries_a_transient_429_then_succeeds() -> None:
+    calls: list[int] = []
+    sleeps: list[float] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        calls.append(1)
+        if len(calls) == 1:
+            return httpx.Response(429, json={"error": {"code": 429}})
+        return httpx.Response(
+            200,
+            json={
+                "candidates": [
+                    {"content": {"parts": [{"text": "Après reprise"}]}}
+                ]
+            },
+        )
+
+    client = GeminiClient(
+        make_settings(),
+        transport=httpx.MockTransport(handler),
+        sleep=sleeps.append,
+    )
+
+    assert client.generate("Prompt") == "Après reprise"
+    assert len(calls) == 2
+    assert sleeps == [1.0]
+
+
+def test_gemini_gives_up_after_max_attempts_without_leaking_the_key() -> None:
+    secret = "fake-key-for-tests"
+    calls: list[int] = []
+    sleeps: list[float] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        calls.append(1)
+        return httpx.Response(503, json={"error": {"message": secret}})
+
+    client = GeminiClient(
+        make_settings(),
+        transport=httpx.MockTransport(handler),
+        sleep=sleeps.append,
+    )
+
+    with pytest.raises(GeminiError) as error:
+        client.generate("Prompt")
+
+    assert len(calls) == 3
+    assert sleeps == [1.0, 2.0]
+    assert "HTTP 503" in str(error.value)
+    assert secret not in str(error.value)
+
+
+def test_gemini_does_not_retry_a_definitive_error() -> None:
+    calls: list[int] = []
+    sleeps: list[float] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        calls.append(1)
+        return httpx.Response(400, json={"error": {"code": 400}})
+
+    client = GeminiClient(
+        make_settings(),
+        transport=httpx.MockTransport(handler),
+        sleep=sleeps.append,
+    )
+
+    with pytest.raises(GeminiError):
+        client.generate("Prompt")
+
+    assert len(calls) == 1
+    assert sleeps == []
