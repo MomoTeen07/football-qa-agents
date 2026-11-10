@@ -108,7 +108,9 @@ Précautions :
   remiser **avant** de changer de branche.
 - `.env` et `.venv` ne sont pas synchronisés par Git : les clés restent locales
   à chaque PC et les dépendances sont à réinstaller.
-- Ne pas pousser sur `main` : la fusion se fait par pull request.
+- Ne pas pousser sur `main` : la fusion se fait par pull request, fusionnée par
+  l'agent après vérification (plus de validation humaine depuis le
+  10 novembre 2026).
 - **GitHub CLI** (`gh` 2.103.3) est installé sur le PC personnel pour créer les
   PR ; l'authentification est stockée dans le keyring Windows. Aucun secret
   n'est documenté ni journalisé.

@@ -33,6 +33,13 @@ retard. En cas de doute, mettre à jour les trois.
 - **Phase 8** — bureau virtuel 2D : frontend séparé, SSE, personnages SVG.
 - **Phase 9** — durcissement : sécurité, robustesse, documentation finale.
 
+### Modifié
+
+- **Politique de fusion Git** (10 novembre 2026) : la validation humaine des
+  pull requests n'est plus requise. L'agent ouvre la PR, vérifie les tests et
+  la fusionne lui-même. Le principe « branche + PR, pas de push direct sur
+  `main` » est conservé. Documenté dans `README.md` et `PROJECT_CONTEXT.md`.
+
 ---
 
 ## [0.6.3] — 2026-11-10 — Phase 6 validée en réel et correctifs associés
@@ -80,7 +87,7 @@ retard. En cas de doute, mettre à jour les trois.
 ### Pull request
 
 - **PR #4** : <https://github.com/MomoTeen07/football-qa-agents/pull/4>
-  (correctifs et documentation, merge humain).
+  (correctifs et documentation).
 
 ---
 
