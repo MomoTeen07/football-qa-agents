@@ -17,7 +17,8 @@ Système multi-agents QA pour tester l'application locale `football-qa`.
 - Toute modification doit aussi mettre à jour **`README.md`** et
   **`PROJECT_CONTEXT.md`**. Une PR n'est pas terminée si l'un des trois fichiers
   est en retard.
-- Dernière entrée : **0.6.0 — phase 6** (automatisation API/UI, PR #1).
+- Dernière entrée : **0.6.3 — phase 6 validée en réel** (mission
+  `7e30889c18cd`, correctifs associés).
 
 ## Structure
 
@@ -35,19 +36,23 @@ reports/              Rapports de baseline, Allure et synthèses
 tests/                Tests du système multi-agents
 ```
 
-## État de l'environnement local (9 novembre 2026)
+## État de l'environnement local (10 novembre 2026)
 
 - Python **3.12.10** natif (obligatoire : `requires-python >= 3.12`).
 - `.venv` recréé et dépendances `requirements.txt` installées.
-- `.env` recréé depuis `.env.example` : **clés Gemini/Telegram vides**,
-  `REAL_AGENTS_ENABLED=false` → repli déterministe.
-- `.venv\Scripts\python.exe -m pytest` → **64 passed**.
-- `playwright==1.64.1` installé ; le navigateur Chromium n'est **pas** installé
-  sur ce PC (nécessaire uniquement à l'exécution UI réelle).
+- `.env` complété : **clés Gemini et Telegram disponibles**,
+  `REAL_AGENTS_ENABLED=true` → agents réels actifs. Les valeurs ne sont
+  jamais affichées ni versionnées.
+- `.venv\Scripts\python.exe -m pytest` → **65 passed**.
+- `playwright==1.64.1` installé et **Chromium présent** dans
+  `%LOCALAPPDATA%\ms-playwright` : l'exécution UI réelle est possible.
+- Projet cible `football-qa` présent à côté du projet QA
+  (`C:\Users\MAbdo\Desktop\Football-Agent\football-qa`).
+- Stack de test `football-qa-test` construite et saine (`8002`/`5175`/`5434`).
 - **GitHub CLI** `gh` 2.103.3 installé via winget et authentifié via le
   navigateur ; le jeton reste dans le keyring Windows, jamais dans le projet.
 
-Sans clés, les 64 tests passent et les agents basculent sur leur repli
+Sans clés, tous les tests passent et les agents basculent sur leur repli
 déterministe. Pour réactiver Gemini et Telegram, renseigner
 `GEMINI_API_KEY` et `TELEGRAM_BOT_TOKEN` dans `.env`, sans jamais les afficher.
 
@@ -56,23 +61,25 @@ déterministe. Pour réactiver Gemini et Telegram, renseigner
 Le projet est utilisé sur deux PC. Un élément manquant sur l'un n'est pas une
 régression : il faut d'abord identifier la machine.
 
-| Élément | PC professionnel | PC personnel (actuel) |
+| Élément | PC professionnel | PC personnel |
 |---|---|---|
 | Utilisateur | `stgadmin` | `MAbdo` |
-| Projet cible `football-qa` | présent | **absent** |
-| Stack de test Docker | opérationnelle | non construite |
-| Clés Gemini / Telegram | présentes dans `.env` | **absentes** |
-| Tests unitaires | 41 passed (phase 5) — sera **64 passed** après `git pull` sur `main` | **64 passed** |
+| Projet cible `football-qa` | présent | présent |
+| Stack de test Docker | opérationnelle | opérationnelle |
+| Clés Gemini / Telegram | présentes dans `.env` | présentes dans `.env` |
+| Tests unitaires | à jour après `git pull` sur `main` | **65 passed** |
 
-Le PC personnel permet le développement hors ligne et les tests unitaires ;
-les missions réelles se font sur le PC professionnel ou après copie du projet
-cible et des clés.
+Les deux PC permettent désormais les missions réelles. Sur le PC personnel, le
+projet cible est une copie de travail du dépôt `MyFinalProject` ; en cas de
+doute sur la version, comparer les deux dossiers avant de conclure à une
+régression.
 
 ## Pull request et reprise sur le PC professionnel
 
 La phase 6 a été **fusionnée** via la **PR #1** (merge commit `992d007`,
-9 novembre 2026) : `main` contient désormais l'automatisation API/UI, le
-reporter étendu et toute la documentation.
+9 novembre 2026) : `main` contient l'automatisation API/UI et le reporter
+étendu. Sa **validation en réel** et les correctifs associés arrivent par la
+**PR #4** (`fix/phase6-real-run`, 10 novembre 2026).
 
 ### Depuis `main` (recommandé)
 
@@ -83,23 +90,24 @@ git switch main
 git pull --ff-only origin main
 
 .venv\Scripts\python.exe -m pip install -r requirements.txt
-.venv\Scripts\python.exe -m pytest          # attendu : 64 passed
+.venv\Scripts\python.exe -m pytest          # attendu : 65 passed
 .venv\Scripts\python.exe -m playwright install chromium
 ```
 
 Démarrer ensuite la stack de test, puis lancer
 `scripts\run_phase6_mission.py`.
 
-> Les branches `chore/reconstruct-local-env` (PR #1) et
-> `docs/post-merge-status` (PR #2) ont été supprimées après leur fusion.
-> Seule `main` subsiste ; tout nouveau travail part de `main`.
+> Les branches `chore/reconstruct-local-env` (PR #1),
+> `docs/post-merge-status` (PR #2) et `docs/branch-cleanup` (PR #3) ont été
+> supprimées après leur fusion. Tout nouveau travail part de `main` et passe
+> par une pull request.
 
 Précautions :
 
 - Si `git status` montre des modifications locales, les committer ou les
   remiser **avant** de changer de branche.
 - `.env` et `.venv` ne sont pas synchronisés par Git : les clés restent locales
-  au PC professionnel et les dépendances sont à réinstaller.
+  à chaque PC et les dépendances sont à réinstaller.
 - Ne pas pousser sur `main` : la fusion se fait par pull request.
 - **GitHub CLI** (`gh` 2.103.3) est installé sur le PC personnel pour créer les
   PR ; l'authentification est stockée dans le keyring Windows. Aucun secret
@@ -107,13 +115,15 @@ Précautions :
 
 ## Prérequis pour les missions réelles
 
-Le projet cible à jour (`football-qa`) **n'est pas présent** sur le PC personnel
-actuel. `C:\Users\MAbdo\Desktop\Football-project\MyFinalProject` n'est **pas**
-la bonne version et ne doit pas être utilisé.
-
 Le compose de test référence `../../football-qa/backend` et
-`../../football-qa/frontend` : sans ce dossier, la stack `8002`/`5175` ne peut
-pas être construite et les missions réelles sont bloquées.
+`../../football-qa/frontend`, c'est-à-dire un dossier `football-qa` **voisin**
+de `football-qa-agents`. Sur le PC personnel, la copie de travail se trouve en
+`C:\Users\MAbdo\Desktop\Football-Agent\football-qa` (copiée depuis
+`C:\Users\MAbdo\Desktop\Football-QA\MyFinalProject`).
+
+Sans ce dossier, la stack `8002`/`5175` ne peut pas être construite et les
+missions réelles sont bloquées. Le compose ne modifie jamais la base réelle :
+il crée son propre volume PostgreSQL sur `5434`.
 
 ## Stack de test
 
@@ -234,19 +244,30 @@ anomalies réellement présentes.
 .venv\Scripts\python.exe scripts\run_phase6_mission.py
 ```
 
-Validation hors ligne : **64 tests passent**. L'exécution réelle API + UI reste
-à faire sur le PC professionnel. Voir `reports/phase-6-agents-4-5.md`.
+Validation **en réel** (10 novembre 2026, mission `7e30889c18cd`) :
+
+| Vérification | Résultat |
+|---|---|
+| Sondes API (phase 5) | 21/21, 0 anomalie |
+| Tests pytest API générés | 27/27, 0 échec |
+| Scénarios Playwright | 11/11, 0 échec |
+| Anomalies applicatives | 0 |
+
+Suite du système : **65 tests passent**. Voir `reports/phase-6-agents-4-5.md`
+et `PROJECT_CONTEXT.md` pour le détail des correctifs de cette validation
+(littéraux Python dans la suite générée, scénario de connexion, identifiant
+Postman stable).
 
 ## État d'avancement
 
-- [x] Environnement local reconstruit sur le PC personnel — Python 3.12.10, `.venv`, `.env` sans clés, **64 tests passent**
+- [x] Environnement local complet sur le PC personnel — Python 3.12.10, `.venv`, `.env` avec clés, Chromium, stack de test, **65 tests passent**
 - [x] Journal des modifications `CHANGELOG.md` et règle de mise à jour documentaire
 - [x] Phase 1 — baseline de l'application existante
 - [x] Phase 2 — stack de test isolée
 - [x] Phase 3 — socle du Manager
 - [x] Phase 4 — connexion Telegram
 - [x] Phase 5 — agents 1 à 3
-- [x] Phase 6 — agents 4 et 5 (code + validation hors ligne ; exécution réelle à faire sur le PC professionnel)
+- [x] Phase 6 — agents 4 et 5 (code + validation hors ligne **et** exécution réelle : 27/27 API, 11/11 UI, 0 anomalie)
 - [ ] Phase 7 — agents 6 et 7
 - [ ] Phase 8 — bureau virtuel
 - [ ] Phase 9 — durcissement
