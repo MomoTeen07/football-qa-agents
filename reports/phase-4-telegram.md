@@ -228,3 +228,20 @@ Couverture : `test_typing_indicator_is_sent_during_execution`,
 `test_typing_indicator_failure_does_not_break_the_mission`,
 `test_waiting_message_is_not_sent_when_approval_is_required`, et assertions
 d'ordre des réponses sur texte libre et `/approve`.
+
+#### Validation en réel du retour d'attente
+
+Le correctif a été rejoué sur le bot le 10 novembre 2026, mission
+**`98943bcedbdd`** (« Analyse l'application et propose un plan de test ») :
+
+| Contrôle | Résultat |
+|---|---|
+| Message d'attente | envoyé immédiatement (création à 13:53:48 UTC) |
+| Indicateur d'activité | **21 `sendChatAction`** au total, espacés de ~4 s pendant les 83 s d'exécution |
+| Réponse finale | envoyée à 13:55:11 UTC, avec statut, **durée** et chemin du rapport |
+| Mission | `completed`, 3 tâches (`qa_analyst`, `test_designer`, `qa_reporter`) |
+| Rapport | `reports/missions/98943bcedbdd.md` |
+| Erreurs Telegram | 0 ; jeton toujours masqué dans les logs |
+
+État de la base après la session : 8 missions / 36 tâches / 118 événements,
+`PRAGMA integrity_check = ok`.

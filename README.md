@@ -236,6 +236,10 @@ Aucun message supplémentaire n'est nécessaire : l'utilisateur n'a rien à
 renvoyer. Les commandes rapides (`/start`, `/help`, `/status`, `/missions`) et
 les missions en attente d'approbation répondent immédiatement.
 
+Validé en réel le 10 novembre 2026 (mission `98943bcedbdd`, 83 s) : message
+d'attente immédiat, 21 `sendChatAction` pendant l'exécution, réponse finale
+avec durée, 0 erreur.
+
 Les secrets restent dans `.env`, ignoré par Git. Ne jamais coller un secret dans
 une conversation ou un rapport.
 

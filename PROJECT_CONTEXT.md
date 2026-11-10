@@ -1,7 +1,7 @@
 # PROJECT_CONTEXT — Football QA Agents
 
 Date du point de reprise : 10 novembre 2026  
-Dernière action terminée : **test réel du bot Telegram** (10 novembre 2026) puis **retour d'attente** (0.6.6). Le gateway `@Quaresma_QA_bot` a été validé en polling sur le PC personnel : `/start`, `/help`, texte libre, `/status`, `/missions`, `/approve` et `/stop` fonctionnent réellement. Mission réelle `8c568cce0ef4` créée depuis Telegram : **21/21 sondes**, **27/27 tests pytest API**, **11/11 scénarios Playwright**, **0 anomalie**. Garde-fou d'approbation et annulation vérifiés (missions `8d7a1f40274d` et `c5d08e7742e2`). Aucun scheduler, aucun `409`. Depuis 0.6.6, le bot répond immédiatement `⏳ Exécution en cours…`, maintient l'indicateur « en train d'écrire » pendant le traitement et affiche la durée finale. Suite du système : **72 tests sur 72 réussis**.
+Dernière action terminée : **test réel du bot Telegram** (10 novembre 2026) puis **retour d'attente** (0.6.6). Le gateway `@Quaresma_QA_bot` a été validé en polling sur le PC personnel : `/start`, `/help`, texte libre, `/status`, `/missions`, `/approve` et `/stop` fonctionnent réellement. Mission réelle `8c568cce0ef4` créée depuis Telegram : **21/21 sondes**, **27/27 tests pytest API**, **11/11 scénarios Playwright**, **0 anomalie**. Garde-fou d'approbation et annulation vérifiés (missions `8d7a1f40274d` et `c5d08e7742e2`). Aucun scheduler, aucun `409`. Depuis 0.6.6, le bot répond immédiatement `⏳ Exécution en cours…`, maintient l'indicateur « en train d'écrire » pendant le traitement et affiche la durée finale (validé en réel sur la mission `98943bcedbdd`). Suite du système : **72 tests sur 72 réussis**.
 État global : **phases 1 à 6 terminées et validées en réel**. Le projet n'est pas terminé : les phases 7 à 9 restent à faire.
 > **Point de reprise — lire ceci en premier**
 >
@@ -228,6 +228,7 @@ Déjà fait :
       Détail : `reports/phase-4-telegram.md`.
 - [x] Retour d'attente (0.6.6) : message immédiat `⏳ Exécution en cours…`,
       indicateur `typing` toutes les 4 s et durée finale dans la réponse.
+      Validé en réel sur la mission `98943bcedbdd` (83 s, 21 `sendChatAction`).
 - [ ] Test du **compte non autorisé** en réel : reporté faute de second compte
       Telegram pendant la session ; couvert par les 5 tests d'allowlist et le
       test de garde du gateway.
@@ -625,9 +626,10 @@ Historique utile :
   les logs ; `logs/` est ignoré par Git. Par précaution, régénérer le jeton via
   BotFather si le fichier de log a circulé, puis mettre à jour `.env` sans
   afficher la nouvelle valeur.
+- **Retour d’attente validé en réel** (0.6.6) : mission `98943bcedbdd` en 83 s,
+  message d’attente immédiat, 21 `sendChatAction`, réponse finale avec durée.
 - Reste à faire : test d’un **compte non autorisé** en réel (second compte
   Telegram indisponible pendant la session).
-
 ### Configuration Gemini
 
 - `GEMINI_API_KEY` est renseignée et `REAL_AGENTS_ENABLED=true` : les agents 1
