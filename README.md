@@ -1,5 +1,7 @@
 # Football QA Agents
 
+[![Tests](https://github.com/MomoTeen07/football-qa-agents/actions/workflows/tests.yml/badge.svg)](https://github.com/MomoTeen07/football-qa-agents/actions/workflows/tests.yml)
+
 Système multi-agents QA pour tester l'application locale `football-qa`.
 
 ## Principes
@@ -17,12 +19,20 @@ Système multi-agents QA pour tester l'application locale `football-qa`.
 - Toute modification doit aussi mettre à jour **`README.md`** et
   **`PROJECT_CONTEXT.md`**. Une PR n'est pas terminée si l'un des trois fichiers
   est en retard.
-- Dernière entrée : **0.6.3 — phase 6 validée en réel** (mission
-  `7e30889c18cd`, correctifs associés).
+- Dernière entrée : **0.6.4 — CI GitHub Actions et reprise sur erreurs
+  Gemini**.
+
+## Intégration continue
+
+`.github/workflows/tests.yml` exécute `python -m pytest` sur chaque pull
+request et sur chaque push vers `main` (Python 3.12, sans clé, sans réseau).
+Comme les PR sont fusionnées par l'agent, ce workflow est le garde-fou avant
+fusion ; il peut aussi être lancé manuellement (`workflow_dispatch`).
 
 ## Structure
 
 ```text
+.github/              CI GitHub Actions (pytest sur chaque PR)
 CHANGELOG.md          Historique daté des modifications
 app/                  Manager, agents, outils, événements
 app/llm/              Client Gemini free tier
@@ -43,7 +53,7 @@ tests/                Tests du système multi-agents
 - `.env` complété : **clés Gemini et Telegram disponibles**,
   `REAL_AGENTS_ENABLED=true` → agents réels actifs. Les valeurs ne sont
   jamais affichées ni versionnées.
-- `.venv\Scripts\python.exe -m pytest` → **65 passed**.
+- `.venv\Scripts\python.exe -m pytest` → **68 passed**.
 - `playwright==1.64.1` installé et **Chromium présent** dans
   `%LOCALAPPDATA%\ms-playwright` : l'exécution UI réelle est possible.
 - Projet cible `football-qa` présent à côté du projet QA
@@ -67,7 +77,7 @@ régression : il faut d'abord identifier la machine.
 | Projet cible `football-qa` | présent | présent |
 | Stack de test Docker | opérationnelle | opérationnelle |
 | Clés Gemini / Telegram | présentes dans `.env` | présentes dans `.env` |
-| Tests unitaires | à jour après `git pull` sur `main` | **65 passed** |
+| Tests unitaires | à jour après `git pull` sur `main` | **68 passed** |
 
 Les deux PC permettent désormais les missions réelles. Sur le PC personnel, le
 projet cible est une copie de travail du dépôt `MyFinalProject` ; en cas de
@@ -90,7 +100,7 @@ git switch main
 git pull --ff-only origin main
 
 .venv\Scripts\python.exe -m pip install -r requirements.txt
-.venv\Scripts\python.exe -m pytest          # attendu : 65 passed
+.venv\Scripts\python.exe -m pytest          # attendu : 68 passed
 .venv\Scripts\python.exe -m playwright install chromium
 ```
 
@@ -202,6 +212,10 @@ Les agents 1 à 3 disposent d'une implémentation réelle, activée par
 
 Modèle par défaut : `gemini-3.5-flash` (`LLM_MODEL` dans `.env`).
 
+Les réponses `429` et `5xx` du free tier sont retentées (3 tentatives, backoff
+1 s puis 2 s). Si toutes échouent, le repli déterministe s'applique sans
+bloquer la mission.
+
 Les sondes sont strictement limitées à la stack de test locale
 (`http://localhost:8002`). Toute autre cible, notamment l'application réelle
 sur `8001`, est refusée avant la moindre requête. Les preuves et les anomalies
@@ -255,14 +269,14 @@ Validation **en réel** (10 novembre 2026, mission `7e30889c18cd`) :
 | Scénarios Playwright | 11/11, 0 échec |
 | Anomalies applicatives | 0 |
 
-Suite du système : **65 tests passent**. Voir `reports/phase-6-agents-4-5.md`
+Suite du système : **68 tests passent**. Voir `reports/phase-6-agents-4-5.md`
 et `PROJECT_CONTEXT.md` pour le détail des correctifs de cette validation
 (littéraux Python dans la suite générée, scénario de connexion, identifiant
 Postman stable).
 
 ## État d'avancement
 
-- [x] Environnement local complet sur le PC personnel — Python 3.12.10, `.venv`, `.env` avec clés, Chromium, stack de test, **65 tests passent**
+- [x] Environnement local complet sur le PC personnel — Python 3.12.10, `.venv`, `.env` avec clés, Chromium, stack de test, **68 tests passent**
 - [x] Journal des modifications `CHANGELOG.md` et règle de mise à jour documentaire
 - [x] Phase 1 — baseline de l'application existante
 - [x] Phase 2 — stack de test isolée

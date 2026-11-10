@@ -1,0 +1,47 @@
+name: Tests
+
+# Garde-fou automatique : les PR sont fusionnées par l'agent, donc la suite
+# complète doit tourner sans intervention humaine avant chaque fusion.
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pytest:
+    name: pytest (Python 3.12)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    env:
+      # Les tests unitaires sont hors ligne : aucun agent réel, aucune clé.
+      REAL_AGENTS_ENABLED: "false"
+      GEMINI_API_KEY: ""
+      TELEGRAM_BOT_TOKEN: ""
+
+    steps:
+      - name: Récupérer le dépôt
+        uses: actions/checkout@v4
+
+      - name: Installer Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Installer les dépendances
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt
+
+      - name: Exécuter la suite de tests
+        run: python -m pytest -q
