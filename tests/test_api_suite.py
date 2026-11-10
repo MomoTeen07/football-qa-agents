@@ -109,6 +109,10 @@ def test_build_api_suite_writes_suite_and_sources(tmp_path: Path) -> None:
     assert "def test_health_returns_ok" in text
     assert "POSTMAN_CASES" in text
     assert "Add favorite" not in text
+    # La suite générée doit être du Python valide : les littéraux sont injectés
+    # en syntaxe Python (True/False/None), pas en JSON (true/false/null).
+    compile(text, str(assets.suite_path), "exec")
+    assert '"requires_bearer": false' not in text
     assert assets.sources["postman_requests"] == 3
     assert assets.sources["postman_safe_cases"] == 2
     assert (
