@@ -42,6 +42,29 @@ retard. En cas de doute, mettre à jour les trois.
 
 ---
 
+## [0.6.4] — 2026-11-10 — CI GitHub Actions et reprise sur erreurs Gemini
+
+### Ajouté
+
+- **CI GitHub Actions** (`.github/workflows/tests.yml`) : la suite pytest
+  s'exécute sur chaque pull request et sur chaque push vers `main`
+  (Python 3.12, dépendances de `requirements.txt`, aucune clé requise).
+  Puisque les PR sont désormais fusionnées par l'agent, ce contrôle remplace
+  la relecture humaine comme garde-fou.
+- **Reprise sur erreurs transitoires Gemini** (`app/llm/gemini.py`) :
+  les réponses `429` et `5xx` sont retentées avec un backoff exponentiel borné
+  (3 tentatives max, 1 s puis 2 s, plafond 8 s). Les erreurs réseau et les
+  `4xx` définitifs échouent immédiatement. Le repli déterministe reste actif
+  si toutes les tentatives échouent.
+
+### Modifié
+
+- Tests du client Gemini : reprise sur `429` puis succès, abandon après
+  `MAX_ATTEMPTS` sans fuite de clé, absence de reprise sur `400`.
+- Suite complète : **68 tests réussis** (65 avant).
+
+---
+
 ## [0.6.3] — 2026-11-10 — Phase 6 validée en réel et correctifs associés
 
 ### Ajouté
