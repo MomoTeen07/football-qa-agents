@@ -19,7 +19,7 @@ Système multi-agents QA pour tester l'application locale `football-qa`.
 - Toute modification doit aussi mettre à jour **`README.md`** et
   **`PROJECT_CONTEXT.md`**. Une PR n'est pas terminée si l'un des trois fichiers
   est en retard.
-- Dernière entrée : **0.6.5 — Test réel du bot Telegram**.
+- Dernière entrée : **0.6.6 — Retour d'attente pendant l'exécution**.
 
 ## Intégration continue
 
@@ -52,7 +52,7 @@ tests/                Tests du système multi-agents
 - `.env` complété : **clés Gemini et Telegram disponibles**,
   `REAL_AGENTS_ENABLED=true` → agents réels actifs. Les valeurs ne sont
   jamais affichées ni versionnées.
-- `.venv\Scripts\python.exe -m pytest` → **69 passed**.
+- `.venv\Scripts\python.exe -m pytest` → **72 passed**.
 - `playwright==1.64.1` installé et **Chromium présent** dans
   `%LOCALAPPDATA%\ms-playwright` : l'exécution UI réelle est possible.
 - Projet cible `football-qa` présent à côté du projet QA
@@ -76,7 +76,7 @@ régression : il faut d'abord identifier la machine.
 | Projet cible `football-qa` | présent | présent |
 | Stack de test Docker | opérationnelle | opérationnelle |
 | Clés Gemini / Telegram | présentes dans `.env` | présentes dans `.env` |
-| Tests unitaires | à jour après `git pull` sur `main` | **69 passed** |
+| Tests unitaires | à jour après `git pull` sur `main` | **72 passed** |
 
 Les deux PC permettent désormais les missions réelles. Sur le PC personnel, le
 projet cible est une copie de travail du dépôt `MyFinalProject` ; en cas de
@@ -99,7 +99,7 @@ git switch main
 git pull --ff-only origin main
 
 .venv\Scripts\python.exe -m pip install -r requirements.txt
-.venv\Scripts\python.exe -m pytest          # attendu : 69 passed
+.venv\Scripts\python.exe -m pytest          # attendu : 72 passed
 .venv\Scripts\python.exe -m playwright install chromium
 ```
 
@@ -215,6 +215,21 @@ Détail : `reports/phase-4-telegram.md`. Reste à rejouer : le refus d'un
 **compte non autorisé** (« Accès refusé. »), faute de second compte pendant la
 session.
 
+### Retour d'attente
+
+Une mission peut durer plusieurs minutes. Le bot ne reste donc jamais muet :
+
+1. **réponse immédiate** : `Mission <id> créée. ⏳ Exécution en cours…` (texte
+   libre) ou `Mission <id> approuvée. ⏳ Exécution en cours…` (`/approve`) ;
+2. **indicateur « en train d'écrire »** renvoyé toutes les 4 s pendant toute
+   l'exécution ;
+3. **résultat final** dans le même fil, avec le statut, la **durée réelle** et
+   le chemin du rapport.
+
+Aucun message supplémentaire n'est nécessaire : l'utilisateur n'a rien à
+renvoyer. Les commandes rapides (`/start`, `/help`, `/status`, `/missions`) et
+les missions en attente d'approbation répondent immédiatement.
+
 Les secrets restent dans `.env`, ignoré par Git. Ne jamais coller un secret dans
 une conversation ou un rapport.
 
@@ -287,19 +302,19 @@ Validation **en réel** (10 novembre 2026, mission `7e30889c18cd`) :
 | Scénarios Playwright | 11/11, 0 échec |
 | Anomalies applicatives | 0 |
 
-Suite du système : **69 tests passent**. Voir `reports/phase-6-agents-4-5.md`
+Suite du système : **72 tests passent**. Voir `reports/phase-6-agents-4-5.md`
 et `PROJECT_CONTEXT.md` pour le détail des correctifs de cette validation
 (littéraux Python dans la suite générée, scénario de connexion, identifiant
 Postman stable).
 
 ## État d'avancement
 
-- [x] Environnement local complet sur le PC personnel — Python 3.12.10, `.venv`, `.env` avec clés, Chromium, stack de test, **69 tests passent**
+- [x] Environnement local complet sur le PC personnel — Python 3.12.10, `.venv`, `.env` avec clés, Chromium, stack de test, **72 tests passent**
 - [x] Journal des modifications `CHANGELOG.md` et règle de mise à jour documentaire
 - [x] Phase 1 — baseline de l'application existante
 - [x] Phase 2 — stack de test isolée
 - [x] Phase 3 — socle du Manager
-- [x] Phase 4 — connexion Telegram (code **et test réel** le 10 novembre 2026 : commandes validées, mission `8c568cce0ef4` à 0 anomalie, approbation et annulation vérifiées, aucun scheduler)
+- [x] Phase 4 — connexion Telegram (code **et test réel** le 10 novembre 2026 : commandes validées, mission `8c568cce0ef4` à 0 anomalie, approbation et annulation vérifiées, aucun scheduler, retour d'attente immédiat + indicateur d'activité)
 - [x] Phase 5 — agents 1 à 3
 - [x] Phase 6 — agents 4 et 5 (code + validation hors ligne **et** exécution réelle : 27/27 API, 11/11 UI, 0 anomalie)
 - [ ] Phase 7 — agents 6 et 7

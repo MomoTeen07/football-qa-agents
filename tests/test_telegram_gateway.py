@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import asyncio
+import contextlib
 import importlib
 import io
 import logging
@@ -44,6 +46,30 @@ class FakeUpdate:
     ) -> None:
         self.effective_user = FakeUser(user_id) if user_id is not None else None
         self.effective_message = FakeMessage(text)
+
+
+class FakeBot:
+    def __init__(self) -> None:
+        self.actions: list[tuple[int | None, object]] = []
+
+    async def send_chat_action(
+        self,
+        chat_id: int | None = None,
+        action: object = None,
+    ) -> None:
+        self.actions.append((chat_id, action))
+
+
+class FakeUpdateWithChat(FakeUpdate):
+    """Update avec chat et bot, pour tester l'indicateur d'activité."""
+
+    def __init__(self, text: str = "") -> None:
+        super().__init__(text=text)
+        self.effective_message.chat_id = 42
+        self.bot = FakeBot()
+
+    def get_bot(self) -> FakeBot:
+        return self.bot
 
 
 class FakeManager:
@@ -209,8 +235,13 @@ async def test_free_text_creates_then_runs_exactly_one_mission(
 
     assert manager.created == [mission.instruction]
     assert manager.runs == [(mission.id, False)]
-    assert mission.id in update.effective_message.replies[-1]
-    assert "completed" in update.effective_message.replies[-1]
+    replies = update.effective_message.replies
+    assert len(replies) == 2
+    assert "Exécution en cours" in replies[0]
+    assert mission.id in replies[0]
+    assert mission.id in replies[-1]
+    assert "completed" in replies[-1]
+    assert "Durée :" in replies[-1]
 
 
 @pytest.mark.asyncio
@@ -253,6 +284,66 @@ async def test_approve_command_runs_with_explicit_approval(
     await gateway._approve(update, context)  # type: ignore[arg-type]
 
     assert manager.runs == [(mission.id, True)]
+    replies = update.effective_message.replies
+    assert len(replies) == 2
+    assert "Exécution en cours" in replies[0]
+    assert "approuvée" in replies[0]
+    assert "Statut : completed" in replies[-1]
+
+
+@pytest.mark.asyncio
+async def test_waiting_message_is_not_sent_when_approval_is_required(
+    tmp_path: Path,
+) -> None:
+    mission = Mission(
+        instruction="Lance un test de sécurité intrusif sur l'API.",
+        requires_approval=True,
+        approval_reason="test de sécurité intrusif",
+    )
+    manager = FakeManager(mission)
+    gateway = make_gateway(tmp_path, manager)
+    update = FakeUpdate(text=mission.instruction)
+
+    await gateway._free_text(update, None)  # type: ignore[arg-type]
+
+    assert len(update.effective_message.replies) == 1
+    assert "Exécution en cours" not in update.effective_message.replies[0]
+
+
+@pytest.mark.asyncio
+async def test_typing_indicator_is_sent_during_execution(tmp_path: Path) -> None:
+    mission = Mission(instruction="Analyse l'application.")
+    manager = FakeManager(mission)
+    gateway = make_gateway(tmp_path, manager)
+    update = FakeUpdateWithChat()
+
+    task = asyncio.create_task(gateway._typing_loop(update))  # type: ignore[arg-type]
+    await asyncio.sleep(0.05)
+    task.cancel()
+    with contextlib.suppress(asyncio.CancelledError):
+        await task
+
+    assert update.bot.actions
+    assert update.bot.actions[0][0] == 42
+
+
+@pytest.mark.asyncio
+async def test_typing_indicator_failure_does_not_break_the_mission(
+    tmp_path: Path,
+) -> None:
+    class BrokenBot:
+        async def send_chat_action(self, **kwargs: object) -> None:
+            raise RuntimeError("réseau indisponible")
+
+    mission = Mission(instruction="Analyse l'application.")
+    manager = FakeManager(mission)
+    gateway = make_gateway(tmp_path, manager)
+    update = FakeUpdateWithChat(text=mission.instruction)
+    update.bot = BrokenBot()  # type: ignore[assignment]
+
+    await gateway._free_text(update, None)  # type: ignore[arg-type]
+
+    assert manager.runs == [(mission.id, False)]
     assert "Statut : completed" in update.effective_message.replies[-1]
 
 

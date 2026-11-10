@@ -80,7 +80,7 @@ Le warning `PTBUserWarning: No JobQueue set up` est attendu : le test
 n'est configurée.
 
 > Chiffres du 9 novembre 2026. Au 10 novembre 2026, après les phases 5 et 6 et
-> le test réel du bot, la suite compte **69 tests** (dont **14** pour
+> le test réel du bot, la suite compte **72 tests** (dont **17** pour
 > `tests/test_telegram_gateway.py`).
 
 Vérification du point d'entrée avec le token vide :
@@ -206,4 +206,25 @@ second compte Telegram disponible dans la session. Il reste couvert par
 
 Bot Telegram **validé en réel** sur les commandes, la création et l'exécution
 d'une mission réelle, l'approbation, l'annulation et l'absence de scheduler.
-Suite du système : **69 tests réussis**.
+Suite du système : **72 tests réussis**.
+
+### Ajout postérieur au test réel : retour d'attente
+
+Le test réel a mis en évidence un défaut d'expérience : pendant l'exécution
+d'une mission (jusqu'à plusieurs minutes), le bot restait muet et l'utilisateur
+ne savait pas si son message avait été reçu. Correctif (version 0.6.6) :
+
+- réponse immédiate `Mission <id> créée. ⏳ Exécution en cours…` (texte libre) ou
+  `Mission <id> approuvée. ⏳ Exécution en cours…` (`/approve`) ;
+- `send_chat_action(..., typing)` renvoyé toutes les 4 s pendant l'exécution
+  (`TYPING_INTERVAL_SECONDS`), arrêté proprement à la fin ;
+- réponse finale enrichie de la **durée réelle** (`Durée : N s`) ;
+- un échec de l'indicateur est journalisé en debug et n'interrompt jamais la
+  mission ;
+- les missions en attente d'approbation ne reçoivent pas de message d'attente
+  (elles ne s'exécutent pas).
+
+Couverture : `test_typing_indicator_is_sent_during_execution`,
+`test_typing_indicator_failure_does_not_break_the_mission`,
+`test_waiting_message_is_not_sent_when_approval_is_required`, et assertions
+d'ordre des réponses sur texte libre et `/approve`.

@@ -42,6 +42,31 @@ retard. En cas de doute, mettre à jour les trois.
 
 ---
 
+## [0.6.6] — 2026-11-10 — Retour d'attente pendant l'exécution d'une mission
+
+### Ajouté
+
+- **Message d'attente immédiat** : sur texte libre (et sur `/approve`), le
+  gateway répond tout de suite `Mission <id> créée. ⏳ Exécution en cours…`
+  avant de lancer les agents, puis envoie le résultat dans le même fil.
+  Auparavant, le bot restait muet plusieurs minutes et l'utilisateur ne savait
+  pas si son message avait été reçu.
+- **Indicateur d'activité Telegram** : `send_chat_action(..., typing)` est
+  renvoyé toutes les 4 s pendant toute la durée de l'exécution
+  (`TYPING_INTERVAL_SECONDS`), puis arrêté proprement. Un échec de cet
+  indicateur n'interrompt jamais la mission.
+- **Durée réelle dans la réponse finale** (`Durée : N s`).
+
+### Modifié
+
+- `_run_mission_with_feedback` encapsule l'exécution et la boucle d'indicateur ;
+  l'utilisateur est informé avant, pendant et après le traitement.
+- Suite complète : **72 tests réussis** (69 avant), dont 3 nouveaux tests
+  (message d'attente avant exécution, indicateur d'activité, tolérance à un
+  échec de l'indicateur) et une assertion renforcée sur `/approve`.
+
+---
+
 ## [0.6.5] — 2026-11-10 — Test réel du bot Telegram
 
 ### Ajouté
