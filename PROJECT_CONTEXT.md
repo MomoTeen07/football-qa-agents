@@ -1,9 +1,8 @@
 # PROJECT_CONTEXT — Football QA Agents
 
 Date du point de reprise : 10 novembre 2026  
-Dernière action terminée : **test réel du bot Telegram** (10 novembre 2026). Le gateway `@Quaresma_QA_bot` a été validé en polling sur le PC personnel : `/start`, `/help`, texte libre, `/status`, `/missions`, `/approve` et `/stop` fonctionnent réellement. Mission réelle `8c568cce0ef4` créée depuis Telegram : **21/21 sondes**, **27/27 tests pytest API**, **11/11 scénarios Playwright**, **0 anomalie**. Garde-fou d'approbation et annulation vérifiés (missions `8d7a1f40274d` et `c5d08e7742e2`). Aucun scheduler, aucun `409`. Suite du système : **69 tests sur 69 réussis**.  
+Dernière action terminée : **test réel du bot Telegram** (10 novembre 2026) puis **retour d'attente** (0.6.6). Le gateway `@Quaresma_QA_bot` a été validé en polling sur le PC personnel : `/start`, `/help`, texte libre, `/status`, `/missions`, `/approve` et `/stop` fonctionnent réellement. Mission réelle `8c568cce0ef4` créée depuis Telegram : **21/21 sondes**, **27/27 tests pytest API**, **11/11 scénarios Playwright**, **0 anomalie**. Garde-fou d'approbation et annulation vérifiés (missions `8d7a1f40274d` et `c5d08e7742e2`). Aucun scheduler, aucun `409`. Depuis 0.6.6, le bot répond immédiatement `⏳ Exécution en cours…`, maintient l'indicateur « en train d'écrire » pendant le traitement et affiche la durée finale. Suite du système : **72 tests sur 72 réussis**.
 État global : **phases 1 à 6 terminées et validées en réel**. Le projet n'est pas terminé : les phases 7 à 9 restent à faire.
-
 > **Point de reprise — lire ceci en premier**
 >
 > - `main` contient les phases 1 à 6 et le **test réel du bot Telegram**
@@ -12,7 +11,7 @@ Dernière action terminée : **test réel du bot Telegram** (10 novembre 2026). 
 > - Reprise : `git switch main` puis `git pull --ff-only origin main`.
 > - Puis :
 >   1. `.venv\Scripts\python.exe -m pip install -r requirements.txt`
->   2. `.venv\Scripts\python.exe -m pytest` → attendu **`69 passed`**
+>   2. `.venv\Scripts\python.exe -m pytest` → attendu **`72 passed`**
 >   3. `.venv\Scripts\python.exe -m playwright install chromium`
 >   4. démarrer la stack `football-qa-test`, puis `.venv\Scripts\python.exe scripts\run_phase6_mission.py`
 > - Le projet cible `football-qa`, les clés et la stack de test sont
@@ -96,7 +95,7 @@ Construire un système multi-agents QA local pour l’application `football-qa`,
   installées.
 - `.env` complété : **clés Gemini et Telegram disponibles**,
   `REAL_AGENTS_ENABLED=true`. Les valeurs ne sont jamais affichées.
-- Suite de tests : `.venv\Scripts\python.exe -m pytest` → **69 passed**.
+- Suite de tests : `.venv\Scripts\python.exe -m pytest` → **72 passed**.
 - `playwright==1.64.1` installé et **Chromium présent** dans
   `%LOCALAPPDATA%\ms-playwright` : l’exécution UI réelle fonctionne.
 - Dépôt Git initialisé sur la branche `main` (commit initial `2a3c929`) ;
@@ -120,7 +119,7 @@ on travaille.**
 | Stack de test Docker | opérationnelle | opérationnelle |
 | `.env` | clés Gemini + Telegram présentes | clés Gemini + Telegram présentes |
 | Python | 3.12 avec `.venv` existant | 3.12.10, `.venv` prêt |
-| Tests | 69 après `git pull` sur `main` | **69 passed** |
+| Tests | 72 après `git pull` sur `main` | **72 passed** |
 
 Conséquences :
 
@@ -146,7 +145,7 @@ git switch main
 git pull --ff-only origin main
 
 .venv\Scripts\python.exe -m pip install -r requirements.txt
-.venv\Scripts\python.exe -m pytest          # attendu : 69 passed
+.venv\Scripts\python.exe -m pytest          # attendu : 72 passed
 .venv\Scripts\python.exe -m playwright install chromium
 ```
 
@@ -430,12 +429,17 @@ QA Analyst  Test Designer  API Tester   API Auto +    QA Reporter
 - `SecretRedactionFilter` installé au démarrage : le jeton Telegram est
   remplacé par `[redacted]` dans tous les logs, y compris ceux d'`httpx` qui
   journalise l'URL de l'API Bot. `logs/` est ignoré par Git.
+- **Retour d'attente** : sur texte libre et `/approve`, le bot répond
+  immédiatement `⏳ Exécution en cours…` avant de lancer les agents, maintient
+  l'indicateur « en train d'écrire » (`send_chat_action`, toutes les 4 s)
+  pendant tout le traitement, puis envoie le résultat avec la durée réelle.
+  Un échec de l'indicateur n'interrompt pas la mission.
 
 ### Vérification
 
 ```powershell
 .venv\Scripts\python.exe -m pytest
-# 69 passed
+# 72 passed
 ```
 
 CI : `.github/workflows/tests.yml` rejoue la même suite sur chaque PR et sur
@@ -498,7 +502,7 @@ Mission réelle de référence (10 novembre 2026) :
 | `app/telegram/gateway.py` | Gateway Telegram en polling, sans scheduler |
 | `tests/test_manager.py` | 5 tests du socle |
 | `tests/test_telegram_auth.py` | 5 tests de l’allowlist |
-| `tests/test_telegram_gateway.py` | 14 tests du gateway, des garde-fous et de la rédaction du jeton |
+| `tests/test_telegram_gateway.py` | 17 tests du gateway, des garde-fous, de la rédaction du jeton et du retour d'attente |
 | `tests/test_gemini_client.py` | 8 tests du client Gemini (dont reprise 429/5xx et absence de fuite de clé) |
 | `tests/test_openapi_postman.py` | 3 tests OpenAPI et Postman |
 | `tests/test_api_probe.py` | 4 tests des sondes, du garde-fou et des anomalies |
@@ -587,7 +591,7 @@ dans ce document.
 | `TEST_USER1_EMAIL` / `TEST_USER2_EMAIL` | comptes de test locaux |
 | `GROQ_API_KEY` / `MISTRAL_API_KEY` | non utilisés |
 
-Sans clé, le système reste utilisable : les 69 tests passent et les agents
+Sans clé, le système reste utilisable : les 72 tests passent et les agents
 réels basculent sur leur repli déterministe.
 
 Historique utile :
@@ -681,7 +685,7 @@ Invoke-WebRequest -UseBasicParsing http://localhost:8002/health
 Invoke-WebRequest -UseBasicParsing http://localhost:5175/
 ```
 
-Attendu : `69 passed` et stack `healthy` sur `8002`, `5434` et `5175`.
+Attendu : `72 passed` et stack `healthy` sur `8002`, `5434` et `5175`.
 Ne jamais sonder `8001` avec les outils du projet.
 
 ### Étape 1 — vérifier l’état livré
@@ -848,7 +852,7 @@ approbation, annulation), la phase 5 (agents 1 à 3 réels avec Gemini
 `gemini-3.5-flash`, collection Postman, sondes API limitées à `localhost:8002`)
 et la phase 6 (agents 4 et 5 : suite pytest API et scénarios Playwright)
 fonctionnent dans un environnement Python 3.12.10 natif, le bot Telegram est
-validé en réel (mission `8c568cce0ef4` à 0 anomalie), et les **69 tests
+validé en réel (mission `8c568cce0ef4` à 0 anomalie), et les **72 tests
 passent**. La mission de référence `7e30889c18cd` (10 novembre 2026) a réussi
 21/21 sondes, 27/27 tests API et 11/11 scénarios UI avec 0 anomalie, sur une
 stack de test saine et avec les clés réelles. Le projet se poursuit à la

@@ -1,11 +1,14 @@
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import logging
 import threading
+import time
 from collections.abc import Callable
 
 from telegram import Update
+from telegram.constants import ChatAction
 from telegram.error import InvalidToken
 from telegram.ext import (
     Application,
@@ -27,6 +30,8 @@ logger = logging.getLogger(__name__)
 MAX_MESSAGE_LENGTH = 3900
 RECENT_MISSIONS_LIMIT = 10
 SECRET_PLACEHOLDER = "[redacted]"
+# Telegram n'affiche « en train d'écrire… » que quelques secondes : on le répète.
+TYPING_INTERVAL_SECONDS = 4.0
 
 START_TEXT = (
     "Bonjour, je suis le Manager QA local de Football QA.\n\n"
@@ -261,12 +266,24 @@ class TelegramGateway:
             await self._reply(update, "Usage : /approve <mission_id>")
             return
 
+        await self._reply(update, _waiting_text(mission_id, "approuvée"))
         try:
-            mission = await self._run_mission(mission_id, approved=True)
+            mission, duration_s = await self._run_mission_with_feedback(
+                update,
+                mission_id,
+                approved=True,
+            )
         except ValueError:
             await self._reply(update, f"Mission introuvable : {mission_id}")
             return
-        await self._reply(update, _mission_result_text(mission, "Mission approuvée"))
+        await self._reply(
+            update,
+            _mission_result_text(
+                mission,
+                "Mission approuvée",
+                duration_s=duration_s,
+            ),
+        )
 
     async def _stop(
         self,
@@ -332,8 +349,15 @@ class TelegramGateway:
             )
             return
 
-        mission = await self._run_mission(mission.id)
-        await self._reply(update, _mission_result_text(mission))
+        await self._reply(update, _waiting_text(mission.id, "créée"))
+        mission, duration_s = await self._run_mission_with_feedback(
+            update,
+            mission.id,
+        )
+        await self._reply(
+            update,
+            _mission_result_text(mission, duration_s=duration_s),
+        )
 
     async def _unknown_command(
         self,
@@ -350,6 +374,48 @@ class TelegramGateway:
     # ------------------------------------------------------------------
     # Exécution synchrone déportée dans un thread
     # ------------------------------------------------------------------
+    async def _run_mission_with_feedback(
+        self,
+        update: Update,
+        mission_id: str,
+        *,
+        approved: bool = False,
+    ) -> tuple[Mission, float]:
+        """Exécute la mission en gardant l'utilisateur informé de l'attente.
+
+        L'indicateur « en train d'écrire » est renvoyé périodiquement tant que
+        le Manager travaille, puis arrêté. La durée réelle est retournée pour
+        être affichée dans la réponse finale.
+        """
+        started = time.monotonic()
+        typing_task = asyncio.create_task(self._typing_loop(update))
+        try:
+            mission = await self._run_mission(mission_id, approved=approved)
+        finally:
+            typing_task.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await typing_task
+        return mission, time.monotonic() - started
+
+    async def _typing_loop(self, update: Update) -> None:
+        """Maintient l'indicateur d'activité Telegram pendant l'exécution."""
+        get_bot = getattr(update, "get_bot", None)
+        bot = get_bot() if callable(get_bot) else None
+        chat_id = getattr(update.effective_message, "chat_id", None)
+        if bot is None or chat_id is None:
+            return
+
+        while True:
+            try:
+                await bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
+            except asyncio.CancelledError:
+                raise
+            except Exception:
+                # Un échec d'indicateur ne doit jamais interrompre la mission.
+                logger.debug("Indicateur d'activité Telegram indisponible.")
+                return
+            await asyncio.sleep(TYPING_INTERVAL_SECONDS)
+
     async def _run_mission(
         self,
         mission_id: str,
@@ -457,9 +523,26 @@ def _first_argument(context: ContextTypes.DEFAULT_TYPE | None) -> str:
     return context.args[0].strip()
 
 
-def _mission_result_text(mission: Mission, title: str | None = None) -> str:
+def _waiting_text(mission_id: str, state: str) -> str:
+    """Message d'attente envoyé immédiatement, avant l'exécution."""
+    return (
+        f"Mission {mission_id} {state}.\n"
+        "⏳ Exécution en cours… le résultat sera envoyé ici dès la fin.\n"
+        "Vous n'avez rien à renvoyer : l'indicateur d'activité reste affiché "
+        "pendant tout le traitement."
+    )
+
+
+def _mission_result_text(
+    mission: Mission,
+    title: str | None = None,
+    *,
+    duration_s: float | None = None,
+) -> str:
     lines = [title or "Mission exécutée", f"ID : {mission.id}"]
     lines.append(f"Statut : {mission.status.value}")
+    if duration_s is not None:
+        lines.append(f"Durée : {duration_s:.0f} s")
     if mission.report_path:
         lines.append(f"Rapport : {mission.report_path}")
     return "\n".join(lines)
