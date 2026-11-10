@@ -215,6 +215,12 @@ Détail : `reports/phase-4-telegram.md`. Reste à rejouer : le refus d'un
 **compte non autorisé** (« Accès refusé. »), faute de second compte pendant la
 session.
 
+> **Sécurité** : pendant ce test, `httpx` a journalisé l'URL de l'API Bot, donc
+> le jeton est apparu en clair dans le log local. Le log a été purgé et un
+> `SecretRedactionFilter` masque désormais le jeton (`[redacted]`) dans tous les
+> logs ; `logs/` est ignoré par Git. Par précaution, il est recommandé de
+> régénérer le jeton via BotFather et de mettre à jour `.env` sans l'afficher.
+
 ### Retour d'attente
 
 Une mission peut durer plusieurs minutes. Le bot ne reste donc jamais muet :
