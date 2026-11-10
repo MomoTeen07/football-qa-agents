@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import importlib
+import io
+import logging
 import warnings
 from pathlib import Path
 from types import SimpleNamespace
@@ -266,6 +268,30 @@ async def test_stop_command_requests_cancellation(tmp_path: Path) -> None:
 
     assert manager.cancelled == [mission.id]
     assert mission.id in update.effective_message.replies[-1]
+
+
+def test_log_records_never_contain_the_token() -> None:
+    """httpx journalise l'URL Bot API : le filtre doit masquer le jeton."""
+    fake_token = "123456:FAKE-SECRET-TOKEN"
+    stream = io.StringIO()
+    handler = logging.StreamHandler(stream)
+    handler.addFilter(gateway_module.SecretRedactionFilter(fake_token))
+    logger = logging.getLogger("tests.telegram.redaction")
+    logger.propagate = False
+    logger.setLevel(logging.INFO)
+    logger.addHandler(handler)
+    try:
+        logger.info(
+            "HTTP Request: POST https://api.telegram.org/bot%s/getMe",
+            fake_token,
+        )
+    finally:
+        logger.removeHandler(handler)
+
+    output = stream.getvalue()
+    assert fake_token not in output
+    assert "FAKE-SECRET-TOKEN" not in output
+    assert gateway_module.SECRET_PLACEHOLDER in output
 
 
 def test_main_refuses_to_start_without_token(

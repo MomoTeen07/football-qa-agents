@@ -26,6 +26,7 @@ logger = logging.getLogger(__name__)
 
 MAX_MESSAGE_LENGTH = 3900
 RECENT_MISSIONS_LIMIT = 10
+SECRET_PLACEHOLDER = "[redacted]"
 
 START_TEXT = (
     "Bonjour, je suis le Manager QA local de Football QA.\n\n"
@@ -54,6 +55,40 @@ HELP_TEXT = (
     "Aucune mission n'est lancée sans message explicite. Aucun planificateur "
     "n'est actif."
 )
+
+
+class SecretRedactionFilter(logging.Filter):
+    """Masque le jeton Telegram dans tous les messages journalisés.
+
+    httpx journalise l'URL complète des appels Bot API, or cette URL contient
+    le jeton. Ce filtre garantit qu'aucun secret n'apparaît dans les logs
+    locaux, y compris ceux écrits par les bibliothèques tierces.
+    """
+
+    def __init__(self, secret: str) -> None:
+        super().__init__()
+        self._secret = (secret or "").strip()
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        if not self._secret:
+            return True
+        try:
+            message = record.getMessage()
+        except Exception:  # pragma: no cover - message non formatable
+            return True
+        if self._secret in message:
+            record.msg = message.replace(self._secret, SECRET_PLACEHOLDER)
+            record.args = ()
+        return True
+
+
+def install_secret_redaction(secret: str) -> None:
+    """Installe le filtre de rédaction sur le logger racine et ses handlers."""
+    log_filter = SecretRedactionFilter(secret)
+    root = logging.getLogger()
+    for handler in root.handlers:
+        handler.addFilter(log_filter)
+    root.addFilter(log_filter)
 
 
 class ManagerProvider:
@@ -436,6 +471,7 @@ def main() -> int:
         level=getattr(logging, settings.log_level.upper(), logging.INFO),
         format="%(asctime)s %(levelname)s %(name)s: %(message)s",
     )
+    install_secret_redaction(settings.telegram_bot_token)
 
     if not settings.telegram_bot_token.strip():
         print(

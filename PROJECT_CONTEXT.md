@@ -1,18 +1,18 @@
 # PROJECT_CONTEXT — Football QA Agents
 
 Date du point de reprise : 10 novembre 2026  
-Dernière action terminée : **CI GitHub Actions** et **reprise sur erreurs Gemini** (429/5xx). La phase 6 a été validée en réel sur le PC personnel : mission de référence `7e30889c18cd`, **21/21 sondes**, **27/27 tests pytest API**, **11/11 scénarios Playwright**, **0 anomalie**. Suite du système : **68 tests sur 68 réussis**.  
+Dernière action terminée : **test réel du bot Telegram** (10 novembre 2026). Le gateway `@Quaresma_QA_bot` a été validé en polling sur le PC personnel : `/start`, `/help`, texte libre, `/status`, `/missions`, `/approve` et `/stop` fonctionnent réellement. Mission réelle `8c568cce0ef4` créée depuis Telegram : **21/21 sondes**, **27/27 tests pytest API**, **11/11 scénarios Playwright**, **0 anomalie**. Garde-fou d'approbation et annulation vérifiés (missions `8d7a1f40274d` et `c5d08e7742e2`). Aucun scheduler, aucun `409`. Suite du système : **69 tests sur 69 réussis**.  
 État global : **phases 1 à 6 terminées et validées en réel**. Le projet n'est pas terminé : les phases 7 à 9 restent à faire.
 
 > **Point de reprise — lire ceci en premier**
 >
-> - `main` contient les phases 1 à 6 (PR #1, #2, #3 fusionnées).
->   La validation réelle et les correctifs arrivent par la **PR #4**
->   (`fix/phase6-real-run`, 10 novembre 2026).
+> - `main` contient les phases 1 à 6 et le **test réel du bot Telegram**
+>   (PR #1, #2, #3, #4 et #6 fusionnées ; PR #7 pour le test Telegram,
+>   10 novembre 2026).
 > - Reprise : `git switch main` puis `git pull --ff-only origin main`.
 > - Puis :
 >   1. `.venv\Scripts\python.exe -m pip install -r requirements.txt`
->   2. `.venv\Scripts\python.exe -m pytest` → attendu **`68 passed`**
+>   2. `.venv\Scripts\python.exe -m pytest` → attendu **`69 passed`**
 >   3. `.venv\Scripts\python.exe -m playwright install chromium`
 >   4. démarrer la stack `football-qa-test`, puis `.venv\Scripts\python.exe scripts\run_phase6_mission.py`
 > - Le projet cible `football-qa`, les clés et la stack de test sont
@@ -96,7 +96,7 @@ Construire un système multi-agents QA local pour l’application `football-qa`,
   installées.
 - `.env` complété : **clés Gemini et Telegram disponibles**,
   `REAL_AGENTS_ENABLED=true`. Les valeurs ne sont jamais affichées.
-- Suite de tests : `.venv\Scripts\python.exe -m pytest` → **68 passed**.
+- Suite de tests : `.venv\Scripts\python.exe -m pytest` → **69 passed**.
 - `playwright==1.64.1` installé et **Chromium présent** dans
   `%LOCALAPPDATA%\ms-playwright` : l’exécution UI réelle fonctionne.
 - Dépôt Git initialisé sur la branche `main` (commit initial `2a3c929`) ;
@@ -120,7 +120,7 @@ on travaille.**
 | Stack de test Docker | opérationnelle | opérationnelle |
 | `.env` | clés Gemini + Telegram présentes | clés Gemini + Telegram présentes |
 | Python | 3.12 avec `.venv` existant | 3.12.10, `.venv` prêt |
-| Tests | 68 après `git pull` sur `main` | **68 passed** |
+| Tests | 69 après `git pull` sur `main` | **69 passed** |
 
 Conséquences :
 
@@ -146,7 +146,7 @@ git switch main
 git pull --ff-only origin main
 
 .venv\Scripts\python.exe -m pip install -r requirements.txt
-.venv\Scripts\python.exe -m pytest          # attendu : 68 passed
+.venv\Scripts\python.exe -m pytest          # attendu : 69 passed
 .venv\Scripts\python.exe -m playwright install chromium
 ```
 
@@ -220,8 +220,16 @@ Déjà fait :
 - [x] Ajouter des tests d’allowlist et d’absence de mission automatique : **23 tests réussis**.
 - [x] Documenter la phase 4 dans `reports/phase-4-telegram.md`.
 - [x] Mettre à jour `README.md` (phase 4).
-- [ ] Test réel du bot : le token est désormais présent dans `.env` ; le test
-      reste à exécuter (voir section 8, étape 3).
+- [x] **Test réel du bot — 10 novembre 2026** : jeton chargé, polling
+      démarré sans `409`, `/start`, `/help`, texte libre, `/status`,
+      `/missions`, `/approve` et `/stop` validés avec `@Quaresma_QA_bot`.
+      Mission réelle `8c568cce0ef4` (6/6 tâches, 0 anomalie), mission à
+      approbation `8d7a1f40274d` bloquée puis approuvée, mission
+      `c5d08e7742e2` annulée par `/stop` (approbation tardive ignorée).
+      Détail : `reports/phase-4-telegram.md`.
+- [ ] Test du **compte non autorisé** en réel : reporté faute de second compte
+      Telegram pendant la session ; couvert par les 5 tests d'allowlist et le
+      test de garde du gateway.
 
 ### Phase 5 — agents 1 à 3 : terminée côté code et validée réellement
 
@@ -242,7 +250,7 @@ Déjà fait :
 - [x] Mission réelle `b745b4a199b7` : 21/21 sondes, 0 anomalie.
 - [x] Documentation : `reports/phase-5-agents-1-3.md`.
 - [x] mise à jour `README.md` (phase 5).
-- [ ] Test réel du bot Telegram : token présent, test restant à exécuter.
+- [x] Test réel du bot Telegram : réalisé le 10 novembre 2026 (voir phase 4).
 
 ### Phase 6 — agents 4 et 5 : terminée et validée en réel
 
@@ -281,7 +289,7 @@ Déjà fait :
       `NameError`), scénario de connexion repassant par une page publique
       (`history.state.from` renvoyait vers `/favorites`), identifiant Postman
       déterministe (`uuid5`) pour éviter un diff à chaque mission.
-- [ ] Test réel du bot Telegram : toujours à faire.
+- [x] Test réel du bot Telegram : réalisé le 10 novembre 2026 (voir phase 4).
 
 ### Phases restantes
 
@@ -411,7 +419,7 @@ QA Analyst  Test Designer  API Tester   API Auto +    QA Reporter
   - `playwright==1.64.1` (le navigateur Chromium s’installe séparément avec
     `python -m playwright install chromium`).
 
-### Gateway Telegram (phase 4, inchangé)
+### Gateway Telegram (phase 4, validé en réel)
 
 - Polling uniquement, aucun scheduler, aucun `JobQueue`.
 - Allowlist stricte sur chaque update (groupe `-1`).
@@ -419,12 +427,15 @@ QA Analyst  Test Designer  API Tester   API Auto +    QA Reporter
 - Texte libre : création puis exécution d’une mission.
 - Missions exécutées via `asyncio.to_thread` (Manager synchrone).
 - Un seul `Manager` par processus, protégé par un verrou thread-safe.
+- `SecretRedactionFilter` installé au démarrage : le jeton Telegram est
+  remplacé par `[redacted]` dans tous les logs, y compris ceux d'`httpx` qui
+  journalise l'URL de l'API Bot. `logs/` est ignoré par Git.
 
 ### Vérification
 
 ```powershell
 .venv\Scripts\python.exe -m pytest
-# 68 passed
+# 69 passed
 ```
 
 CI : `.github/workflows/tests.yml` rejoue la même suite sur chaque PR et sur
@@ -487,7 +498,7 @@ Mission réelle de référence (10 novembre 2026) :
 | `app/telegram/gateway.py` | Gateway Telegram en polling, sans scheduler |
 | `tests/test_manager.py` | 5 tests du socle |
 | `tests/test_telegram_auth.py` | 5 tests de l’allowlist |
-| `tests/test_telegram_gateway.py` | 13 tests du gateway et des garde-fous |
+| `tests/test_telegram_gateway.py` | 14 tests du gateway, des garde-fous et de la rédaction du jeton |
 | `tests/test_gemini_client.py` | 8 tests du client Gemini (dont reprise 429/5xx et absence de fuite de clé) |
 | `tests/test_openapi_postman.py` | 3 tests OpenAPI et Postman |
 | `tests/test_api_probe.py` | 4 tests des sondes, du garde-fou et des anomalies |
@@ -504,7 +515,7 @@ Mission réelle de référence (10 novembre 2026) :
 | `reports/baseline.md` | Baseline |
 | `reports/phase-2-isolation.md` | Validation isolation |
 | `reports/phase-3-manager-core.md` | Validation socle Manager |
-| `reports/phase-4-telegram.md` | Validation connexion Telegram |
+| `reports/phase-4-telegram.md` | Validation connexion Telegram (code + test réel) |
 | `reports/phase-5-agents-1-3.md` | Validation phase 5 |
 | `reports/phase-6-agents-4-5.md` | Validation phase 6 (hors ligne + réel) |
 | `reports/missions/4e1c01636615.md` | Rapport de mission de démonstration (local, ignoré par Git) |
@@ -513,6 +524,7 @@ Mission réelle de référence (10 novembre 2026) :
 | `workspace/missions/b745b4a199b7/` | Preuves de la mission phase 5 (locales) |
 | `workspace/missions/7e30889c18cd/` | Preuves de la mission phase 6 réelle (locales) |
 | `workspace/missions.db` | Base SQLite locale des missions |
+| `logs/telegram-gateway.log` | Journal local du gateway (ignoré par Git, jeton masqué) |
 | `workspace/missions/.gitkeep` | Maintien du dossier |
 | `reports/missions/.gitkeep` | Maintien du dossier |
 
@@ -575,7 +587,7 @@ dans ce document.
 | `TEST_USER1_EMAIL` / `TEST_USER2_EMAIL` | comptes de test locaux |
 | `GROQ_API_KEY` / `MISTRAL_API_KEY` | non utilisés |
 
-Sans clé, le système reste utilisable : les 68 tests passent et les agents
+Sans clé, le système reste utilisable : les 69 tests passent et les agents
 réels basculent sur leur repli déterministe.
 
 Historique utile :
@@ -588,13 +600,23 @@ Historique utile :
 - Ne jamais afficher, journaliser ou coller ces valeurs dans le chat, un
   rapport ou une preuve.
 
-### Configuration Telegram restant à effectuer
+### Configuration Telegram — validée en réel le 10 novembre 2026
 
-- `TELEGRAM_BOT_TOKEN` est renseigné ; le bot n’a pas encore été testé en réel.
-- Pour le tester : lancer `.venv\Scripts\python.exe -m app.telegram.gateway`
-  puis envoyer `/start`, un texte libre, `/status`, `/approve`, `/stop`.
-- Vérifier que le token n’a jamais été publié ; en cas de doute, le régénérer
-  via BotFather et mettre à jour `.env` sans afficher la nouvelle valeur.
+- `TELEGRAM_BOT_TOKEN` est renseigné et le bot `@Quaresma_QA_bot` a été testé
+  en réel : polling sans `409`, commandes `/start`, `/help`, `/status`,
+  `/missions`, `/approve`, `/stop` et texte libre validés.
+- Mission réelle créée depuis Telegram : `8c568cce0ef4` (6/6 tâches,
+  21/21 sondes, 27/27 tests API, 11/11 scénarios UI, 0 anomalie).
+- Garde-fou : la mission `8d7a1f40274d` (publication externe) est restée à
+  `created` sans exécution jusqu’à `/approve`. L’annulation `c5d08e7742e2`
+  est restée `cancelled` malgré une approbation tardive.
+- **Fuite de jeton corrigée** : `httpx` journalisait l’URL de l’API Bot. Un
+  `SecretRedactionFilter` masque désormais le jeton (`[redacted]`) dans tous
+  les logs ; `logs/` est ignoré par Git. Par précaution, régénérer le jeton via
+  BotFather si le fichier de log a circulé, puis mettre à jour `.env` sans
+  afficher la nouvelle valeur.
+- Reste à faire : test d’un **compte non autorisé** en réel (second compte
+  Telegram indisponible pendant la session).
 
 ### Configuration Gemini
 
@@ -659,7 +681,7 @@ Invoke-WebRequest -UseBasicParsing http://localhost:8002/health
 Invoke-WebRequest -UseBasicParsing http://localhost:5175/
 ```
 
-Attendu : `68 passed` et stack `healthy` sur `8002`, `5434` et `5175`.
+Attendu : `69 passed` et stack `healthy` sur `8002`, `5434` et `5175`.
 Ne jamais sonder `8001` avec les outils du projet.
 
 ### Étape 1 — vérifier l’état livré
@@ -705,17 +727,29 @@ affiche `API_STATUS`, `API_TESTS`, `API_PASSED`, `API_FAILED`,
 > `UI_CHECKS=11`, `UI_PASSED=11`, anomalies à `0`. Un statut `blocked` signifie
 > que la stack est arrêtée, pas qu’une anomalie a été trouvée.
 
-### Étape 3 — tester réellement le bot Telegram (optionnel)
+### Étape 3 — bot Telegram : test réel effectué
+
+Le 10 novembre 2026, le gateway a été lancé et validé en réel :
 
 ```powershell
 .venv\Scripts\python.exe -m app.telegram.gateway
 ```
 
-Puis, depuis le compte autorisé : `/start`, un texte libre, `/status <id>`,
-`/approve <id>` si demandé, `/stop <id>`. Aucun scheduler ne doit démarrer.
+Résultats (détail : `reports/phase-4-telegram.md`) :
 
-> Le token est désormais présent dans `.env` ; seul le test manuel reste à
-> faire.
+- `/start` et `/help` répondent conformément aux textes du gateway ;
+- un texte libre crée **et exécute** une mission réelle (`8c568cce0ef4`,
+  0 anomalie) ;
+- `/status <id>` affiche mission, tâches et dernier événement ;
+- `/missions` liste les missions récentes ;
+- `/approve <id>` lève explicitement le garde-fou (`8d7a1f40274d`) ;
+- `/stop <id>` annule (`c5d08e7742e2`, `cancelled`) ;
+- aucun scheduler, aucun `JobQueue`, aucun `409` Telegram.
+
+> Reste à rejouer : le refus d’un message venant d’un **compte non autorisé**,
+> dès qu’un second compte Telegram est disponible. Lancer ensuite
+> `.venv\Scripts\python.exe -m app.telegram.gateway` avec les logs dans
+> `logs/telegram-gateway.log`.
 
 ### Étape 4 — prochaine phase de développement
 
@@ -801,7 +835,7 @@ explicite.
 - L’agent 6 (DevOps) reste un stub ; l’agent 7 (reporter) est réel mais le reporting Allure complet relève de la phase 7.
 - Chromium est installé sur le PC personnel ; l’agent UI y exécute réellement Playwright.
 - Les agents 1 à 3 dépendent du free tier Gemini : une erreur passagère (quota/429) déclenche le repli déterministe sans bloquer la mission ni créer d’anomalie.
-- Le test réel du bot Telegram n’a pas encore été exécuté, mais le token est présent.
+- Le bot Telegram est validé en réel (10 novembre 2026) ; le test d’un compte non autorisé reste à rejouer avec un second compte. Le jeton est masqué dans les logs par `SecretRedactionFilter`.
 - Les rapports et preuves de mission sont **locaux** (`reports/missions/`, `workspace/missions/`) et ignorés par Git : leur absence après un clone est normale.
 - Aucune nouvelle phase ne doit démarrer sans demande explicite.
 
@@ -813,7 +847,8 @@ Le socle QA local (baseline, isolation, Manager, gateway Telegram, rapports,
 approbation, annulation), la phase 5 (agents 1 à 3 réels avec Gemini
 `gemini-3.5-flash`, collection Postman, sondes API limitées à `localhost:8002`)
 et la phase 6 (agents 4 et 5 : suite pytest API et scénarios Playwright)
-fonctionnent dans un environnement Python 3.12.10 natif, et les **68 tests
+fonctionnent dans un environnement Python 3.12.10 natif, le bot Telegram est
+validé en réel (mission `8c568cce0ef4` à 0 anomalie), et les **69 tests
 passent**. La mission de référence `7e30889c18cd` (10 novembre 2026) a réussi
 21/21 sondes, 27/27 tests API et 11/11 scénarios UI avec 0 anomalie, sur une
 stack de test saine et avec les clés réelles. Le projet se poursuit à la
