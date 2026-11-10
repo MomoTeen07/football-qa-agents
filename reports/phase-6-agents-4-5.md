@@ -156,7 +156,8 @@ https://github.com/MomoTeen07/football-qa-agents/pull/1
 
 - Branche source : `chore/reconstruct-local-env`
 - Branche cible : `main`
-- Merge : **humain**, jamais de push direct sur `main`
+- Merge : jamais de push direct sur `main` ; la PR est fusionnée après
+  vérification (validation humaine plus requise depuis le 10 novembre 2026)
 - Outil : GitHub CLI `gh` 2.103.3, installé via winget et authentifié via le
   navigateur (jeton dans le keyring Windows, jamais dans le dépôt)
 

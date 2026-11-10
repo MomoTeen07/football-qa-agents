@@ -48,7 +48,9 @@ Construire un système multi-agents QA local pour l’application `football-qa`,
   - action sur l’application réelle ;
   - publication externe ;
   - validation finale d’une anomalie.
-- Git : branche + PR uniquement, jamais de push direct sur `main` ; merge humain.
+- Git : branche + PR uniquement, jamais de push direct sur `main`. Depuis le
+  10 novembre 2026, **l'agent fusionne lui-même** la PR après vérification
+  (plus d'attente de validation humaine).
 - Documentation : toute modification met à jour `README.md`,
   `PROJECT_CONTEXT.md` et `CHANGELOG.md`.
 - Tests de sécurité actifs non destructifs autorisés.
@@ -162,7 +164,8 @@ Précautions :
   remiser **avant** de changer de branche.
 - `.env` et `.venv` ne sont pas synchronisés par Git : les clés restent locales
   à chaque PC et les dépendances sont à réinstaller.
-- Ne pas pousser sur `main` : la fusion se fait par pull request.
+- Ne pas pousser sur `main` : la fusion se fait par pull request, ouverte
+  **et fusionnée** par l'agent après vérification des tests.
 - **GitHub CLI** (`gh` 2.103.3) est installé sur le PC personnel pour créer les
   PR ; l'authentification est stockée dans le keyring Windows. Aucun secret
   n'est documenté ni journalisé.
@@ -532,7 +535,7 @@ Le dépôt `football-qa` est resté propre.
 - **Rapports** : Markdown/JSON puis Allure, en français.
 - **Bureau virtuel** : frontend séparé, SSE, personnages SVG.
 - **Jira/Xray/Squash** : non retenus.
-- **Git** : branche + PR uniquement, merge humain.
+- **Git** : branche + PR uniquement, jamais de push direct sur `main`. Fusion réalisée par l'agent (décision du 10 novembre 2026, remplace la validation humaine).
 - **Agents actuels** : agents 1 à 3 réels (phase 5), agents 4 et 5 réels et validés en réel (phase 6), agent 6 (DevOps) encore stub, agent 7 (reporter) réel mais sans Allure. Aucune anomalie inventée.
 - **Automatisation API** : suite pytest générée depuis les GET sûrs de la collection Postman ; JUnit + JSON + Markdown ; cible limitée à `localhost:8002` ; cas injectés en littéraux Python, jamais en JSON.
 - **Automatisation UI** : Playwright/Chromium, cible limitée à `localhost:5175` et API `localhost:8002` ; préflight UI + API ; captures en cas d’échec ; connexion testée depuis une page publique (pas après une redirection protégée).
