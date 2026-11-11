@@ -42,6 +42,14 @@ class Settings(BaseSettings):
     reports_dir: Path = PROJECT_ROOT / "reports" / "missions"
     workspace_dir: Path = PROJECT_ROOT / "workspace"
     postman_dir: Path = PROJECT_ROOT / "postman"
+    allure_results_dir: Path = PROJECT_ROOT / "reports" / "allure-results"
+
+    # Agent 6 DevOps (phase 7) : la publication Git est strictement opt-in.
+    devops_publish_enabled: bool = False
+    devops_repo_dir: Path = PROJECT_ROOT
+    devops_remote: str = "origin"
+    devops_base_branch: str = "main"
+    devops_timeout_seconds: float = 120.0
 
     log_level: str = "INFO"
 

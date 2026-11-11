@@ -1,22 +1,24 @@
 # PROJECT_CONTEXT — Football QA Agents
 
-Date du point de reprise : 10 novembre 2026  
-Dernière action terminée : **test réel du bot Telegram** (10 novembre 2026) puis **retour d'attente** (0.6.6). Le gateway `@Quaresma_QA_bot` a été validé en polling sur le PC personnel : `/start`, `/help`, texte libre, `/status`, `/missions`, `/approve` et `/stop` fonctionnent réellement. Mission réelle `8c568cce0ef4` créée depuis Telegram : **21/21 sondes**, **27/27 tests pytest API**, **11/11 scénarios Playwright**, **0 anomalie**. Garde-fou d'approbation et annulation vérifiés (missions `8d7a1f40274d` et `c5d08e7742e2`). Aucun scheduler, aucun `409`. Depuis 0.6.6, le bot répond immédiatement `⏳ Exécution en cours…`, maintient l'indicateur « en train d'écrire » pendant le traitement et affiche la durée finale (validé en réel sur la mission `98943bcedbdd`). Suite du système : **72 tests sur 72 réussis**.
-État global : **phases 1 à 6 terminées et validées en réel**. Le projet n'est pas terminé : les phases 7 à 9 restent à faire.
+Date du point de reprise : 11 novembre 2026  
+Dernière action terminée : **phase 7 — agents 6 et 7** (11 novembre 2026). L’agent DevOps réel prépare ou publie une branche et une pull request sans jamais pousser sur `main` (mode préparation par défaut, publication opt-in). Le reporter produit un Markdown enrichi, une synthèse JSON et des résultats **Allure 2** standards. Validation réelle sur la mission `7e30889c18cd` : **59 résultats Allure** (21 sondes + 27 API + 11 UI), 0 échec, rapport HTML généré par Allure CLI 2.46.2. Suite du système : **90 tests sur 90 réussis**.  
+État global : **phases 1 à 7 terminées**. Le projet n'est pas terminé : les phases 8 et 9 restent à faire.
 > **Point de reprise — lire ceci en premier**
 >
-> - `main` contient les phases 1 à 6 et le **test réel du bot Telegram**
->   (PR #1, #2, #3, #4 et #6 fusionnées ; PR #7 pour le test Telegram,
->   10 novembre 2026).
+> - `main` contient les phases 1 à 6 et le **test réel du bot Telegram**,
+>   ainsi que la **phase 7** (DevOps et reporting Allure).
 > - Reprise : `git switch main` puis `git pull --ff-only origin main`.
 > - Puis :
 >   1. `.venv\Scripts\python.exe -m pip install -r requirements.txt`
->   2. `.venv\Scripts\python.exe -m pytest` → attendu **`72 passed`**
+>   2. `.venv\Scripts\python.exe -m pytest` → attendu **`90 passed`**
 >   3. `.venv\Scripts\python.exe -m playwright install chromium`
 >   4. démarrer la stack `football-qa-test`, puis `.venv\Scripts\python.exe scripts\run_phase6_mission.py`
 > - Le projet cible `football-qa`, les clés et la stack de test sont
 >   désormais disponibles sur le PC personnel : les missions réelles y sont
 >   possibles.
+> - **Phase 7** : rapport Allure régénérable avec
+>   `scripts\run_phase7_mission.py --mission-id <id>` ; publication Git
+>   opt-in via `DEVOPS_PUBLISH_ENABLED=true` et `--publish`.
 > - Détail et précautions : section **« Reprise sur le PC professionnel »** ci-dessous.
 > - **Documentation** : toute modification met à jour `README.md`,
 >   `PROJECT_CONTEXT.md` et `CHANGELOG.md`.
@@ -95,7 +97,7 @@ Construire un système multi-agents QA local pour l’application `football-qa`,
   installées.
 - `.env` complété : **clés Gemini et Telegram disponibles**,
   `REAL_AGENTS_ENABLED=true`. Les valeurs ne sont jamais affichées.
-- Suite de tests : `.venv\Scripts\python.exe -m pytest` → **72 passed**.
+- Suite de tests : `.venv\Scripts\python.exe -m pytest` → **90 passed**.
 - `playwright==1.64.1` installé et **Chromium présent** dans
   `%LOCALAPPDATA%\ms-playwright` : l’exécution UI réelle fonctionne.
 - Dépôt Git initialisé sur la branche `main` (commit initial `2a3c929`) ;
@@ -119,7 +121,7 @@ on travaille.**
 | Stack de test Docker | opérationnelle | opérationnelle |
 | `.env` | clés Gemini + Telegram présentes | clés Gemini + Telegram présentes |
 | Python | 3.12 avec `.venv` existant | 3.12.10, `.venv` prêt |
-| Tests | 72 après `git pull` sur `main` | **72 passed** |
+| Tests | 90 après `git pull` sur `main` | **90 passed** |
 
 Conséquences :
 
@@ -135,8 +137,9 @@ Conséquences :
 ### Reprise sur le PC professionnel
 
 La phase 6 est sur `main` depuis la **PR #1** (merge commit `992d007`,
-9 novembre 2026). Sa validation réelle et les correctifs associés arrivent par
-la **PR #4** (`fix/phase6-real-run`, 10 novembre 2026).
+9 novembre 2026) ; sa validation réelle et les correctifs sont arrivés par la
+**PR #4** (`fix/phase6-real-run`, 10 novembre 2026). La **phase 7** (DevOps et
+reporting Allure) arrive par une PR dédiée le 11 novembre 2026.
 
 ```powershell
 cd C:\Users\stgadmin\Desktop\football-qa-agents
@@ -145,7 +148,7 @@ git switch main
 git pull --ff-only origin main
 
 .venv\Scripts\python.exe -m pip install -r requirements.txt
-.venv\Scripts\python.exe -m pytest          # attendu : 72 passed
+.venv\Scripts\python.exe -m pytest          # attendu : 90 passed
 .venv\Scripts\python.exe -m playwright install chromium
 ```
 
@@ -292,10 +295,14 @@ Déjà fait :
       (`history.state.from` renvoyait vers `/favorites`), identifiant Postman
       déterministe (`uuid5`) pour éviter un diff à chaque mission.
 - [x] Test réel du bot Telegram : réalisé le 10 novembre 2026 (voir phase 4).
+- [x] **Phase 7 — agents 6 et 7** : DevOps réel (branche + PR, jamais de push
+      direct sur `main`, mode préparation par défaut) et reporting enrichi
+      (Markdown, JSON, résultats Allure 2 standards). Validation réelle sur la
+      mission `7e30889c18cd` : **59 résultats Allure**, 0 échec, rendu HTML
+      généré par la CLI Allure 2.46.2 ; promotion DevOps en mode `planned`.
 
 ### Phases restantes
 
-- [ ] **Phase 7 — agents 6 et 7** : DevOps (branche + PR) et reporting Allure/Markdown/JSON.
 - [ ] **Phase 8 — bureau virtuel 2D** : frontend séparé, SSE, personnages SVG, événements réels.
 - [ ] **Phase 9 — durcissement** : sécurité, robustesse, documentation finale.
 
@@ -329,9 +336,10 @@ QA Analyst  Test Designer  API Tester   API Auto +    QA Reporter
 - Les **agents 1 à 3** sont réels depuis la phase 5.
 - Les **agents 4 et 5** (API Automation, UI Automation) sont réels depuis la
   phase 6 et validés **en réel** le 10 novembre 2026.
-- L’**agent 6 (DevOps)** reste un stub ; l’**agent 7 (reporter)** est réel et
-  agrège désormais les preuves des phases 5 et 6. Le reporting Allure complet
-  relève de la phase 7.
+- L’**agent 6 (DevOps)** est réel depuis la phase 7 : branche dédiée, commit,
+  push et pull request, sans jamais toucher `main` ni fusionner.
+- L’**agent 7 (reporter)** agrège les preuves des phases 5 et 6 et produit le
+  Markdown enrichi, la synthèse JSON et les résultats **Allure 2**.
 - L’**EventBus** et le **store SQLite** journalisent missions, tâches et
   événements localement.
 
@@ -408,11 +416,12 @@ QA Analyst  Test Designer  API Tester   API Auto +    QA Reporter
   - Le scénario de connexion repasse par une page publique avant `/login` :
     un reload conserve `history.state.from`, qui renvoie vers `/favorites`.
 
-- `app/agents/stubs.py`
-  - Le reporter lit désormais `probe-results.json`,
+- `app/agents/stubs.py` (phase 6)
+  - Le reporter lisait `probe-results.json`,
     `api-automation-results.json` et `ui-automation-results.json`.
   - Il agrège les anomalies réellement présentes et conserve les phrases de
-    repli quand aucune exécution n’a eu lieu.
+    repli quand aucune exécution n’a eu lieu. Depuis la phase 7, cette logique
+    vit dans `app/agents/phase7.py` ; `stubs.py` ne fait que ré-exporter.
 
 - `scripts/run_phase6_mission.py`
   - Lanceur explicite d’une mission API + UI sur la stack de test.
@@ -420,6 +429,50 @@ QA Analyst  Test Designer  API Tester   API Auto +    QA Reporter
 - `requirements.txt`
   - `playwright==1.64.1` (le navigateur Chromium s’installe séparément avec
     `python -m playwright install chromium`).
+
+### Phase 7 — agents 6 et 7
+
+- `app/agents/phase7.py`
+  - `DevOpsAgent` : repli déterministe si `REAL_AGENTS_ENABLED=false` ;
+    sinon délègue à `DevOpsPromotion` et expose branche, commit et URL de PR.
+  - `QAReporterAgent` : agrège les preuves phases 5/6, écrit le rapport
+    Markdown enrichi, la synthèse JSON et les résultats Allure 2.
+
+- `app/tools/allure_report.py`
+  - Écrit des fichiers `*-result.json` au **format Allure 2 standard**, sans
+    dépendance supplémentaire : `uuid`, `historyId`, `fullName`, `status`,
+    `statusDetails`, `stage`, `start`/`stop`, `labels`, `links`, `attachments`.
+  - Attache l’extrait de réponse API, les détails d’échec et les captures
+    Playwright quand elles existent ; expurge les secrets connus.
+  - Écrit `environment.properties`, `executor.json`, `allure-summary.json` et
+    `allure-report.md` à côté des résultats.
+  - Un statut `blocked` produit un résultat `skipped` sans anomalie ; sans
+    aucune preuve réelle, aucun résultat n’est généré.
+  - Les identifiants sont déterministes (`uuid5`) : une régénération ne crée
+    pas de doublons.
+
+- `app/tools/devops.py`
+  - Mode **préparation** par défaut : vérifie le dépôt, calcule la branche et
+    les fichiers, mais n’exécute aucune commande Git mutante.
+  - Mode publication (`DEVOPS_PUBLISH_ENABLED=true`) : copie les suites
+    générées dans `tests/generated/<mission>/`, ajoute un manifeste
+    `promotion.json`, commit sur `qa/promotion-<mission>`, push puis
+    `gh pr create`.
+  - Garde-fous : arbre non propre, branche locale déjà existante, dépôt absent,
+    `git fetch`/`push` ou `gh` en échec ⇒ statut bloqué, sans anomalie.
+  - Jamais de `--force`, jamais de push sur `main`, jamais de fusion.
+
+- `scripts/run_phase7_mission.py`
+  - Régénère explicitement le rapport d’une mission existante et prépare la
+    promotion DevOps ; `--publish` sert de confirmation explicite.
+
+- `app/orchestrator/planner.py`
+  - Les instructions Git/PR rejoignent les groupes soumis à approbation ; le
+    mot-clé `ci` est affiné en ` ci ` / `ci/` pour éviter les faux positifs.
+
+- `app/orchestrator/graph.py`
+  - Les preuves du reporter sont journalisées dans la tâche et dans
+    l’événement `report_ready`.
 
 ### Gateway Telegram (phase 4, validé en réel)
 
@@ -446,7 +499,7 @@ QA Analyst  Test Designer  API Tester   API Auto +    QA Reporter
 
 ```powershell
 .venv\Scripts\python.exe -m pytest
-# 72 passed
+# 90 passed
 ```
 
 CI : `.github/workflows/tests.yml` rejoue la même suite sur chaque PR et sur
@@ -488,7 +541,9 @@ Mission réelle de référence (10 novembre 2026) :
 | `app/events/bus.py` | EventBus réel avec abonnés |
 | `app/agents/base.py` | Interface `BaseAgent` |
 | `app/agents/phase5.py` | Agents 1 à 3 réels (Gemini, OpenAPI, Postman, sondes) |
-| `app/agents/stubs.py` | Agent DevOps (stub) et reporter étendu phases 5/6 |
+| `app/agents/phase6.py` | Agents 4 et 5 (API Automation, UI Automation) |
+| `app/agents/phase7.py` | Agents 6 et 7 (DevOps réel, reporter Allure/Markdown/JSON) |
+| `app/agents/stubs.py` | Ré-exports de compatibilité vers `phase7` (plus aucun stub) |
 | `app/llm/__init__.py` | Package d’intégration LLM |
 | `app/llm/gemini.py` | Client Gemini free tier REST, sans fuite de clé |
 | `app/tools/__init__.py` | Package des outils réels |
@@ -498,6 +553,8 @@ Mission réelle de référence (10 novembre 2026) :
 | `app/tools/api_probe.py` | Sondes API réelles, garde-fou 8002, preuves, anomalies |
 | `app/tools/api_suite.py` | Suite pytest API générée, exécution, JUnit, preuves |
 | `app/tools/ui_suite.py` | Scénarios Playwright générés, exécution, captures, preuves |
+| `app/tools/allure_report.py` | Résultats Allure 2 standards, synthèse JSON, Markdown |
+| `app/tools/devops.py` | Promotion Git sécurisée : branche, commit, push, PR |
 | `app/agents/phase6.py` | Agents 4 et 5 (API Automation, UI Automation) |
 | `app/orchestrator/planner.py` | Planification déterministe et détection d’approbation |
 | `app/orchestrator/state.py` | `MissionState` LangGraph |
@@ -517,10 +574,13 @@ Mission réelle de référence (10 novembre 2026) :
 | `tests/test_api_suite.py` | 6 tests de la suite pytest API générée |
 | `tests/test_ui_suite.py` | 9 tests de la suite Playwright et des garde-fous |
 | `tests/test_phase6_agents.py` | 9 tests des agents 4/5 et du reporter |
+| `tests/test_allure_report.py` | 6 tests des résultats Allure 2 et des synthèses |
+| `tests/test_phase7_agents.py` | 12 tests DevOps, reporter enrichi et approbation Git/PR |
 | `infra/docker-compose.test.yml` | Stack de test isolée |
 | `scripts/seed_test_data.py` | Création des comptes de test |
 | `scripts/run_phase5_mission.py` | Lanceur explicite d’une mission phase 5 |
 | `scripts/run_phase6_mission.py` | Lanceur explicite d’une mission phase 6 API + UI |
+| `scripts/run_phase7_mission.py` | Rapport Allure/Markdown/JSON et promotion DevOps d’une mission |
 | `postman/collections/football-qa.json` | Collection Postman réelle (11 requêtes) |
 | `postman/environments/football-qa-test.json` | Environnement Postman de test |
 | `reports/baseline.md` | Baseline |
@@ -529,6 +589,7 @@ Mission réelle de référence (10 novembre 2026) :
 | `reports/phase-4-telegram.md` | Validation connexion Telegram (code + test réel) |
 | `reports/phase-5-agents-1-3.md` | Validation phase 5 |
 | `reports/phase-6-agents-4-5.md` | Validation phase 6 (hors ligne + réel) |
+| `reports/phase-7-agents-6-7.md` | Validation phase 7 (Allure + DevOps) |
 | `reports/missions/4e1c01636615.md` | Rapport de mission de démonstration (local, ignoré par Git) |
 | `reports/missions/b745b4a199b7.md` | Rapport de la mission phase 5 de référence (local) |
 | `reports/missions/7e30889c18cd.md` | Rapport de la mission phase 6 validée en réel (local) |
@@ -560,13 +621,14 @@ Le dépôt `football-qa` est resté propre.
 - **Stockage** : SQLite local pour le pilotage QA, indépendant de PostgreSQL.
 - **Base de test** : PostgreSQL `5434`, backend `8002`, frontend `5175`.
 - **Mode football** : `MOCK_FOOTBALL_API=true` pour des tests déterministes.
-- **Rapports** : Markdown/JSON puis Allure, en français.
+- **Rapports** : Markdown/JSON enrichis et résultats **Allure 2** standards générés en Python, sans dépendance ajoutée ; CLI Allure optionnelle pour le rendu HTML.
+- **DevOps** : mode préparation par défaut ; publication opt-in via `DEVOPS_PUBLISH_ENABLED=true` (+ `--publish` sur le lanceur). Toujours branche `qa/promotion-<mission>` + PR, jamais de push direct sur `main`, jamais de `--force`, jamais de fusion automatique.
 - **Bureau virtuel** : frontend séparé, SSE, personnages SVG.
 - **Jira/Xray/Squash** : non retenus.
 - **Git** : branche + PR uniquement, jamais de push direct sur `main`. Fusion réalisée par l'agent (décision du 10 novembre 2026, remplace la validation humaine).
 - **CI** : GitHub Actions, `pytest` sur chaque PR et sur `main` (Python 3.12, sans clé). Garde-fou qui remplace la relecture humaine avant fusion.
 - **Gemini** : les `429` et `5xx` sont retentés (3 tentatives, backoff 1 s puis 2 s, plafond 8 s) ; erreurs réseau et `4xx` définitifs immédiats ; repli déterministe après échec.
-- **Agents actuels** : agents 1 à 3 réels (phase 5), agents 4 et 5 réels et validés en réel (phase 6), agent 6 (DevOps) encore stub, agent 7 (reporter) réel mais sans Allure. Aucune anomalie inventée.
+- **Agents actuels** : agents 1 à 3 réels (phase 5), agents 4 et 5 réels et validés en réel (phase 6), agent 6 (DevOps) et agent 7 (reporter Allure) réels depuis la phase 7. Aucune anomalie inventée.
 - **Automatisation API** : suite pytest générée depuis les GET sûrs de la collection Postman ; JUnit + JSON + Markdown ; cible limitée à `localhost:8002` ; cas injectés en littéraux Python, jamais en JSON.
 - **Automatisation UI** : Playwright/Chromium, cible limitée à `localhost:5175` et API `localhost:8002` ; préflight UI + API ; captures en cas d’échec ; connexion testée depuis une page publique (pas après une redirection protégée).
 - **Postman (identifiants)** : UUID déterministe (`uuid5`) pour la collection et l’environnement, afin que la régénération ne produise pas de diff parasite.
@@ -596,9 +658,11 @@ dans ce document.
 | `TEST_API_URL` | `http://localhost:8002` |
 | `TEST_UI_URL` | `http://localhost:5175` |
 | `TEST_USER1_EMAIL` / `TEST_USER2_EMAIL` | comptes de test locaux |
+| `DEVOPS_PUBLISH_ENABLED` | `false` par défaut → mode préparation, aucune opération Git mutante |
+| `DEVOPS_REMOTE` / `DEVOPS_BASE_BRANCH` | `origin` / `main` |
 | `GROQ_API_KEY` / `MISTRAL_API_KEY` | non utilisés |
 
-Sans clé, le système reste utilisable : les 72 tests passent et les agents
+Sans clé, le système reste utilisable : les 90 tests passent et les agents
 réels basculent sur leur repli déterministe.
 
 Historique utile :
@@ -693,7 +757,7 @@ Invoke-WebRequest -UseBasicParsing http://localhost:8002/health
 Invoke-WebRequest -UseBasicParsing http://localhost:5175/
 ```
 
-Attendu : `72 passed` et stack `healthy` sur `8002`, `5434` et `5175`.
+Attendu : `90 passed` et stack `healthy` sur `8002`, `5434` et `5175`.
 Ne jamais sonder `8001` avec les outils du projet.
 
 ### Étape 1 — vérifier l’état livré
@@ -765,10 +829,10 @@ Résultats (détail : `reports/phase-4-telegram.md`) :
 
 ### Étape 4 — prochaine phase de développement
 
-**Phase 7 — agents 6 et 7** : agent DevOps (branche + PR, sans push direct sur
-`main`) et reporting Allure/Markdown/JSON enrichi. Les phases 1 à 6 sont
-terminées et validées en réel. Ne pas démarrer la phase 7 sans demande
-explicite.
+**Phase 8 — bureau virtuel 2D** : frontend séparé, SSE, personnages SVG et
+événements réels. Les phases 1 à 7 sont terminées ; la phase 7 est validée hors
+ligne et en réel (Allure + mode préparation DevOps). Ne pas démarrer la phase 8
+sans demande explicite.
 
 ### En cas de problème connu
 
@@ -784,7 +848,11 @@ explicite.
 | tests lents ou appels réels | `REAL_AGENTS_ENABLED=true` dans l’environnement | les tests forcent déjà `false` ; vérifier les overrides |
 | accents illisibles en console | rendu PowerShell | les fichiers sont UTF-8 ; lire avec Python si besoin |
 | jeton Telegram dans un log | `httpx` journalise l’URL de l’API Bot | `SecretRedactionFilter` actif depuis 0.6.6 ; vérifier `TOKEN_IN_LOG=False` et ne jamais publier le log |
-| bot muet pendant une mission | exécution longue, updates traités séquentiellement | normal : message d’attente + indicateur `typing` depuis 0.6.6 ; ne pas conclure à un blocage |
+| bot muet pendant une mission | exécution longue, updates traités séquentiellement | normal : message d'attente + indicateur `typing` depuis 0.6.6 ; ne pas conclure à un blocage |
+| `DEVOPS_STATUS=planned` | `DEVOPS_PUBLISH_ENABLED=false` (valeur par défaut) | normal : aucune opération Git ; activer la variable et `--publish` pour publier |
+| promotion DevOps bloquée « arbre non propre » | modifications locales non commitées | committer ou remiser avant de relancer |
+| promotion bloquée « branche existe déjà » | `qa/promotion-<mission>` déjà créée | supprimer la branche locale ou réutiliser la PR existante |
+| `ALLURE_TOTAL=0` | aucune preuve réelle pour la mission | exécuter d’abord les phases 5/6 ; aucun résultat n’est inventé |
 
 ---
 
@@ -802,6 +870,15 @@ explicite.
 
 # Mission réelle phase 6 API + UI (explicite, sur la stack de test)
 .venv\Scripts\python.exe scripts\run_phase6_mission.py
+
+# Rapport phase 7 (Allure + Markdown/JSON) et promotion DevOps en mode préparation
+.venv\Scripts\python.exe scripts\run_phase7_mission.py --mission-id <mission_id>
+
+# Publication réelle : DEVOPS_PUBLISH_ENABLED=true dans .env, puis confirmation
+.venv\Scripts\python.exe scripts\run_phase7_mission.py --mission-id <mission_id> --publish
+
+# Rendu HTML Allure (CLI gratuite et optionnelle)
+allure serve reports\allure-results\<mission_id>
 
 # Gateway Telegram (polling, allowlist)
 .venv\Scripts\python.exe -m app.telegram.gateway
@@ -846,7 +923,8 @@ explicite.
 - Le projet cible utilisé sur le PC personnel est `Football-Agent\football-qa`, copie de `Football-QA\MyFinalProject`. `Football-project\MyFinalProject` reste à ne pas utiliser.
 - `.env` contient les clés Gemini et Telegram et `REAL_AGENTS_ENABLED=true` ; ne jamais afficher ces valeurs.
 - Les agents 4 et 5 (API Automation, UI Automation) sont réels et validés **en réel** (27/27 API, 11/11 UI, 0 anomalie, mission `7e30889c18cd`).
-- L’agent 6 (DevOps) reste un stub ; l’agent 7 (reporter) est réel mais le reporting Allure complet relève de la phase 7.
+- Les agents 6 (DevOps) et 7 (reporter) sont réels depuis la phase 7. Le DevOps ne pousse jamais sur `main`, ne force jamais un push et ne fusionne jamais : il ouvre une PR. Le mode préparation est le comportement par défaut.
+- Les résultats Allure 2 sont standards et autonomes ; la CLI Allure n’est qu’un rendu HTML optionnel. Ne jamais déclarer un résultat Allure sans preuve réelle.
 - Chromium est installé sur le PC personnel ; l’agent UI y exécute réellement Playwright.
 - Les agents 1 à 3 dépendent du free tier Gemini : une erreur passagère (quota/429) déclenche le repli déterministe sans bloquer la mission ni créer d’anomalie.
 - Le bot Telegram est validé en réel (10 novembre 2026) ; le test d’un compte non autorisé reste à rejouer avec un second compte. Le jeton est masqué dans les logs par `SecretRedactionFilter`.
@@ -859,11 +937,12 @@ explicite.
 
 Le socle QA local (baseline, isolation, Manager, gateway Telegram, rapports,
 approbation, annulation), la phase 5 (agents 1 à 3 réels avec Gemini
-`gemini-3.5-flash`, collection Postman, sondes API limitées à `localhost:8002`)
-et la phase 6 (agents 4 et 5 : suite pytest API et scénarios Playwright)
+`gemini-3.5-flash`, collection Postman, sondes API limitées à `localhost:8002`),
+la phase 6 (agents 4 et 5 : suite pytest API et scénarios Playwright) et la
+phase 7 (agent DevOps branche + PR, reporting Markdown/JSON et Allure 2)
 fonctionnent dans un environnement Python 3.12.10 natif, le bot Telegram est
-validé en réel (mission `8c568cce0ef4` à 0 anomalie), et les **72 tests
+validé en réel (mission `8c568cce0ef4` à 0 anomalie), et les **90 tests
 passent**. La mission de référence `7e30889c18cd` (10 novembre 2026) a réussi
-21/21 sondes, 27/27 tests API et 11/11 scénarios UI avec 0 anomalie, sur une
-stack de test saine et avec les clés réelles. Le projet se poursuit à la
-phase 7 (agent DevOps et reporting Allure).
+21/21 sondes, 27/27 tests API et 11/11 scénarios UI avec 0 anomalie ; sa
+régénération phase 7 produit **59 résultats Allure** valides et un rendu HTML
+Allure CLI 2.46.2. Le projet se poursuit à la phase 8 (bureau virtuel 2D).

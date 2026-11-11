@@ -19,7 +19,7 @@ Système multi-agents QA pour tester l'application locale `football-qa`.
 - Toute modification doit aussi mettre à jour **`README.md`** et
   **`PROJECT_CONTEXT.md`**. Une PR n'est pas terminée si l'un des trois fichiers
   est en retard.
-- Dernière entrée : **0.6.6 — Retour d'attente pendant l'exécution**.
+- Dernière entrée : **0.7.0 — Phase 7 : agent DevOps et reporting Allure**.
 
 ## Intégration continue
 
@@ -45,14 +45,14 @@ reports/              Rapports de baseline, Allure et synthèses
 tests/                Tests du système multi-agents
 ```
 
-## État de l'environnement local (10 novembre 2026)
+## État de l'environnement local (11 novembre 2026)
 
 - Python **3.12.10** natif (obligatoire : `requires-python >= 3.12`).
 - `.venv` recréé et dépendances `requirements.txt` installées.
 - `.env` complété : **clés Gemini et Telegram disponibles**,
   `REAL_AGENTS_ENABLED=true` → agents réels actifs. Les valeurs ne sont
   jamais affichées ni versionnées.
-- `.venv\Scripts\python.exe -m pytest` → **72 passed**.
+- `.venv\Scripts\python.exe -m pytest` → **90 passed**.
 - `playwright==1.64.1` installé et **Chromium présent** dans
   `%LOCALAPPDATA%\ms-playwright` : l'exécution UI réelle est possible.
 - Projet cible `football-qa` présent à côté du projet QA
@@ -76,7 +76,7 @@ régression : il faut d'abord identifier la machine.
 | Projet cible `football-qa` | présent | présent |
 | Stack de test Docker | opérationnelle | opérationnelle |
 | Clés Gemini / Telegram | présentes dans `.env` | présentes dans `.env` |
-| Tests unitaires | à jour après `git pull` sur `main` | **72 passed** |
+| Tests unitaires | à jour après `git pull` sur `main` | **90 passed** |
 
 Les deux PC permettent désormais les missions réelles. Sur le PC personnel, le
 projet cible est une copie de travail du dépôt `MyFinalProject` ; en cas de
@@ -88,7 +88,8 @@ régression.
 La phase 6 a été **fusionnée** via la **PR #1** (merge commit `992d007`,
 9 novembre 2026) : `main` contient l'automatisation API/UI et le reporter
 étendu. Sa **validation en réel** et les correctifs associés arrivent par la
-**PR #4** (`fix/phase6-real-run`, 10 novembre 2026).
+**PR #4** (`fix/phase6-real-run`, 10 novembre 2026). La **phase 7** (DevOps et
+reporting Allure) est livrée par une PR dédiée le 11 novembre 2026.
 
 ### Depuis `main` (recommandé)
 
@@ -99,12 +100,13 @@ git switch main
 git pull --ff-only origin main
 
 .venv\Scripts\python.exe -m pip install -r requirements.txt
-.venv\Scripts\python.exe -m pytest          # attendu : 72 passed
+.venv\Scripts\python.exe -m pytest          # attendu : 90 passed
 .venv\Scripts\python.exe -m playwright install chromium
 ```
 
 Démarrer ensuite la stack de test, puis lancer
-`scripts\run_phase6_mission.py`.
+`scripts\run_phase6_mission.py`. Pour régénérer un rapport Allure/Markdown/JSON
+et préparer une promotion DevOps : `scripts\run_phase7_mission.py --mission-id <id>`.
 
 > Les branches `chore/reconstruct-local-env` (PR #1),
 > `docs/post-merge-status` (PR #2) et `docs/branch-cleanup` (PR #3) ont été
@@ -165,6 +167,9 @@ Copy-Item .env.example .env
 
 # Lancer explicitement une mission phase 6 API + UI
 .venv\Scripts\python.exe scripts\run_phase6_mission.py
+
+# Régénérer le rapport phase 7 (Allure + Markdown/JSON) d'une mission existante
+.venv\Scripts\python.exe scripts\run_phase7_mission.py --mission-id <mission_id>
 
 # Démarrer la stack de test
 docker compose -f infra/docker-compose.test.yml -p football-qa-test up --build -d --wait
@@ -312,14 +317,66 @@ Validation **en réel** (10 novembre 2026, mission `7e30889c18cd`) :
 | Scénarios Playwright | 11/11, 0 échec |
 | Anomalies applicatives | 0 |
 
-Suite du système : **72 tests passent**. Voir `reports/phase-6-agents-4-5.md`
+Suite du système : **90 tests passent**. Voir `reports/phase-6-agents-4-5.md`
 et `PROJECT_CONTEXT.md` pour le détail des correctifs de cette validation
 (littéraux Python dans la suite générée, scénario de connexion, identifiant
 Postman stable).
 
+## DevOps et reporting Allure (phase 7)
+
+Les agents 6 et 7 disposent d'une implémentation réelle :
+
+- **DevOps** (`devops`) : recense les suites générées de la mission, crée une
+  branche dédiée `qa/promotion-<mission>`, y commit les fichiers
+  `test_api_suite.py` et `run_ui_checks.py` (avec un manifeste
+  `promotion.json`), pousse la branche puis ouvre une pull request. Il ne
+  pousse **jamais** sur `main`, ne force jamais un push et ne fusionne aucune
+  PR.
+- **QA Reporter** (`qa_reporter`) : agrège les preuves des phases 5 et 6,
+  produit un rapport Markdown enrichi (synthèse globale, anomalies), une
+  synthèse JSON (`reports/missions/<id>.json`) et des résultats **Allure 2**
+  standards (`reports/allure-results/<id>/`).
+
+Garde-fous DevOps :
+
+- mode **préparation** par défaut : aucune copie, aucun commit, aucun push,
+  aucune PR sans `DEVOPS_PUBLISH_ENABLED=true` ;
+- toute instruction Git/PR est classée sensible par le planificateur et exige
+  `/approve` (ou une approbation explicite) ;
+- arbre de travail non propre, branche déjà existante, dépôt absent, `git` ou
+  `gh` en échec ⇒ statut bloqué, sans anomalie applicative ;
+- aucune fusion automatique : la PR reste à vérifier via la CI.
+
+```powershell
+# Mode préparation (aucune opération distante)
+.venv\Scripts\python.exe scripts\run_phase7_mission.py --mission-id <mission_id>
+
+# Publication réelle : exige DEVOPS_PUBLISH_ENABLED=true dans .env
+# puis la confirmation explicite --publish
+.venv\Scripts\python.exe scripts\run_phase7_mission.py --mission-id <mission_id> --publish
+```
+
+Validation réelle (11 novembre 2026) sur la mission de référence
+`7e30889c18cd` :
+
+| Vérification | Résultat |
+|---|---|
+| Résultats Allure 2 générés | **59** (21 sondes + 27 API + 11 UI) |
+| Réussis / échecs / ignorés | 59 / 0 / 0 |
+| Anomalies | 0 |
+| Rendu HTML Allure CLI 2.46.2 | généré sans erreur |
+| Promotion DevOps | `planned` — branche `qa/promotion-7e30889c18cd`, aucune opération distante |
+
+La CLI Allure est **optionnelle** et gratuite : les résultats JSON sont
+autonomes. Pour le rendu HTML :
+
+```powershell
+allure serve reports\allure-results\<mission_id>
+```
+
 ## État d'avancement
 
-- [x] Environnement local complet sur le PC personnel — Python 3.12.10, `.venv`, `.env` avec clés, Chromium, stack de test, **72 tests passent**
+- [x] Environnement local complet sur le PC personnel — Python 3.12.10, `.venv`, `.env` avec clés, Chromium, stack de test, **90 tests passent**
 - [x] Journal des modifications `CHANGELOG.md` et règle de mise à jour documentaire
 - [x] Phase 1 — baseline de l'application existante
 - [x] Phase 2 — stack de test isolée
@@ -327,6 +384,6 @@ Postman stable).
 - [x] Phase 4 — connexion Telegram (code **et test réel** le 10 novembre 2026 : commandes validées, mission `8c568cce0ef4` à 0 anomalie, approbation et annulation vérifiées, aucun scheduler, retour d'attente immédiat + indicateur d'activité)
 - [x] Phase 5 — agents 1 à 3
 - [x] Phase 6 — agents 4 et 5 (code + validation hors ligne **et** exécution réelle : 27/27 API, 11/11 UI, 0 anomalie)
-- [ ] Phase 7 — agents 6 et 7
+- [x] Phase 7 — agents 6 et 7 (DevOps branche + PR sécurisée, reporting Allure/Markdown/JSON, **90 tests passent**)
 - [ ] Phase 8 — bureau virtuel
 - [ ] Phase 9 — durcissement
