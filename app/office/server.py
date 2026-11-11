@@ -11,23 +11,21 @@ Il ne démarre aucune mission, ne planifie rien et n'expose aucun secret.
 from __future__ import annotations
 
 import json
-import re
 import time
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, unquote, urlsplit
 
-from app.config import PROJECT_ROOT
+from app.config import PROJECT_ROOT, get_settings
 from app.office.state import (
     build_office_state,
     mission_summaries,
     serialize_event,
 )
 from app.office.stream import OfficeEventStream
+from app.security import ensure_within, known_secrets, validate_mission_id
 from app.store.sqlite_store import SqliteStore
-
-MISSION_ID_PATTERN = re.compile(r"^[A-Za-z0-9_-]{1,64}$")
 
 MIME_TYPES = {
     ".html": "text/html; charset=utf-8",
@@ -54,10 +52,6 @@ SECURITY_HEADERS = {
 }
 
 
-def _valid_mission_id(value: str | None) -> bool:
-    return bool(value) and bool(MISSION_ID_PATTERN.fullmatch(value or ""))
-
-
 class OfficeHTTPServer(ThreadingHTTPServer):
     daemon_threads = True
     allow_reuse_address = True
@@ -70,12 +64,16 @@ class OfficeHTTPServer(ThreadingHTTPServer):
         *,
         bus=None,
         allure_root: Path | None = None,
+        secrets: tuple[str, ...] | None = None,
     ) -> None:
         super().__init__(address, OfficeRequestHandler)
         self.store = store
         self.static_dir = Path(static_dir).resolve()
         self.bus = bus
         self.allure_root = Path(allure_root) if allure_root else None
+        self.secrets = (
+            tuple(secrets) if secrets is not None else known_secrets(get_settings())
+        )
         self.quiet = True
         self.stopping = False
 
@@ -131,8 +129,11 @@ class OfficeRequestHandler(BaseHTTPRequestHandler):
         relative = request_path.lstrip("/")
         if relative in {"", "index.html"}:
             relative = "index.html"
-        candidate = (self.server.static_dir / relative).resolve()
-        if not candidate.is_relative_to(self.server.static_dir):
+        try:
+            candidate = ensure_within(
+                self.server.static_dir, self.server.static_dir / relative
+            )
+        except ValueError:
             return None
         if not candidate.is_file():
             return None
@@ -147,9 +148,15 @@ class OfficeRequestHandler(BaseHTTPRequestHandler):
         query = parse_qs(parsed.query)
         mission_id = (query.get("mission_id") or [None])[0]
 
-        if mission_id is not None and not _valid_mission_id(mission_id):
-            self._send_error_json(HTTPStatus.BAD_REQUEST, "Identifiant de mission invalide.")
-            return
+        if mission_id is not None:
+            try:
+                mission_id = validate_mission_id(mission_id)
+            except ValueError:
+                self._send_error_json(
+                    HTTPStatus.BAD_REQUEST,
+                    "Identifiant de mission invalide.",
+                )
+                return
 
         if path == "/api/health":
             self._send_json(
@@ -167,7 +174,9 @@ class OfficeRequestHandler(BaseHTTPRequestHandler):
         if path == "/api/missions":
             self._send_json(
                 {
-                    "missions": mission_summaries(self.server.store),
+                    "missions": mission_summaries(
+                        self.server.store, secrets=self.server.secrets
+                    ),
                     "generated_at": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
                 }
             )
@@ -203,6 +212,7 @@ class OfficeRequestHandler(BaseHTTPRequestHandler):
             self.server.store,
             mission_id,
             allure_root=self.server.allure_root,
+            secrets=self.server.secrets,
         )
         self._send_json(state)
 
@@ -241,6 +251,7 @@ class OfficeRequestHandler(BaseHTTPRequestHandler):
                     self.server.store,
                     resolved,
                     allure_root=self.server.allure_root,
+                    secrets=self.server.secrets,
                 ),
             )
             last_id = max((event.id or 0) for event in events) if events else 0
@@ -253,11 +264,14 @@ class OfficeRequestHandler(BaseHTTPRequestHandler):
                     self._send_sse(
                         "office",
                         {
-                            "event": serialize_event(event),
+                            "event": serialize_event(
+                                event, self.server.secrets
+                            ),
                             "state": build_office_state(
                                 self.server.store,
                                 resolved,
                                 allure_root=self.server.allure_root,
+                                secrets=self.server.secrets,
                             ),
                         },
                     )
@@ -277,6 +291,7 @@ def create_server(
     static_dir: Path | None = None,
     bus=None,
     allure_root: Path | None = None,
+    secrets: tuple[str, ...] | None = None,
 ) -> OfficeHTTPServer:
     """Crée le serveur local. Refuse toute interface non locale."""
 
@@ -291,4 +306,5 @@ def create_server(
         static,
         bus=bus,
         allure_root=allure_root,
+        secrets=secrets,
     )

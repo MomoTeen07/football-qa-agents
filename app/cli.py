@@ -8,6 +8,7 @@ from rich.table import Table
 
 from app.config import get_settings
 from app.orchestrator.manager import Manager
+from app.security import validate_mission_id
 
 # La console Windows héritée utilise parfois cp1252. Les rapports contiennent
 # des caractères UTF-8 (flèches, accents) : on force une sortie UTF-8.
@@ -37,9 +38,14 @@ def cmd_create(args: argparse.Namespace) -> int:
 
 
 def cmd_run(args: argparse.Namespace) -> int:
+    try:
+        mission_id = validate_mission_id(args.mission_id)
+    except ValueError as exc:
+        console.print(f"[red]{exc}[/red]")
+        return 2
     manager = build_manager()
     try:
-        mission = manager.run_mission(args.mission_id, approved=args.approve)
+        mission = manager.run_mission(mission_id, approved=args.approve)
         console.print(f"Statut : [bold]{mission.status.value}[/bold]")
         if mission.report_path:
             console.print(f"Rapport : {mission.report_path}")
@@ -49,9 +55,14 @@ def cmd_run(args: argparse.Namespace) -> int:
 
 
 def cmd_approve(args: argparse.Namespace) -> int:
+    try:
+        mission_id = validate_mission_id(args.mission_id)
+    except ValueError as exc:
+        console.print(f"[red]{exc}[/red]")
+        return 2
     manager = build_manager()
     try:
-        mission = manager.approve_mission(args.mission_id)
+        mission = manager.approve_mission(mission_id)
         console.print(f"Statut : [bold]{mission.status.value}[/bold]")
         if mission.report_path:
             console.print(f"Rapport : {mission.report_path}")
@@ -61,9 +72,14 @@ def cmd_approve(args: argparse.Namespace) -> int:
 
 
 def cmd_status(args: argparse.Namespace) -> int:
+    try:
+        mission_id = validate_mission_id(args.mission_id)
+    except ValueError as exc:
+        console.print(f"[red]{exc}[/red]")
+        return 2
     manager = build_manager()
     try:
-        data = manager.status(args.mission_id)
+        data = manager.status(mission_id)
         mission = data["mission"]
         console.print(f"Mission {mission.id} — {mission.status.value}")
         console.print(f"Instruction : {mission.instruction}")
@@ -95,9 +111,14 @@ def cmd_status(args: argparse.Namespace) -> int:
 
 
 def cmd_events(args: argparse.Namespace) -> int:
+    try:
+        mission_id = validate_mission_id(args.mission_id)
+    except ValueError as exc:
+        console.print(f"[red]{exc}[/red]")
+        return 2
     manager = build_manager()
     try:
-        for event in manager.get_events(args.mission_id):
+        for event in manager.get_events(mission_id):
             console.print(
                 f"[bold]{event.type}[/bold] "
                 f"({event.agent or '-'}) {event.payload}"

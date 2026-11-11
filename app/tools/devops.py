@@ -22,6 +22,13 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from app.config import Settings, get_settings
+from app.security import (
+    known_secrets,
+    redact_structure,
+    validate_git_ref,
+    validate_mission_id,
+)
+from app.tools.redaction import redact_text
 from app.tools.workspace import write_mission_json, write_mission_text
 
 PROMOTABLE_FILES = (
@@ -83,8 +90,21 @@ class DevOpsPromotion:
             if publish is None
             else publish
         )
+        mission_id = validate_mission_id(mission_id)
         commands: list[list[str]] = []
         repo_dir = Path(self.settings.devops_repo_dir).resolve()
+        try:
+            remote = validate_git_ref(self.settings.devops_remote)
+            base_branch = validate_git_ref(self.settings.devops_base_branch)
+        except ValueError as exc:
+            return self._finish(
+                mission_id,
+                status="blocked",
+                branch=None,
+                blocked_reason=f"Configuration Git refusée : {exc}",
+                commands=commands,
+                publish=publish,
+            )
         workspace = (
             Path(self.settings.workspace_dir) / "missions" / mission_id
         )
@@ -198,11 +218,7 @@ class DevOpsPromotion:
                 publish=publish,
             )
 
-        fetch = git(
-            "fetch",
-            self.settings.devops_remote,
-            self.settings.devops_base_branch,
-        )
+        fetch = git("fetch", remote, base_branch)
         if fetch.returncode != 0:
             return self._finish(
                 mission_id,
@@ -210,7 +226,7 @@ class DevOpsPromotion:
                 branch=branch,
                 blocked_reason=(
                     "Récupération de la branche de base impossible "
-                    f"({_snippet(fetch.stderr)})."
+                    f"({self._snippet(fetch.stderr)})."
                 ),
                 commands=commands,
                 publish=publish,
@@ -220,7 +236,7 @@ class DevOpsPromotion:
             "switch",
             "-c",
             branch,
-            f"{self.settings.devops_remote}/{self.settings.devops_base_branch}",
+            f"{remote}/{base_branch}",
         )
         if switch.returncode != 0:
             return self._finish(
@@ -228,7 +244,7 @@ class DevOpsPromotion:
                 status="blocked",
                 branch=branch,
                 blocked_reason=(
-                    f"Création de la branche impossible ({_snippet(switch.stderr)})."
+                    f"Création de la branche impossible ({self._snippet(switch.stderr)})."
                 ),
                 commands=commands,
                 publish=publish,
@@ -261,7 +277,7 @@ class DevOpsPromotion:
                 status="blocked",
                 branch=branch,
                 blocked_reason=(
-                    f"Ajout Git impossible ({_snippet(added.stderr)})."
+                    f"Ajout Git impossible ({self._snippet(added.stderr)})."
                 ),
                 commands=commands,
                 publish=publish,
@@ -279,7 +295,7 @@ class DevOpsPromotion:
                 status="blocked",
                 branch=branch,
                 blocked_reason=(
-                    f"Commit impossible ({_snippet(commit.stderr)})."
+                    f"Commit impossible ({self._snippet(commit.stderr)})."
                 ),
                 commands=commands,
                 publish=publish,
@@ -292,7 +308,7 @@ class DevOpsPromotion:
         push = git(
             "push",
             "-u",
-            self.settings.devops_remote,
+            remote,
             branch,
         )
         if push.returncode != 0:
@@ -303,7 +319,7 @@ class DevOpsPromotion:
                 commit=commit_id,
                 blocked_reason=(
                     "Push de la branche impossible "
-                    f"({_snippet(push.stderr)}). La branche locale est conservée."
+                    f"({self._snippet(push.stderr)}). La branche locale est conservée."
                 ),
                 commands=commands,
                 publish=publish,
@@ -324,7 +340,7 @@ class DevOpsPromotion:
             "pr",
             "create",
             "--base",
-            self.settings.devops_base_branch,
+            base_branch,
             "--head",
             branch,
             "--title",
@@ -342,7 +358,7 @@ class DevOpsPromotion:
                 commit=commit_id,
                 blocked_reason=(
                     "Branche poussée mais pull request non créée "
-                    f"({_snippet(pr.stderr)})."
+                    f"({self._snippet(pr.stderr)})."
                 ),
                 commands=commands,
                 publish=publish,
@@ -381,6 +397,13 @@ class DevOpsPromotion:
                 sources.append((candidate, name))
         return sources
 
+    def _snippet(self, text: str, limit: int = 300) -> str:
+        value = redact_text(
+            (text or "").strip().replace("\n", " "),
+            known_secrets(self.settings),
+        )
+        return value[:limit] if value else "sans détail"
+
     def _finish(
         self,
         mission_id: str,
@@ -396,8 +419,9 @@ class DevOpsPromotion:
         publish: bool,
         extra: dict | None = None,
     ) -> DevOpsOutcome:
+        secrets = known_secrets(self.settings)
         promoted_files = promoted_files or []
-        payload = {
+        payload = redact_structure({
             "mission_id": mission_id,
             "status": status,
             "publish": publish,
@@ -409,7 +433,7 @@ class DevOpsPromotion:
             "merged": False,
             "commands": commands,
             **(extra or {}),
-        }
+        }, secrets)
         json_path = write_mission_json(
             self.settings,
             mission_id,
@@ -447,15 +471,18 @@ class DevOpsPromotion:
             self.settings,
             mission_id,
             "devops/devops-report.md",
-            "\n".join(lines),
+            redact_text("\n".join(lines), secrets),
         )
 
+        if blocked_reason:
+            blocked_reason = redact_text(blocked_reason, secrets)
         if summary is None:
             summary = (
                 f"Promotion Git non réalisée : {blocked_reason}"
                 if blocked_reason
                 else f"Promotion Git terminée pour la mission {mission_id}."
             )
+        summary = redact_text(summary, secrets)
         return DevOpsOutcome(
             status=status,
             branch=branch,
@@ -467,11 +494,6 @@ class DevOpsPromotion:
             evidence_paths=[str(json_path), str(md_path)],
             commands=commands,
         )
-
-
-def _snippet(text: str, limit: int = 300) -> str:
-    value = (text or "").strip().replace("\n", " ")
-    return value[:limit] if value else "sans détail"
 
 
 def _last_non_empty_line(text: str) -> str:

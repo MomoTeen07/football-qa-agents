@@ -18,6 +18,7 @@ from app.office.catalog import (
     agent_order,
     department_catalog,
 )
+from app.security import redact_structure, validate_mission_id
 from app.store.sqlite_store import SqliteStore
 
 MISSION_STATUS_LABELS = {
@@ -79,7 +80,7 @@ def _short(value: str | None, limit: int = 240) -> str | None:
     return text[: limit - 1].rstrip() + "…"
 
 
-def _task_dict(task: Task) -> dict:
+def _task_dict(task: Task, secrets: tuple[str, ...] = ()) -> dict:
     return {
         "id": task.id,
         "key": task.key,
@@ -96,21 +97,21 @@ def _task_dict(task: Task) -> dict:
     }
 
 
-def _event_dict(event: Event) -> dict:
+def _event_dict(event: Event, secrets: tuple[str, ...] = ()) -> dict:
     return {
         "id": event.id,
         "mission_id": event.mission_id,
         "type": event.type,
         "agent": event.agent,
-        "payload": event.payload,
+        "payload": redact_structure(event.payload, secrets),
         "created_at": _iso(event.created_at),
     }
 
 
-def serialize_event(event: Event) -> dict:
+def serialize_event(event: Event, secrets: tuple[str, ...] = ()) -> dict:
     """Sérialisation publique d'un événement pour le flux SSE."""
 
-    return _event_dict(event)
+    return _event_dict(event, secrets)
 
 
 def _agent_status(
@@ -180,6 +181,7 @@ def _communications(tasks: list[Task]) -> list[dict]:
 def _allure_summary(allure_root: Path | None, mission_id: str) -> dict | None:
     if allure_root is None:
         return None
+    mission_id = validate_mission_id(mission_id)
     summary_path = Path(allure_root) / mission_id / "allure-summary.json"
     if not summary_path.is_file():
         return None
@@ -247,8 +249,15 @@ def build_office_state(
     mission_id: str | None = None,
     *,
     allure_root: Path | None = None,
+    secrets: tuple[str, ...] = (),
 ) -> dict:
-    """Retourne un instantané complet et sérialisable du bureau."""
+    """Retourne un instantané complet et sérialisable du bureau.
+
+    ``secrets`` expurge les valeurs connues avant toute réponse HTTP.
+    """
+
+    if mission_id is not None:
+        mission_id = validate_mission_id(mission_id)
 
     missions = store.list_missions()
     mission: Mission | None = None
@@ -337,7 +346,7 @@ def build_office_state(
         "progress": progress,
     }
 
-    return {
+    return redact_structure({
         "generated_at": datetime.now().astimezone().isoformat(),
         "requested_mission_id": mission_id,
         "mission": {
@@ -356,15 +365,19 @@ def build_office_state(
         },
         "agents": agents,
         "departments": department_catalog(),
-        "tasks": [_task_dict(task) for task in tasks],
-        "events": [_event_dict(event) for event in events[-120:]],
+        "tasks": [_task_dict(task, secrets) for task in tasks],
+        "events": [_event_dict(event, secrets) for event in events[-120:]],
         "communications": _communications(tasks),
         "stats": stats,
         "allure": _allure_summary(allure_root, mission.id),
-    }
+    }, secrets)
 
 
-def mission_summaries(store: SqliteStore, limit: int = 20) -> list[dict]:
+def mission_summaries(
+    store: SqliteStore,
+    limit: int = 20,
+    secrets: tuple[str, ...] = (),
+) -> list[dict]:
     """Liste compacte des missions récentes pour le panneau « Missions »."""
 
     summaries: list[dict] = []
@@ -373,7 +386,7 @@ def mission_summaries(store: SqliteStore, limit: int = 20) -> list[dict]:
         total = len(tasks)
         done = sum(1 for task in tasks if task.status == TaskStatus.COMPLETED)
         summaries.append(
-            {
+            redact_structure({
                 "id": mission.id,
                 "instruction": _short(mission.instruction, 160),
                 "status": mission.status.value,
@@ -383,7 +396,7 @@ def mission_summaries(store: SqliteStore, limit: int = 20) -> list[dict]:
                 "tasks_total": total,
                 "tasks_done": done,
                 "progress": round(done * 100 / total) if total else 0,
-            }
+            }, secrets)
         )
     return summaries
 
@@ -393,5 +406,8 @@ def state_for_request(
     mission_id: str | None,
     *,
     allure_root: Path | None = None,
+    secrets: tuple[str, ...] = (),
 ) -> dict[str, Any]:
-    return build_office_state(store, mission_id, allure_root=allure_root)
+    return build_office_state(
+        store, mission_id, allure_root=allure_root, secrets=secrets
+    )

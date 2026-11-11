@@ -21,6 +21,7 @@ from pathlib import Path
 from uuid import NAMESPACE_URL, uuid5
 
 from app.config import Settings, get_settings
+from app.security import known_secrets, redact_structure
 from app.tools.redaction import redact_text
 
 
@@ -114,15 +115,20 @@ class AllureReport:
         mission_dir = (
             Path(self.settings.workspace_dir) / "missions" / mission_id
         )
+        secrets = known_secrets(self.settings)
         stopped = int(time.time() * 1000)
         for index, case in enumerate(cases):
-            result = self._result_payload(
-                mission_id,
-                directory,
-                mission_dir,
-                case,
-                index,
-                stopped,
+            result = redact_structure(
+                self._result_payload(
+                    mission_id,
+                    directory,
+                    mission_dir,
+                    case,
+                    index,
+                    stopped,
+                    secrets,
+                ),
+                secrets,
             )
             filename = f"{result['uuid']}-result.json"
             (directory / filename).write_text(
@@ -160,7 +166,7 @@ class AllureReport:
         )
 
         totals = _totals(cases)
-        summary_payload = {
+        summary_payload = redact_structure({
             "mission_id": mission_id,
             "generated_at": datetime.now(timezone.utc).isoformat(),
             "status": "completed",
@@ -168,7 +174,7 @@ class AllureReport:
             "suites": suite_summaries,
             "anomalies": anomalies,
             "results_dir": str(directory),
-        }
+        }, secrets)
         summary_path = directory / "allure-summary.json"
         summary_path.write_text(
             json.dumps(summary_payload, indent=2, ensure_ascii=False),
@@ -176,7 +182,16 @@ class AllureReport:
         )
         report_path = directory / "allure-report.md"
         report_path.write_text(
-            _markdown(mission_id, totals, suite_summaries, anomalies, directory),
+            redact_text(
+                _markdown(
+                    mission_id,
+                    totals,
+                    suite_summaries,
+                    anomalies,
+                    directory,
+                ),
+                secrets,
+            ),
             encoding="utf-8",
         )
 
@@ -416,6 +431,7 @@ class AllureReport:
         case: _Case,
         index: int,
         stopped: int,
+        secrets: tuple[str, ...] = (),
     ) -> dict:
         identifier = str(
             uuid5(
@@ -425,11 +441,6 @@ class AllureReport:
         )
         start = max(stopped - case.duration_ms, stopped - 86_400_000)
         full_name = f"{mission_id} :: {case.suite} :: {case.name}"
-        secrets = (
-            self.settings.test_user1_password,
-            self.settings.test_user2_password,
-            "QaTest123!",
-        )
 
         details: dict = {"known": False, "muted": False, "flaky": False}
         if case.message:

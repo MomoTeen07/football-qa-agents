@@ -25,6 +25,7 @@ if str(PROJECT_ROOT) not in sys.path:
 from app.config import get_settings
 from app.domain.models import Task
 from app.orchestrator.manager import Manager
+from app.security import validate_mission_id
 
 EVIDENCE_FILES = (
     "api/probe-results.json",
@@ -34,6 +35,7 @@ EVIDENCE_FILES = (
 
 
 def has_evidence(settings, mission_id: str) -> bool:
+    mission_id = validate_mission_id(mission_id)
     base = Path(settings.workspace_dir) / "missions" / mission_id
     return any((base / relative).is_file() for relative in EVIDENCE_FILES)
 
@@ -59,6 +61,7 @@ def parse_args() -> argparse.Namespace:
 
 def select_mission(manager: Manager, settings, requested: str | None):
     if requested:
+        requested = validate_mission_id(requested)
         mission = manager.get_mission(requested)
         if mission is None:
             raise SystemExit(f"MISSION_INTROUVABLE={requested}")

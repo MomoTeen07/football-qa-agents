@@ -21,6 +21,7 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from app.config import get_settings
 from app.office.server import create_server
+from app.security import validate_mission_id
 from app.store.sqlite_store import SqliteStore
 
 
@@ -43,8 +44,16 @@ def main() -> int:
     settings = get_settings()
     store = SqliteStore(settings.mission_db_path)
 
-    if args.mission_id and store.get_mission(args.mission_id) is None:
-        print(f"Mission introuvable : {args.mission_id}", file=sys.stderr)
+    try:
+        mission_id = (
+            validate_mission_id(args.mission_id) if args.mission_id else None
+        )
+    except ValueError as exc:
+        print(f"Identifiant refusé : {exc}", file=sys.stderr)
+        return 2
+
+    if mission_id and store.get_mission(mission_id) is None:
+        print(f"Mission introuvable : {mission_id}", file=sys.stderr)
         return 2
 
     try:
@@ -61,13 +70,13 @@ def main() -> int:
 
     host, port = server.server_address[:2]
     url = f"http://{host}:{port}/"
-    if args.mission_id:
-        url += f"?mission_id={args.mission_id}"
+    if mission_id:
+        url += f"?mission_id={mission_id}"
 
     missions = store.list_missions()
     print(f"Bureau virtuel : {url}")
     print(f"Missions disponibles : {len(missions)}")
-    if missions and not args.mission_id:
+    if missions and not mission_id:
         print(f"Mission affichée : {missions[0].id} ({missions[0].status.value})")
     print("Ctrl+C pour arrêter. Aucune mission n'est lancée automatiquement.")
 
