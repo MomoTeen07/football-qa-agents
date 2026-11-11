@@ -1,8 +1,8 @@
 # PROJECT_CONTEXT — Football QA Agents
 
 Date du point de reprise : 11 novembre 2026  
-Dernière action terminée : **phase 8 — bureau virtuel 2D** (11 novembre 2026). L'open space isométrique `office/` représente les huit agents réels ; il est servi en lecture seule par un serveur local en bibliothèque standard, alimenté par l'`EventBus` et le journal SQLite via SSE. Les passations et les bulles sont dérivées uniquement de tâches et d'événements réels. Suite du système : **103 tests sur 103 réussis**.  
-État global : **phases 1 à 8 terminées**. Le projet n'est pas terminé : la phase 9 reste à faire.
+Dernière action terminée : **phase 9 — J0 baseline** (11 novembre 2026). La baseline est confirmée sur `main` (`0179751`, **103 passed**) et les constats R1 à R4 sont couverts par des tests rouges (`xfail` strict) dans `tests/test_security.py`, avant toute correction.  
+État global : **phases 1 à 8 terminées ; phase 9 en cours (J0)**.
 > **Point de reprise — lire ceci en premier**
 >
 > - `main` contient les phases 1 à 8, y compris le **test réel du bot
@@ -22,9 +22,10 @@ Dernière action terminée : **phase 8 — bureau virtuel 2D** (11 novembre 2026
 > - **Phase 8** : bureau virtuel avec
 >   `scripts\run_office.py --mission-id <id>` (lecture seule, aucun lancement
 >   de mission).
-> - **Phase 9 (non commencée)** : lire `reports/phase-9-plan.md` avant toute
+> - **Phase 9 (en cours, J0)** : lire `reports/phase-9-plan.md` avant toute
 >   action. C'est la spécification de travail (jalons J0 à J4, tests,
->   Definition of Done).
+>   Definition of Done). J0 a confirmé la baseline (103 tests) et écrit les
+>   tests rouges R1 à R4 dans `tests/test_security.py`.
 > - Détail et précautions : section **« Reprise sur le PC professionnel »** ci-dessous.
 > - **Documentation** : toute modification met à jour `README.md`,
 >   `PROJECT_CONTEXT.md` et `CHANGELOG.md`.
@@ -318,8 +319,9 @@ Déjà fait :
 ### Phases restantes
 
 - [ ] **Phase 9 — durcissement** : sécurité, robustesse, documentation finale.
-      **Plan détaillé prêt** dans `reports/phase-9-plan.md` ; la phase n'est pas
-      commencée.
+      **En cours**. J0 (baseline) : `main` `0179751`, **103 passed**, constats
+      R1 à R4 confirmés par 8 tests rouges dans `tests/test_security.py`.
+      J1 à J4 restent à livrer.
 
 ---
 

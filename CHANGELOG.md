@@ -26,9 +26,28 @@ retard. En cas de doute, mettre à jour les trois.
 
 ## [Non publié]
 
+### En cours — Phase 9 : durcissement
+
+#### J0 — baseline (11 novembre 2026)
+
+##### Ajouté
+
+- **Tests rouges R1 à R4** (`tests/test_security.py`, 8 tests) : traversée
+  d'identifiant de mission (`workspace`, DevOps), écriture hors dossier de
+  mission, rédaction absente de `build_office_state` / `serialize_event`, fuite
+  d'un secret sentinelle dans les rapports Markdown/JSON et les fichiers Allure.
+  Ils sont marqués `xfail(strict=True)` jusqu'à leur correction au jalon J1.
+
+##### Vérifié
+
+- Baseline `main` `0179751` : **103 passed** avant tout ajout.
+- Suite après ajout : **103 passed, 8 xfailed** (aucune régression).
+
 ### À venir
 
-- **Phase 9** — durcissement : sécurité, robustesse, documentation finale.
+- **Phase 9** — jalons J1 (sécurité des identifiants, chemins, secrets et
+  garde-fous Git), J2 (bureau et persistance), J3 (lint/CI/version), J4
+  (documentation finale).
 
 ### Ajouté
 
