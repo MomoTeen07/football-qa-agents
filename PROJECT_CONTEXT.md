@@ -1,16 +1,16 @@
 # PROJECT_CONTEXT — Football QA Agents
 
 Date du point de reprise : 11 novembre 2026  
-Dernière action terminée : **phase 7 — agents 6 et 7** (11 novembre 2026). L’agent DevOps réel prépare ou publie une branche et une pull request sans jamais pousser sur `main` (mode préparation par défaut, publication opt-in). Le reporter produit un Markdown enrichi, une synthèse JSON et des résultats **Allure 2** standards. Validation réelle sur la mission `7e30889c18cd` : **59 résultats Allure** (21 sondes + 27 API + 11 UI), 0 échec, rapport HTML généré par Allure CLI 2.46.2. Suite du système : **90 tests sur 90 réussis**.  
-État global : **phases 1 à 7 terminées**. Le projet n'est pas terminé : les phases 8 et 9 restent à faire.
+Dernière action terminée : **phase 8 — bureau virtuel 2D** (11 novembre 2026). L'open space isométrique `office/` représente les huit agents réels ; il est servi en lecture seule par un serveur local en bibliothèque standard, alimenté par l'`EventBus` et le journal SQLite via SSE. Les passations et les bulles sont dérivées uniquement de tâches et d'événements réels. Suite du système : **103 tests sur 103 réussis**.  
+État global : **phases 1 à 8 terminées**. Le projet n'est pas terminé : la phase 9 reste à faire.
 > **Point de reprise — lire ceci en premier**
 >
-> - `main` contient les phases 1 à 6 et le **test réel du bot Telegram**,
->   ainsi que la **phase 7** (DevOps et reporting Allure).
+> - `main` contient les phases 1 à 8, y compris le **test réel du bot
+>   Telegram** et la **phase 8** (bureau virtuel 2D).
 > - Reprise : `git switch main` puis `git pull --ff-only origin main`.
 > - Puis :
 >   1. `.venv\Scripts\python.exe -m pip install -r requirements.txt`
->   2. `.venv\Scripts\python.exe -m pytest` → attendu **`90 passed`**
+>   2. `.venv\Scripts\python.exe -m pytest` → attendu **`103 passed`**
 >   3. `.venv\Scripts\python.exe -m playwright install chromium`
 >   4. démarrer la stack `football-qa-test`, puis `.venv\Scripts\python.exe scripts\run_phase6_mission.py`
 > - Le projet cible `football-qa`, les clés et la stack de test sont
@@ -19,6 +19,9 @@ Dernière action terminée : **phase 7 — agents 6 et 7** (11 novembre 2026). L
 > - **Phase 7** : rapport Allure régénérable avec
 >   `scripts\run_phase7_mission.py --mission-id <id>` ; publication Git
 >   opt-in via `DEVOPS_PUBLISH_ENABLED=true` et `--publish`.
+> - **Phase 8** : bureau virtuel avec
+>   `scripts\run_office.py --mission-id <id>` (lecture seule, aucun lancement
+>   de mission).
 > - Détail et précautions : section **« Reprise sur le PC professionnel »** ci-dessous.
 > - **Documentation** : toute modification met à jour `README.md`,
 >   `PROJECT_CONTEXT.md` et `CHANGELOG.md`.
@@ -97,7 +100,7 @@ Construire un système multi-agents QA local pour l’application `football-qa`,
   installées.
 - `.env` complété : **clés Gemini et Telegram disponibles**,
   `REAL_AGENTS_ENABLED=true`. Les valeurs ne sont jamais affichées.
-- Suite de tests : `.venv\Scripts\python.exe -m pytest` → **90 passed**.
+- Suite de tests : `.venv\Scripts\python.exe -m pytest` → **103 passed**.
 - `playwright==1.64.1` installé et **Chromium présent** dans
   `%LOCALAPPDATA%\ms-playwright` : l’exécution UI réelle fonctionne.
 - Dépôt Git initialisé sur la branche `main` (commit initial `2a3c929`) ;
@@ -121,7 +124,7 @@ on travaille.**
 | Stack de test Docker | opérationnelle | opérationnelle |
 | `.env` | clés Gemini + Telegram présentes | clés Gemini + Telegram présentes |
 | Python | 3.12 avec `.venv` existant | 3.12.10, `.venv` prêt |
-| Tests | 90 après `git pull` sur `main` | **90 passed** |
+| Tests | 103 après `git pull` sur `main` | **103 passed** |
 
 Conséquences :
 
@@ -150,7 +153,7 @@ git switch main
 git pull --ff-only origin main
 
 .venv\Scripts\python.exe -m pip install -r requirements.txt
-.venv\Scripts\python.exe -m pytest          # attendu : 90 passed
+.venv\Scripts\python.exe -m pytest          # attendu : 103 passed
 .venv\Scripts\python.exe -m playwright install chromium
 ```
 
@@ -303,10 +306,14 @@ Déjà fait :
       (Markdown, JSON, résultats Allure 2 standards). Validation réelle sur la
       mission `7e30889c18cd` : **59 résultats Allure**, 0 échec, rendu HTML
       généré par la CLI Allure 2.46.2 ; promotion DevOps en mode `planned`.
+- [x] **Phase 8 — bureau virtuel 2D** : open space isométrique pixel art,
+      huit personnages, six départements, SSE réel (EventBus + journal SQLite),
+      fiche agent, passations dérivées des dépendances terminées. **Aucune
+      animation aléatoire** ; sans mission, les agents restent disponibles.
+      Suite du système : **103 tests passent**.
 
 ### Phases restantes
 
-- [ ] **Phase 8 — bureau virtuel 2D** : frontend séparé, SSE, personnages SVG, événements réels.
 - [ ] **Phase 9 — durcissement** : sécurité, robustesse, documentation finale.
 
 ---
@@ -345,6 +352,8 @@ QA Analyst  Test Designer  API Tester   API Auto +    QA Reporter
   Markdown enrichi, la synthèse JSON et les résultats **Allure 2**.
 - L’**EventBus** et le **store SQLite** journalisent missions, tâches et
   événements localement.
+- Le **bureau virtuel** (`office/`, phase 8) lit ce même journal en lecture
+  seule et le diffuse en SSE ; il n'écrit rien et ne déclenche aucune mission.
 
 ### Phase 5 — agents 1 à 3
 
@@ -476,6 +485,66 @@ QA Analyst  Test Designer  API Tester   API Auto +    QA Reporter
 - `app/orchestrator/graph.py`
   - Les preuves du reporter sont journalisées dans la tâche et dans
     l’événement `report_ready`.
+  - Depuis la phase 8, chaque événement de tâche (`task_started`,
+    `task_completed`, `task_failed`, `task_blocked`) porte la clé `key`, ce qui
+    permet au bureau d’associer l’événement à la tâche exacte.
+
+### Phase 8 — bureau virtuel 2D
+
+- `app/office/catalog.py`
+  - Catalogue figé des **huit personnages** (identifiants identiques à ceux du
+    planificateur et du graphe), de leurs rôles, départements, couleurs et
+    sprites pixel art.
+  - Six départements : Direction, Analyse & Conception, Tests API,
+    Automatisation UI, Infrastructure, Reporting.
+
+- `app/office/state.py`
+  - Construit l’état complet à partir du store : mission courante, statut de
+    chaque agent, tâche en cours, tâches terminées, preuves, résultats Allure,
+    événements et activité récente.
+  - **Passations** : uniquement déduites des dépendances `depends_on` dont la
+    tâche amont est terminée et portée par un autre agent. Aucune
+    communication inventée.
+  - Sans mission : état vide, huit agents `idle`, aucun événement.
+
+- `app/office/stream.py`
+  - `OfficeEventStream` : abonnement à l’`EventBus` en mémoire **et** relecture
+    du journal SQLite, avec déduplication par identifiant. Le bureau fonctionne
+    donc même si le gateway Telegram tourne dans un autre processus.
+  - `wait(after_id, timeout)` ne bloque jamais indéfiniment.
+
+- `app/office/server.py`
+  - `ThreadingHTTPServer` de la bibliothèque standard, strictement local
+    (`127.0.0.1`, `localhost`, `::1`), avec en-têtes de sécurité et CSP sans
+    ressource distante.
+  - Routes : `/`, `/api/state`, `/api/missions`, `/events` (SSE), `/api/health`.
+  - Sert `office/` avec protection contre la traversée de chemins ; valide les
+    identifiants de mission ; ne sert que des fichiers locaux.
+  - N’exécute aucune mission et n’écrit dans aucune base.
+
+- `office/`
+  - Frontend statique sans build : `index.html`, `assets/styles.css`,
+    `layout.js` (géométrie isométrique, postes, zones, décor), `sprites.js`
+    (personnages pixel art), `scene.js` (scène SVG, tri en profondeur,
+    déplacements) et `app.js` (SSE, rendu, panneaux, bulles).
+  - Une seule bulle par agent, quatre au maximum ; file de passations limitée.
+  - Veille toutes les 5 s via `setTimeout` quand le bureau est ouvert avant la
+    première mission. Aucun `setInterval`, aucun `Math.random`, aucune URL
+    externe.
+  - Fiche agent : rôle, département, statut, tâche courante, tâches, dernier
+    résultat, historique.
+  - Vues Bureau, Missions, Agents et Rapports.
+
+- `scripts/run_office.py`
+  - Lanceur explicite : choisit la mission (`--mission-id`), le port
+    (`--port`), ouvre éventuellement le navigateur (`--open`). Ne crée ni ne
+    lance aucune mission.
+
+- `tests/test_office.py`
+  - Catalogue, statuts, passations, Allure, flux mémoire et SQLite, endpoints
+    HTTP, SSE, refus d’une interface non locale, traversée de chemins, absence
+    de `Math.random`/`setInterval`/URL externe, présence de `key` dans les
+    événements de tâche.
 
 ### Gateway Telegram (phase 4, validé en réel)
 
@@ -502,7 +571,7 @@ QA Analyst  Test Designer  API Tester   API Auto +    QA Reporter
 
 ```powershell
 .venv\Scripts\python.exe -m pytest
-# 90 passed
+# 103 passed
 ```
 
 CI : `.github/workflows/tests.yml` rejoue la même suite sur chaque PR et sur
@@ -564,6 +633,17 @@ Mission réelle de référence (10 novembre 2026) :
 | `app/orchestrator/graph.py` | Graphe plan → execute → review → report → finalize |
 | `app/orchestrator/manager.py` | Manager, cycle de mission, approbation, annulation, agents réels |
 | `app/cli.py` | CLI `create`, `run`, `approve`, `status`, `events`, `list`, `demo` |
+| `app/office/__init__.py` | Façade du bureau virtuel (phase 8) |
+| `app/office/catalog.py` | Catalogue des 8 personnages et des 6 départements |
+| `app/office/state.py` | État réel du bureau, passations, synthèse Allure |
+| `app/office/stream.py` | Flux d’événements EventBus + SQLite, dédupliqué |
+| `app/office/server.py` | Serveur HTTP local en lecture seule, SSE, fichiers statiques |
+| `office/index.html` | Coque du bureau isométrique |
+| `office/assets/styles.css` | Thème sombre pixel/game UI |
+| `office/assets/layout.js` | Géométrie isométrique, postes, zones, décor |
+| `office/assets/sprites.js` | Sprites pixel art des 8 agents |
+| `office/assets/scene.js` | Scène SVG, tri en profondeur, déplacements |
+| `office/assets/app.js` | Client SSE, rendu, panneaux, bulles, fiche agent |
 | `app/telegram/__init__.py` | Package Telegram |
 | `app/telegram/auth.py` | Allowlist stricte par `user_id` |
 | `app/telegram/gateway.py` | Gateway Telegram en polling, sans scheduler |
@@ -579,11 +659,13 @@ Mission réelle de référence (10 novembre 2026) :
 | `tests/test_phase6_agents.py` | 9 tests des agents 4/5 et du reporter |
 | `tests/test_allure_report.py` | 6 tests des résultats Allure 2 et des synthèses |
 | `tests/test_phase7_agents.py` | 12 tests DevOps, reporter enrichi et approbation Git/PR |
+| `tests/test_office.py` | 13 tests du bureau : catalogue, état, passations, SSE, serveur, garanties frontend |
 | `infra/docker-compose.test.yml` | Stack de test isolée |
 | `scripts/seed_test_data.py` | Création des comptes de test |
 | `scripts/run_phase5_mission.py` | Lanceur explicite d’une mission phase 5 |
 | `scripts/run_phase6_mission.py` | Lanceur explicite d’une mission phase 6 API + UI |
 | `scripts/run_phase7_mission.py` | Rapport Allure/Markdown/JSON et promotion DevOps d’une mission |
+| `scripts/run_office.py` | Lanceur local du bureau virtuel, en lecture seule |
 | `postman/collections/football-qa.json` | Collection Postman réelle (11 requêtes) |
 | `postman/environments/football-qa-test.json` | Environnement Postman de test |
 | `reports/baseline.md` | Baseline |
@@ -626,7 +708,11 @@ Le dépôt `football-qa` est resté propre.
 - **Mode football** : `MOCK_FOOTBALL_API=true` pour des tests déterministes.
 - **Rapports** : Markdown/JSON enrichis et résultats **Allure 2** standards générés en Python, sans dépendance ajoutée ; CLI Allure optionnelle pour le rendu HTML.
 - **DevOps** : mode préparation par défaut ; publication opt-in via `DEVOPS_PUBLISH_ENABLED=true` (+ `--publish` sur le lanceur). Toujours branche `qa/promotion-<mission>` + PR, jamais de push direct sur `main`, jamais de `--force`, jamais de fusion automatique.
-- **Bureau virtuel** : frontend séparé, SSE, personnages SVG.
+- **Bureau virtuel** : frontend statique séparé, sans build, servi par un
+  serveur `http.server` local en lecture seule. SSE alimenté par l'`EventBus`
+  et le journal SQLite (dédupliqué). Passations dérivées des seules
+  dépendances terminées, une bulle par agent (4 max), aucune animation
+  aléatoire, aucune ressource externe, écoute strictement locale.
 - **Jira/Xray/Squash** : non retenus.
 - **Git** : branche + PR uniquement, jamais de push direct sur `main`. Fusion réalisée par l'agent (décision du 10 novembre 2026, remplace la validation humaine).
 - **CI** : GitHub Actions, `pytest` sur chaque PR et sur `main` (Python 3.12, sans clé). Garde-fou qui remplace la relecture humaine avant fusion.
@@ -668,7 +754,7 @@ dans ce document.
 | `ALLURE_RESULTS_DIR` | `reports/allure-results` (fichiers JSON Allure standard) |
 | `GROQ_API_KEY` / `MISTRAL_API_KEY` | non utilisés |
 
-Sans clé, le système reste utilisable : les 90 tests passent et les agents
+Sans clé, le système reste utilisable : les 103 tests passent et les agents
 réels basculent sur leur repli déterministe.
 
 Historique utile :
@@ -763,7 +849,7 @@ Invoke-WebRequest -UseBasicParsing http://localhost:8002/health
 Invoke-WebRequest -UseBasicParsing http://localhost:5175/
 ```
 
-Attendu : `90 passed` et stack `healthy` sur `8002`, `5434` et `5175`.
+Attendu : `103 passed` et stack `healthy` sur `8002`, `5434` et `5175`.
 Ne jamais sonder `8001` avec les outils du projet.
 
 ### Étape 1 — vérifier l’état livré
@@ -835,10 +921,11 @@ Résultats (détail : `reports/phase-4-telegram.md`) :
 
 ### Étape 4 — prochaine phase de développement
 
-**Phase 8 — bureau virtuel 2D** : frontend séparé, SSE, personnages SVG et
-événements réels. Les phases 1 à 7 sont terminées ; la phase 7 est validée hors
-ligne et en réel (Allure + mode préparation DevOps). Ne pas démarrer la phase 8
-sans demande explicite.
+**Phase 9 — durcissement** : sécurité, robustesse et documentation finale. Les
+phases 1 à 8 sont terminées ; la phase 8 (bureau virtuel 2D) est livrée et
+couverte par **103 tests**. Le bureau s'ouvre avec
+`.venv\Scripts\python.exe scripts\run_office.py --mission-id <id>` ; il est en
+lecture seule et ne déclenche aucune mission.
 
 ### En cas de problème connu
 
@@ -885,6 +972,12 @@ sans demande explicite.
 
 # Rendu HTML Allure (CLI gratuite et optionnelle)
 allure serve reports\allure-results\<mission_id>
+
+# Bureau virtuel 2D en lecture seule (mission la plus récente)
+.venv\Scripts\python.exe scripts\run_office.py
+
+# Bureau virtuel 2D sur une mission précise, port choisi
+.venv\Scripts\python.exe scripts\run_office.py --mission-id <mission_id> --port 5180
 
 # Gateway Telegram (polling, allowlist)
 .venv\Scripts\python.exe -m app.telegram.gateway
@@ -935,6 +1028,8 @@ allure serve reports\allure-results\<mission_id>
 - Les agents 1 à 3 dépendent du free tier Gemini : une erreur passagère (quota/429) déclenche le repli déterministe sans bloquer la mission ni créer d’anomalie.
 - Le bot Telegram est validé en réel (10 novembre 2026) ; le test d’un compte non autorisé reste à rejouer avec un second compte. Le jeton est masqué dans les logs par `SecretRedactionFilter`.
 - Les rapports et preuves de mission sont **locaux** (`reports/missions/`, `workspace/missions/`) et ignorés par Git : leur absence après un clone est normale.
+- Le **bureau virtuel** (`office/`) est strictement en **lecture seule** : il lit le store SQLite et l’`EventBus`, n’écrit rien, ne crée et ne lance aucune mission. Il refuse toute interface non locale (seuls `127.0.0.1`, `localhost` et `::1` sont acceptés).
+- Toute animation du bureau (statut, bulle, déplacement) doit rester **dérivée d’un événement ou d’une dépendance réelle**. Ne jamais ajouter de communication, de déplacement ou d’activité décorative.
 - Aucune nouvelle phase ne doit démarrer sans demande explicite.
 
 ---
@@ -944,11 +1039,14 @@ allure serve reports\allure-results\<mission_id>
 Le socle QA local (baseline, isolation, Manager, gateway Telegram, rapports,
 approbation, annulation), la phase 5 (agents 1 à 3 réels avec Gemini
 `gemini-3.5-flash`, collection Postman, sondes API limitées à `localhost:8002`),
-la phase 6 (agents 4 et 5 : suite pytest API et scénarios Playwright) et la
-phase 7 (agent DevOps branche + PR, reporting Markdown/JSON et Allure 2)
-fonctionnent dans un environnement Python 3.12.10 natif, le bot Telegram est
-validé en réel (mission `8c568cce0ef4` à 0 anomalie), et les **90 tests
-passent**. La mission de référence `7e30889c18cd` (10 novembre 2026) a réussi
-21/21 sondes, 27/27 tests API et 11/11 scénarios UI avec 0 anomalie ; sa
-régénération phase 7 produit **59 résultats Allure** valides et un rendu HTML
-Allure CLI 2.46.2. Le projet se poursuit à la phase 8 (bureau virtuel 2D).
+la phase 6 (agents 4 et 5 : suite pytest API et scénarios Playwright), la
+phase 7 (agent DevOps branche + PR, reporting Markdown/JSON et Allure 2) et la
+phase 8 (bureau virtuel isométrique en lecture seule, huit personnages,
+événements réels via SSE, passations dérivées des dépendances) fonctionnent
+dans un environnement Python 3.12.10 natif, le bot Telegram est validé en réel
+(mission `8c568cce0ef4` à 0 anomalie), et les **103 tests passent**. La mission
+de référence `7e30889c18cd` (10 novembre 2026) a réussi 21/21 sondes, 27/27
+tests API et 11/11 scénarios UI avec 0 anomalie ; sa régénération phase 7
+produit **59 résultats Allure** valides et un rendu HTML Allure CLI 2.46.2. Le
+bureau virtuel s’ouvre avec `scripts\run_office.py` sans jamais inventer
+d’activité. Le projet se poursuit à la phase 9 (durcissement).

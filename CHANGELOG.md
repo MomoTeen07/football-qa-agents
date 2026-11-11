@@ -28,7 +28,6 @@ retard. En cas de doute, mettre à jour les trois.
 
 ### À venir
 
-- **Phase 8** — bureau virtuel 2D : frontend séparé, SSE, personnages SVG.
 - **Phase 9** — durcissement : sécurité, robustesse, documentation finale.
 
 ### Modifié
@@ -37,6 +36,63 @@ retard. En cas de doute, mettre à jour les trois.
   pull requests n'est plus requise. L'agent ouvre la PR, vérifie les tests et
   la fusionne lui-même. Le principe « branche + PR, pas de push direct sur
   `main` » est conservé. Documenté dans `README.md` et `PROJECT_CONTEXT.md`.
+
+---
+
+## [0.8.0] — 2026-11-11 — Phase 8 : bureau virtuel 2D
+
+### Ajouté
+
+- **Bureau virtuel isométrique** (`office/`) : frontend statique sans build
+  (HTML/CSS/JS natifs) représentant les 8 agents réels dans un open space
+  pixel art, avec six départements, postes de travail, décor, panneau latéral
+  et légende des statuts.
+- **Serveur local en lecture seule** (`app/office/server.py`,
+  `scripts/run_office.py`) : `http.server` de la bibliothèque standard, écoute
+  strictement sur la boucle locale, sert le frontend et expose
+  `/api/state`, `/api/missions` et `/events` (SSE). Aucune mission n'est créée
+  ni lancée par le bureau.
+- **Flux SSE réel** (`app/office/stream.py`) : combine l'abonnement à
+  l'`EventBus` en mémoire et la relecture du journal SQLite, avec
+  déduplication par identifiant d'événement. Fonctionne donc aussi quand le
+  gateway Telegram tourne dans un autre processus.
+- **Cartographie réelle de l'état** (`app/office/state.py`) : statuts
+  d'agents, mission courante, progression, preuves, résultats Allure,
+  événements et activité récente sont dérivés des missions, tâches et
+  événements persistés. Aucune donnée simulée.
+- **Passations réelles** : un personnage ne se déplace que lorsqu'une tâche
+  dépend d'une tâche terminée portée par un autre agent (`depends_on`), puis
+  revient à son poste.
+- **Fiche agent** : rôle, département, statut, tâche courante, liste des
+  tâches, dernier résultat et historique, ouverte au clic sur un personnage ou
+  dans la liste « Agents ».
+- **Flux temps réel sobre** : bulles dédupliquées par agent et plafonnées à
+  quatre, file d'animations limitée, veille de mission toutes les 5 s via
+  `setTimeout` quand le bureau est ouvert avant la première mission.
+- **Tests** (`tests/test_office.py`) : catalogue, cartographie des statuts,
+  passations dérivées des dépendances, synthèse Allure, flux mémoire/SQLite,
+  endpoints HTTP, SSE, refus d'une interface non locale, traversée de chemins,
+  absence de `Math.random`/`setInterval`/URL externe dans le frontend et
+  présence de `key` dans les événements de tâche.
+
+### Modifié
+
+- **`app/orchestrator/graph.py`** : les événements `task_started`,
+  `task_completed`, `task_failed` et `task_blocked` incluent désormais la clé
+  de tâche (`key`), ce qui permet au bureau d'associer un événement à la bonne
+  tâche sans heuristique.
+- **`.gitignore`** : les bases et rapports de démonstration
+  `workspace/office-*/` ainsi que les aperçus locaux `preview-*` sont ignorés.
+- **Documentation** : `README.md` et `PROJECT_CONTEXT.md` décrivent le
+  lancement, les garanties « événements réels uniquement » et l'état de la
+  phase 8. Suite du système : **103 tests passent**.
+
+### Pourquoi
+
+Le bureau devait représenter la mission sans jamais inventer d'activité. Toute
+animation est donc dérivée d'un événement enregistré ou d'une dépendance
+réelle entre tâches ; sans mission, les huit agents restent disponibles et
+silencieux.
 
 ---
 

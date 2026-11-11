@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>Football QA Agents — Quartier général</title>
+  <link rel="stylesheet" href="/assets/styles.css">
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 32 32" role="presentation">
+            <rect x="2" y="2" width="28" height="28" rx="7" fill="#0d5c63"/>
+            <circle cx="16" cy="16" r="9" fill="#f8fafc"/>
+            <path d="M16 9l4 3-1.5 5h-5L12 12z" fill="#132033"/>
+            <path d="M7 16h4M21 16h4M16 25v-5M12 12l-3-3M20 12l3-3" stroke="#132033" stroke-width="2"/>
+          </svg>
+        </span>
+        <div class="brand-text">
+          <h1>Football QA Agents</h1>
+          <p>Quartier général · temps réel</p>
+        </div>
+      </div>
+
+      <nav class="nav" id="nav" aria-label="Navigation principale">
+        <button type="button" class="nav-item is-active" data-view="overview">Bureau</button>
+        <button type="button" class="nav-item" data-view="missions">Missions</button>
+        <button type="button" class="nav-item" data-view="agents">Agents</button>
+        <button type="button" class="nav-item" data-view="reports">Rapports</button>
+      </nav>
+
+      <div class="top-status">
+        <span class="top-kpis" id="top-kpis"></span>
+        <span class="connection" id="connection" data-state="connecting">
+          <i aria-hidden="true"></i><span>Connexion…</span>
+        </span>
+        <span class="mission-chip" id="mission-chip">Aucune mission</span>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <section class="stage" id="stage" aria-label="Bureau virtuel isométrique">
+        <div class="stage-bar">
+          <span class="stage-pill">OPEN SPACE · 8 AGENTS</span>
+          <span class="stage-live" id="stage-live"><i aria-hidden="true"></i> EN DIRECT</span>
+        </div>
+        <svg id="scene" viewBox="0 0 1040 760" preserveAspectRatio="xMidYMid slice" role="img"
+             aria-label="Bureau isométrique pixel art des huit agents QA"></svg>
+        <div class="bubbles" id="bubbles" aria-live="polite"></div>
+        <div class="dept-legend" id="dept-legend" aria-label="Départements"></div>
+        <div class="stage-note" id="stage-note" hidden></div>
+      </section>
+
+      <aside class="side" id="side" aria-label="Panneau d'information"></aside>
+    </main>
+
+    <footer class="legend" aria-label="Légende des statuts">
+      <span class="legend-item" data-status="idle"><i></i>Disponible</span>
+      <span class="legend-item" data-status="working"><i></i>En travail</span>
+      <span class="legend-item" data-status="waiting"><i></i>En attente</span>
+      <span class="legend-item" data-status="moving"><i></i>En déplacement</span>
+      <span class="legend-item" data-status="blocked"><i></i>Bloqué</span>
+      <span class="legend-item" data-status="done"><i></i>Terminé</span>
+      <span class="legend-spacer"></span>
+      <span class="legend-meta">Gemini free tier · 0 € · aucun scheduler</span>
+    </footer>
+  </div>
+
+  <div class="toast" id="toast" role="status" hidden></div>
+  <script type="module" src="/assets/app.js"></script>
+</body>
+</html>

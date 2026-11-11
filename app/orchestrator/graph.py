@@ -104,7 +104,11 @@ def build_graph(
                     mission_id,
                     "task_blocked",
                     agent=task.agent,
-                    payload={"title": task.title, "reason": "dépendance non satisfaite"},
+                    payload={
+                        "key": task.key,
+                        "title": task.title,
+                        "reason": "dépendance non satisfaite",
+                    },
                 )
                 continue
 
@@ -113,7 +117,7 @@ def build_graph(
                 mission_id,
                 "task_started",
                 agent=task.agent,
-                payload={"title": task.title},
+                payload={"key": task.key, "title": task.title},
             )
             try:
                 result = agents[task.agent].run(task, mission)
@@ -128,7 +132,7 @@ def build_graph(
                     mission_id,
                     "task_failed",
                     agent=task.agent,
-                    payload={"title": task.title, "error": str(exc)},
+                    payload={"key": task.key, "title": task.title, "error": str(exc)},
                 )
                 continue
 
@@ -143,7 +147,11 @@ def build_graph(
                 mission_id,
                 "task_completed",
                 agent=task.agent,
-                payload={"title": task.title, "summary": result.summary[:400]},
+                payload={
+                    "key": task.key,
+                    "title": task.title,
+                    "summary": result.summary[:400],
+                },
             )
 
         return {"status": "executed"}

@@ -19,7 +19,7 @@ Système multi-agents QA pour tester l'application locale `football-qa`.
 - Toute modification doit aussi mettre à jour **`README.md`** et
   **`PROJECT_CONTEXT.md`**. Une PR n'est pas terminée si l'un des trois fichiers
   est en retard.
-- Dernière entrée : **0.7.0 — Phase 7 : agent DevOps et reporting Allure**.
+- Dernière entrée : **0.8.0 — Phase 8 : bureau virtuel 2D**.
 
 ## Intégration continue
 
@@ -52,7 +52,7 @@ tests/                Tests du système multi-agents
 - `.env` complété : **clés Gemini et Telegram disponibles**,
   `REAL_AGENTS_ENABLED=true` → agents réels actifs. Les valeurs ne sont
   jamais affichées ni versionnées.
-- `.venv\Scripts\python.exe -m pytest` → **90 passed**.
+- `.venv\Scripts\python.exe -m pytest` → **103 passed**.
 - `playwright==1.64.1` installé et **Chromium présent** dans
   `%LOCALAPPDATA%\ms-playwright` : l'exécution UI réelle est possible.
 - Projet cible `football-qa` présent à côté du projet QA
@@ -76,7 +76,7 @@ régression : il faut d'abord identifier la machine.
 | Projet cible `football-qa` | présent | présent |
 | Stack de test Docker | opérationnelle | opérationnelle |
 | Clés Gemini / Telegram | présentes dans `.env` | présentes dans `.env` |
-| Tests unitaires | à jour après `git pull` sur `main` | **90 passed** |
+| Tests unitaires | à jour après `git pull` sur `main` | **103 passed** |
 
 Les deux PC permettent désormais les missions réelles. Sur le PC personnel, le
 projet cible est une copie de travail du dépôt `MyFinalProject` ; en cas de
@@ -100,7 +100,7 @@ git switch main
 git pull --ff-only origin main
 
 .venv\Scripts\python.exe -m pip install -r requirements.txt
-.venv\Scripts\python.exe -m pytest          # attendu : 90 passed
+.venv\Scripts\python.exe -m pytest          # attendu : 103 passed
 .venv\Scripts\python.exe -m playwright install chromium
 ```
 
@@ -170,6 +170,9 @@ Copy-Item .env.example .env
 
 # Régénérer le rapport phase 7 (Allure + Markdown/JSON) d'une mission existante
 .venv\Scripts\python.exe scripts\run_phase7_mission.py --mission-id <mission_id>
+
+# Ouvrir le bureau virtuel 2D en lecture seule
+.venv\Scripts\python.exe scripts\run_office.py --mission-id <mission_id>
 
 # Démarrer la stack de test
 docker compose -f infra/docker-compose.test.yml -p football-qa-test up --build -d --wait
@@ -317,7 +320,7 @@ Validation **en réel** (10 novembre 2026, mission `7e30889c18cd`) :
 | Scénarios Playwright | 11/11, 0 échec |
 | Anomalies applicatives | 0 |
 
-Suite du système : **90 tests passent**. Voir `reports/phase-6-agents-4-5.md`
+Suite du système : **103 tests passent**. Voir `reports/phase-6-agents-4-5.md`
 et `PROJECT_CONTEXT.md` pour le détail des correctifs de cette validation
 (littéraux Python dans la suite générée, scénario de connexion, identifiant
 Postman stable).
@@ -378,9 +381,64 @@ autonomes. Pour le rendu HTML :
 allure serve reports\allure-results\<mission_id>
 ```
 
+## Bureau virtuel 2D (phase 8)
+
+Le dossier `office/` contient un frontend statique (HTML/CSS/JS, **aucun build**)
+servi par un petit serveur HTTP local en bibliothèque standard. Le bureau est
+strictement **en lecture seule** : il lit le store SQLite des missions, ne crée
+aucune mission et n'écrit aucune preuve.
+
+```powershell
+# Afficher la mission la plus récente
+.venv\Scripts\python.exe scripts\run_office.py
+
+# Afficher une mission précise
+.venv\Scripts\python.exe scripts\run_office.py --mission-id <mission_id>
+
+# Ouvrir automatiquement le navigateur (facultatif)
+.venv\Scripts\python.exe scripts\run_office.py --open
+```
+
+- **Huit personnages distincts** — Manager QA, QA Analyst, Test Designer,
+  API Tester, API Automation, UI Automation, DevOps et QA Reporter — répartis
+  en six départements autour d'un Manager central.
+- **Événements réels uniquement** : le flux SSE (`/events`) combine
+  l'`EventBus` en mémoire et le journal SQLite avec déduplication. L'état, les
+  statuts, les bulles et l'activité proviennent des missions, tâches et
+  événements réellement enregistrés. Aucun événement décoratif n'est généré.
+- **Passations réelles** : un personnage ne quitte son poste que si une tâche
+  dépend d'une tâche **terminée** portée par un autre agent (`depends_on`), puis
+  revient à son poste. Aucun déplacement aléatoire.
+- **Fiche agent** : un clic sur un personnage (ou la liste « Agents ») ouvre le
+  rôle, le département, la tâche courante, les tâches, le dernier résultat et
+  l'historique d'événements.
+- **Vues** : Bureau, Missions, Agents et Rapports. Les chemins de rapports et
+  de résultats Allure peuvent être copiés depuis le panneau.
+- **Sobriété** : une seule bulle par agent, quatre au maximum, animations
+  limitées et aucune ressource externe. Sans mission, les huit agents restent
+  disponibles et silencieux ; une veille de 5 s charge la mission dès qu'elle
+  apparaît.
+- **Sécurité** : écoute uniquement sur `127.0.0.1` (`localhost`/`::1`), refus
+  de toute autre interface, protection contre la traversée de chemins, en-têtes
+  de sécurité et CSP sans ressource distante. Aucun secret n'est exposé.
+
+Endpoints locaux :
+
+| Route | Rôle |
+|---|---|
+| `/` | Bureau isométrique |
+| `/api/state?mission_id=<id>` | Instantané complet (mission, agents, tâches, événements, Allure) |
+| `/api/missions` | Missions récentes |
+| `/events?mission_id=<id>` | Flux SSE `snapshot` + `office` |
+
+Garanties vérifiées par `tests/test_office.py` : les dépendances réelles
+produisent les seules passations affichées, le flux déduplique les événements,
+le frontend ne contient ni `Math.random`, ni `setInterval`, ni URL externe, et
+les événements de tâche portent bien leur `key`.
+
 ## État d'avancement
 
-- [x] Environnement local complet sur le PC personnel — Python 3.12.10, `.venv`, `.env` avec clés, Chromium, stack de test, **90 tests passent**
+- [x] Environnement local complet sur le PC personnel — Python 3.12.10, `.venv`, `.env` avec clés, Chromium, stack de test, **103 tests passent**
 - [x] Journal des modifications `CHANGELOG.md` et règle de mise à jour documentaire
 - [x] Phase 1 — baseline de l'application existante
 - [x] Phase 2 — stack de test isolée
@@ -389,5 +447,5 @@ allure serve reports\allure-results\<mission_id>
 - [x] Phase 5 — agents 1 à 3
 - [x] Phase 6 — agents 4 et 5 (code + validation hors ligne **et** exécution réelle : 27/27 API, 11/11 UI, 0 anomalie)
 - [x] Phase 7 — agents 6 et 7 (DevOps branche + PR sécurisée, reporting Allure/Markdown/JSON, **90 tests passent**)
-- [ ] Phase 8 — bureau virtuel
+- [x] Phase 8 — bureau virtuel 2D (open space isométrique, 8 personnages, SSE réel, fiche agent, passations dérivées des dépendances, **103 tests passent**)
 - [ ] Phase 9 — durcissement
