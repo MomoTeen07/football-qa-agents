@@ -82,6 +82,9 @@ retard. En cas de doute, mettre à jour les trois.
   `DevOpsAgent` et `QAReporterAgent` depuis `app/agents/phase7.py`.
 - **Tests** : **90 tests réussis** (72 avant), dont 6 pour Allure et 12 pour
   les agents 6/7, le reporter enrichi et l'approbation Git/PR.
+- **Documentation** : `ALLURE_RESULTS_DIR`, `DEVOPS_REPO_DIR` et
+  `DEVOPS_TIMEOUT_SECONDS` documentés dans `.env.example`, `README.md` et
+  `PROJECT_CONTEXT.md` ; lien vers la **PR #11** ajouté aux rapports.
 
 ### Validé en réel
 
