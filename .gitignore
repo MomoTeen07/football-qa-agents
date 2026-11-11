@@ -22,6 +22,7 @@ workspace/*.db-wal
 workspace/*.db-shm
 workspace/missions/*
 !workspace/missions/.gitkeep
+workspace/office-*/
 reports/missions/*
 !reports/missions/.gitkeep
 reports/allure-results/
@@ -40,3 +41,7 @@ Thumbs.db
 
 # Logs locaux du gateway Telegram
 logs/
+
+# Aperçus locaux du bureau virtuel
+/preview-*.png
+/preview-live/
