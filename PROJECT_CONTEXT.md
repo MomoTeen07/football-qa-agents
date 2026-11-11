@@ -126,7 +126,8 @@ on travaille.**
 Conséquences :
 
 - Les **deux PC** permettent désormais les missions réelles (sondes API, UI
-  Playwright, Gemini). Seul le test réel du bot Telegram reste à faire.
+  Playwright, Gemini). Le bot Telegram est validé en réel ; seul le refus d’un
+  **compte non autorisé** reste à rejouer avec un second compte.
 - Les documents `reports/baseline.md` et les preuves historiques mentionnent
   des chemins `stgadmin` : ce sont des traces du PC professionnel, pas une
   configuration à reproduire sur le PC personnel.
@@ -139,7 +140,8 @@ Conséquences :
 La phase 6 est sur `main` depuis la **PR #1** (merge commit `992d007`,
 9 novembre 2026) ; sa validation réelle et les correctifs sont arrivés par la
 **PR #4** (`fix/phase6-real-run`, 10 novembre 2026). La **phase 7** (DevOps et
-reporting Allure) arrive par une PR dédiée le 11 novembre 2026.
+reporting Allure) est livrée par la **PR #11**
+(`feat/phase7-devops-allure`, 11 novembre 2026).
 
 ```powershell
 cd C:\Users\stgadmin\Desktop\football-qa-agents
@@ -153,7 +155,8 @@ git pull --ff-only origin main
 ```
 
 Démarrer ensuite la stack de test, puis lancer
-`scripts\run_phase6_mission.py`.
+`scripts\run_phase6_mission.py`. Pour un rapport phase 7 :
+`scripts\run_phase7_mission.py --mission-id <id>`.
 
 > Les branches `chore/reconstruct-local-env` (PR #1),
 > `docs/post-merge-status` (PR #2) et `docs/branch-cleanup` (PR #3) ont été
@@ -660,6 +663,9 @@ dans ce document.
 | `TEST_USER1_EMAIL` / `TEST_USER2_EMAIL` | comptes de test locaux |
 | `DEVOPS_PUBLISH_ENABLED` | `false` par défaut → mode préparation, aucune opération Git mutante |
 | `DEVOPS_REMOTE` / `DEVOPS_BASE_BRANCH` | `origin` / `main` |
+| `DEVOPS_REPO_DIR` | racine du dépôt (par défaut, celle du projet) |
+| `DEVOPS_TIMEOUT_SECONDS` | `120` |
+| `ALLURE_RESULTS_DIR` | `reports/allure-results` (fichiers JSON Allure standard) |
 | `GROQ_API_KEY` / `MISTRAL_API_KEY` | non utilisés |
 
 Sans clé, le système reste utilisable : les 90 tests passent et les agents

@@ -165,12 +165,12 @@ optionnelle ; le projet ne dépend que des fichiers JSON standards.
 
 ## Pull request
 
-La phase 7 est proposée dans une PR dédiée depuis `main` :
+La phase 7 est livrée par la **PR #11**, fusionnée après CI verte :
 
 - branche source : `feat/phase7-devops-allure`
 - branche cible : `main`
-- aucune fusion automatique avant vérification de la CI (`pytest`, sans clé) ;
-- aucun push direct sur `main`.
+- URL : https://github.com/MomoTeen07/football-qa-agents/pull/11
+- aucun push direct sur `main` ; la fusion intervient après le workflow `Tests`.
 
 ## Limites connues
 

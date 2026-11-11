@@ -35,7 +35,7 @@ fusion ; il peut aussi être lancé manuellement (`workflow_dispatch`).
 CHANGELOG.md          Historique daté des modifications
 app/                  Manager, agents, outils, événements
 app/llm/              Client Gemini free tier
-app/tools/            OpenAPI, Postman, sondes API, workspace
+app/tools/            OpenAPI, Postman, sondes, suites, Allure, DevOps
 office/               Bureau virtuel 2D
 postman/              Collections et environnements Postman
 infra/                Stack Docker de test
@@ -89,7 +89,7 @@ La phase 6 a été **fusionnée** via la **PR #1** (merge commit `992d007`,
 9 novembre 2026) : `main` contient l'automatisation API/UI et le reporter
 étendu. Sa **validation en réel** et les correctifs associés arrivent par la
 **PR #4** (`fix/phase6-real-run`, 10 novembre 2026). La **phase 7** (DevOps et
-reporting Allure) est livrée par une PR dédiée le 11 novembre 2026.
+reporting Allure) est livrée par la **PR #11** (11 novembre 2026).
 
 ### Depuis `main` (recommandé)
 
@@ -346,6 +346,10 @@ Garde-fous DevOps :
 - arbre de travail non propre, branche déjà existante, dépôt absent, `git` ou
   `gh` en échec ⇒ statut bloqué, sans anomalie applicative ;
 - aucune fusion automatique : la PR reste à vérifier via la CI.
+
+Configuration associée (voir `.env.example`) : `DEVOPS_PUBLISH_ENABLED` (mode
+publication), `DEVOPS_REMOTE`, `DEVOPS_BASE_BRANCH`, `DEVOPS_REPO_DIR`,
+`DEVOPS_TIMEOUT_SECONDS` et `ALLURE_RESULTS_DIR`.
 
 ```powershell
 # Mode préparation (aucune opération distante)

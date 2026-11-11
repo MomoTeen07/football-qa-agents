@@ -180,3 +180,7 @@ La validation réelle et les correctifs associés sont proposés dans la **PR #4
 - L'agent DevOps (branche + PR) reste un stub de planification.
 - Les missions réelles utilisent le free tier Gemini : une erreur de quota
   déclenche le repli déterministe, sans anomalie applicative.
+
+> Limites historiques de la phase 6. Le reporting Allure et l'agent DevOps ont
+> depuis été livrés par la phase 7 (PR #11, 11 novembre 2026) ; voir
+> `reports/phase-7-agents-6-7.md`.
