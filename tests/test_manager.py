@@ -16,6 +16,7 @@ def manager(tmp_path: Path):
         reports_dir=tmp_path / "reports",
         workspace_dir=tmp_path / "workspace",
         postman_dir=tmp_path / "postman",
+        allure_results_dir=tmp_path / "reports" / "allure-results",
         real_agents_enabled=False,
     )
     instance = Manager(settings)

@@ -215,6 +215,7 @@ def build_graph(
             report_task.id,
             status=TaskStatus.COMPLETED,
             result=result.summary,
+            evidence=result.evidence,
         )
         store.update_mission(
             mission_id,
@@ -225,7 +226,7 @@ def build_graph(
             mission_id,
             "report_ready",
             agent="qa_reporter",
-            payload={"path": str(report_path)},
+            payload={"path": str(report_path), "evidence": result.evidence},
         )
         return {"report": str(report_path), "status": "reported"}
 

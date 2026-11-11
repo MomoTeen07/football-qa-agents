@@ -37,7 +37,8 @@ FULL_KEYWORDS = (
 DEVOPS_KEYWORDS = (
     "git",
     "github",
-    "ci",
+    " ci ",
+    "ci/",
     "pipeline",
     "branche",
     "pull request",
@@ -94,6 +95,7 @@ def mission_requires_approval(instruction: str) -> tuple[bool, str | None]:
         ("action destructrice sur les données", DESTRUCTIVE_KEYWORDS),
         ("action sur l'application réelle", REAL_APP_KEYWORDS),
         ("publication dans un outil externe", EXTERNAL_KEYWORDS),
+        ("publication d'une branche et d'une pull request", DEVOPS_KEYWORDS),
     ]
     for reason, keywords in groups:
         if any(keyword in text for keyword in keywords):

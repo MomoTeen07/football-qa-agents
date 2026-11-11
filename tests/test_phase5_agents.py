@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 
 from app.agents.phase5 import APITesterAgent, QAAnalystAgent
-from app.agents.stubs import QAReporterAgent
+from app.agents.phase7 import QAReporterAgent
 from app.config import Settings
 from app.domain.models import Mission, Task
 from app.tools.api_probe import ProbeCheck, ProbeOutcome
@@ -59,6 +59,8 @@ def make_settings(tmp_path: Path, *, real_agents_enabled: bool = True) -> Settin
         real_agents_enabled=real_agents_enabled,
         workspace_dir=tmp_path / "workspace",
         postman_dir=tmp_path / "postman",
+        reports_dir=tmp_path / "reports" / "missions",
+        allure_results_dir=tmp_path / "reports" / "allure-results",
         test_api_url="http://localhost:8002",
         test_user1_email="qa.user1@example.com",
         test_user1_password="QaTest123!",

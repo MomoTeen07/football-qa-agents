@@ -7,10 +7,7 @@ from langgraph.checkpoint.sqlite import SqliteSaver
 
 from app.agents.phase5 import APITesterAgent, QAAnalystAgent, TestDesignerAgent
 from app.agents.phase6 import APIAutomationAgent, UIAutomationAgent
-from app.agents.stubs import (
-    DevOpsAgent,
-    QAReporterAgent,
-)
+from app.agents.phase7 import DevOpsAgent, QAReporterAgent
 from app.config import Settings, get_settings
 from app.domain.models import Event, Mission, MissionStatus, Task
 from app.events.bus import EventBus
@@ -41,7 +38,7 @@ class Manager:
             "api_tester": APITesterAgent(self.settings, self.llm, self.api_probe),
             "api_automation": APIAutomationAgent(self.settings),
             "ui_automation": UIAutomationAgent(self.settings),
-            "devops": DevOpsAgent(),
+            "devops": DevOpsAgent(self.settings),
             "qa_reporter": QAReporterAgent(self.settings),
         }
         self._checkpoint_connection = sqlite3.connect(

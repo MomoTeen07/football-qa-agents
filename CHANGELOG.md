@@ -28,8 +28,6 @@ retard. En cas de doute, mettre à jour les trois.
 
 ### À venir
 
-- **Phase 7** — agents 6 et 7 : agent DevOps (branche + PR) et reporting
-  Allure/Markdown/JSON enrichi.
 - **Phase 8** — bureau virtuel 2D : frontend séparé, SSE, personnages SVG.
 - **Phase 9** — durcissement : sécurité, robustesse, documentation finale.
 
@@ -39,6 +37,69 @@ retard. En cas de doute, mettre à jour les trois.
   pull requests n'est plus requise. L'agent ouvre la PR, vérifie les tests et
   la fusionne lui-même. Le principe « branche + PR, pas de push direct sur
   `main` » est conservé. Documenté dans `README.md` et `PROJECT_CONTEXT.md`.
+
+---
+
+## [0.7.0] — 2026-11-11 — Phase 7 : agent DevOps et reporting Allure
+
+### Ajouté
+
+- **Agent 6 DevOps réel** (`app/agents/phase7.py`, `app/tools/devops.py`) :
+  recense les suites générées d'une mission, crée une branche dédiée
+  `qa/promotion-<mission>`, y commit `test_api_suite.py` et
+  `run_ui_checks.py` accompagnés d'un manifeste `promotion.json`, pousse la
+  branche puis ouvre une pull request via `gh pr create`.
+- **Mode préparation par défaut** : sans `DEVOPS_PUBLISH_ENABLED=true`, aucune
+  copie, aucun commit, aucun push et aucune PR. Le statut est `planned` avec la
+  branche et les fichiers calculés.
+- **Garde-fous DevOps** : refus d'un arbre de travail non propre, d'une branche
+  locale déjà existante, d'un dépôt absent ; échec de `fetch`, `push` ou `gh`
+  rapporté en statut `blocked` sans anomalie applicative. Jamais de `--force`,
+  jamais de push sur `main`, jamais de fusion automatique.
+- **Agent 7 reporter enrichi** : synthèse globale des sources réelles, rapport
+  Markdown, synthèse JSON (`reports/missions/<mission>.json`) et résultats
+  **Allure 2** standards (`reports/allure-results/<mission>/`).
+- **`app/tools/allure_report.py`** : génération Allure 2 en Python pur, sans
+  dépendance supplémentaire — résultats `*-result.json`, attaches texte et
+  captures Playwright, `environment.properties`, `executor.json`,
+  `allure-summary.json` et `allure-report.md`. Identifiants déterministes,
+  secrets expurgés, aucun résultat inventé sans preuve réelle.
+- **`scripts/run_phase7_mission.py`** : régénère explicitement le rapport d'une
+  mission existante et prépare la promotion DevOps ; `--publish` sert de
+  confirmation explicite.
+- **Configuration** : `ALLURE_RESULTS_DIR`, `DEVOPS_PUBLISH_ENABLED`,
+  `DEVOPS_REMOTE`, `DEVOPS_BASE_BRANCH`, `DEVOPS_TIMEOUT_SECONDS`
+  (documentées dans `.env.example`).
+
+### Modifié
+
+- **Planificateur** : toute instruction Git/PR rejoint les groupes soumis à
+  approbation ; le mot-clé `ci` est affiné en ` ci ` / `ci/` pour éviter les
+  faux positifs.
+- **Graphe** : les preuves du reporter sont journalisées dans la tâche et dans
+  l'événement `report_ready`.
+- **`app/agents/stubs.py`** : ne définit plus d'agent, ré-exporte seulement
+  `DevOpsAgent` et `QAReporterAgent` depuis `app/agents/phase7.py`.
+- **Tests** : **90 tests réussis** (72 avant), dont 6 pour Allure et 12 pour
+  les agents 6/7, le reporter enrichi et l'approbation Git/PR.
+
+### Validé en réel
+
+- Mission de référence `7e30889c18cd` régénérée le 11 novembre 2026 :
+  **59 résultats Allure** (21 sondes + 27 API + 11 UI), **59 réussis**,
+  0 échec, 0 anomalie.
+- Rendu HTML généré sans erreur par la **CLI Allure 2.46.2** (outil gratuit et
+  optionnel) depuis `reports/allure-results/7e30889c18cd`.
+- Promotion DevOps en mode préparation : `DEVOPS_STATUS=planned`, branche
+  `qa/promotion-7e30889c18cd`, 3 fichiers, aucune opération distante.
+
+### Limites connues
+
+- La **publication Git réelle** (branche distante + PR) n'a pas été exécutée
+  pendant la validation : elle exige `DEVOPS_PUBLISH_ENABLED=true` et
+  `--publish`. Le code est couvert par 12 tests avec un exécuteur Git simulé.
+- La CLI Allure reste optionnelle : seuls les fichiers JSON standard sont
+  produits par le projet.
 
 ---
 
