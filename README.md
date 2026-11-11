@@ -19,7 +19,8 @@ Système multi-agents QA pour tester l'application locale `football-qa`.
 - Toute modification doit aussi mettre à jour **`README.md`** et
   **`PROJECT_CONTEXT.md`**. Une PR n'est pas terminée si l'un des trois fichiers
   est en retard.
-- Dernière entrée : **0.8.0 — Phase 8 : bureau virtuel 2D**.
+- Dernière entrée publiée : **0.8.0 — Phase 8 : bureau virtuel 2D**.
+  Phase 9 en cours : jalon **J0 (baseline)** sur `chore/phase9-baseline`.
 
 ## Intégration continue
 
@@ -448,4 +449,4 @@ les événements de tâche portent bien leur `key`.
 - [x] Phase 6 — agents 4 et 5 (code + validation hors ligne **et** exécution réelle : 27/27 API, 11/11 UI, 0 anomalie)
 - [x] Phase 7 — agents 6 et 7 (DevOps branche + PR sécurisée, reporting Allure/Markdown/JSON, **90 tests passent**)
 - [x] Phase 8 — bureau virtuel 2D (open space isométrique, 8 personnages, SSE réel, fiche agent, passations dérivées des dépendances, **103 tests passent**)
-- [ ] Phase 9 — durcissement — **plan détaillé prêt** : `reports/phase-9-plan.md` (phase non commencée)
+- [ ] Phase 9 — durcissement — **en cours (J0)**. Plan : `reports/phase-9-plan.md`. Baseline confirmée (**103 passed**), tests rouges R1–R4 écrits dans `tests/test_security.py` (`xfail` strict tant que les correctifs ne sont pas livrés).
