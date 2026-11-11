@@ -448,4 +448,4 @@ les événements de tâche portent bien leur `key`.
 - [x] Phase 6 — agents 4 et 5 (code + validation hors ligne **et** exécution réelle : 27/27 API, 11/11 UI, 0 anomalie)
 - [x] Phase 7 — agents 6 et 7 (DevOps branche + PR sécurisée, reporting Allure/Markdown/JSON, **90 tests passent**)
 - [x] Phase 8 — bureau virtuel 2D (open space isométrique, 8 personnages, SSE réel, fiche agent, passations dérivées des dépendances, **103 tests passent**)
-- [ ] Phase 9 — durcissement
+- [ ] Phase 9 — durcissement — **plan détaillé prêt** : `reports/phase-9-plan.md` (phase non commencée)

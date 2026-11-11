@@ -22,6 +22,9 @@ Dernière action terminée : **phase 8 — bureau virtuel 2D** (11 novembre 2026
 > - **Phase 8** : bureau virtuel avec
 >   `scripts\run_office.py --mission-id <id>` (lecture seule, aucun lancement
 >   de mission).
+> - **Phase 9 (non commencée)** : lire `reports/phase-9-plan.md` avant toute
+>   action. C'est la spécification de travail (jalons J0 à J4, tests,
+>   Definition of Done).
 > - Détail et précautions : section **« Reprise sur le PC professionnel »** ci-dessous.
 > - **Documentation** : toute modification met à jour `README.md`,
 >   `PROJECT_CONTEXT.md` et `CHANGELOG.md`.
@@ -315,6 +318,8 @@ Déjà fait :
 ### Phases restantes
 
 - [ ] **Phase 9 — durcissement** : sécurité, robustesse, documentation finale.
+      **Plan détaillé prêt** dans `reports/phase-9-plan.md` ; la phase n'est pas
+      commencée.
 
 ---
 
@@ -675,6 +680,7 @@ Mission réelle de référence (10 novembre 2026) :
 | `reports/phase-5-agents-1-3.md` | Validation phase 5 |
 | `reports/phase-6-agents-4-5.md` | Validation phase 6 (hors ligne + réel) |
 | `reports/phase-7-agents-6-7.md` | Validation phase 7 (Allure + DevOps) |
+| `reports/phase-9-plan.md` | Plan détaillé de la phase 9 (phase non commencée) |
 | `reports/missions/4e1c01636615.md` | Rapport de mission de démonstration (local, ignoré par Git) |
 | `reports/missions/b745b4a199b7.md` | Rapport de la mission phase 5 de référence (local) |
 | `reports/missions/7e30889c18cd.md` | Rapport de la mission phase 6 validée en réel (local) |

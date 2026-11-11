@@ -30,6 +30,15 @@ retard. En cas de doute, mettre à jour les trois.
 
 - **Phase 9** — durcissement : sécurité, robustesse, documentation finale.
 
+### Ajouté
+
+- **Plan détaillé de la phase 9** (`reports/phase-9-plan.md`, 11 novembre
+  2026) : audit initial des écarts (identifiants/chemins, secrets, SSE,
+  SQLite, reprise, garde-fous Git, CI, documentation), six lots de travail
+  priorisés, jalons J0 à J4, plan de tests et Definition of Done. **La phase 9
+  n'est pas commencée** : ce document sert de spécification à la session
+  suivante.
+
 ### Modifié
 
 - **Politique de fusion Git** (10 novembre 2026) : la validation humaine des
