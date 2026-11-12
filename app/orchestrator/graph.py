@@ -48,8 +48,15 @@ def build_graph(
             raise ValueError(f"Mission introuvable : {mission_id}")
 
         plan = build_plan(mission.instruction)
+        existing = {task.key: task for task in store.list_tasks(mission_id)}
         task_ids: dict[str, str] = {}
+        created = 0
         for item in plan:
+            previous = existing.get(item["key"])
+            if previous is not None:
+                # Reprise après interruption : ne jamais dupliquer une tâche.
+                task_ids[item["key"]] = previous.id
+                continue
             task = Task(
                 mission_id=mission_id,
                 key=item["key"],
@@ -59,16 +66,18 @@ def build_graph(
             )
             store.create_task(task)
             task_ids[item["key"]] = task.id
+            created += 1
 
         store.update_mission(mission_id, status=MissionStatus.PLANNING)
-        bus.publish(
-            mission_id,
-            "mission_planned",
-            payload={
-                "task_count": len(plan),
-                "agents": [item["agent"] for item in plan],
-            },
-        )
+        if created:
+            bus.publish(
+                mission_id,
+                "mission_planned",
+                payload={
+                    "task_count": len(plan),
+                    "agents": [item["agent"] for item in plan],
+                },
+            )
         return {"plan": plan, "task_ids": task_ids, "status": "planned"}
 
     def execute_node(state: MissionState) -> dict:
@@ -82,6 +91,11 @@ def build_graph(
         ordered = _ordered_tasks(tasks)
 
         for task in ordered:
+            if task.status == TaskStatus.COMPLETED:
+                # Reprise : une tâche déjà terminée n'est jamais rejouée, ce qui
+                # évite les doublons d'événements et de preuves.
+                continue
+
             if cancel_check and cancel_check(mission_id):
                 for remaining in store.list_tasks(mission_id):
                     if remaining.status == TaskStatus.PENDING:
@@ -198,6 +212,17 @@ def build_graph(
         )
         if report_task is None:
             raise ValueError("Tâche de rapport introuvable")
+
+        existing_report = reports_dir / f"{mission_id}.md"
+        if report_task.status == TaskStatus.COMPLETED and existing_report.is_file():
+            # Reprise : le rapport déjà produit n'est ni régénéré ni annoncé
+            # une seconde fois.
+            store.update_mission(
+                mission_id,
+                status=MissionStatus.REPORTING,
+                report_path=mission.report_path or str(existing_report),
+            )
+            return {"report": str(existing_report), "status": "reported"}
 
         result = reporter.run(
             report_task,

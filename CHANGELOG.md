@@ -80,10 +80,45 @@ retard. En cas de doute, mettre à jour les trois.
 
 - Suite complète : **135 passed**, hors ligne, sans clé.
 
+#### J2 — robustesse runtime (12 novembre 2026)
+
+##### Ajouté
+
+- **Diagnostic en lecture seule** (`app/orchestrator/doctor.py` +
+  `python -m app.cli doctor`) : missions non terminales, incohérences
+  (mission terminée avec tâche active, mission en cours sans tâche), clés de
+  tâche dupliquées, tâches et événements orphelins. La base est ouverte en
+  `mode=ro`, sans création de schéma ni PRAGMA d'écriture ; aucune réparation
+  automatique. Code retour `1` uniquement si la base est illisible.
+- **Tests de robustesse** (`tests/test_store_robustness.py`,
+  `tests/test_manager_recovery.py`, `tests/test_office_security.py`) :
+  PRAGMA WAL/timeout/clés étrangères, retry sur verrou, base corrompue,
+  lectures et écritures concurrentes, reprise sans doublon ni rapport
+  régénéré, `doctor` sans mutation (empreinte SHA-256 identique), limite SSE,
+  `503`, `405`, en-têtes de sécurité et instantané unique par lot.
+
+##### Modifié
+
+- `app/store/sqlite_store.py` : `journal_mode=WAL`, `busy_timeout=5000`,
+  `synchronous=NORMAL`, `foreign_keys=ON`, retry borné (3 tentatives,
+  0,1 s × tentative), `StorageError` explicite pour verrou, corruption ou
+  lecture impossible, connexions toujours fermées, mode `read_only=True`.
+- `app/orchestrator/graph.py` : reprise idempotente — réutilisation des tâches
+  existantes par `key`, tâches `COMPLETED` ignorées (aucun nouvel événement
+  `task_started`), rapport déjà produit non régénéré et non réannoncé.
+- `app/office/server.py` : limite de **12 flux SSE** (`503` explicite au-delà),
+  timeout d'écriture de 10 s, un seul `build_office_state` par lot
+  d'événements, méthodes autres que `GET` en `405` + `Allow: GET`, en-têtes de
+  sécurité sur toutes les réponses, déconnexion brutale absorbée.
+- `app/cli.py` : sous-commande `doctor` (lecture seule, tables `rich`).
+
+##### Vérifié
+
+- Suite complète : **156 passed**, hors ligne, sans clé, sans réseau.
+
 ### À venir
 
-- **Phase 9** — jalons J2 (bureau et persistance), J3 (lint/CI/version), J4
-  (documentation finale).
+- **Phase 9** — jalons J3 (lint/CI/version), J4 (documentation finale).
 
 ### Ajouté
 

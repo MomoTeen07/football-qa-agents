@@ -11,6 +11,7 @@ Il ne démarre aucune mission, ne planifie rien et n'expose aucun secret.
 from __future__ import annotations
 
 import json
+import threading
 import time
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -51,6 +52,11 @@ SECURITY_HEADERS = {
     ),
 }
 
+# Le bureau est local : une douzaine d'onglets simultanés suffit largement.
+# Au-delà, la réponse est un 503 explicite plutôt qu'un thread bloqué.
+MAX_SSE_CLIENTS = 12
+SSE_WRITE_TIMEOUT_SECONDS = 10.0
+
 
 def _valid_mission_id(value: str | None) -> bool:
     if not value:
@@ -75,6 +81,7 @@ class OfficeHTTPServer(ThreadingHTTPServer):
         bus=None,
         allure_root: Path | None = None,
         secrets: tuple[str, ...] = (),
+        max_sse_clients: int = MAX_SSE_CLIENTS,
     ) -> None:
         super().__init__(address, OfficeRequestHandler)
         self.store = store
@@ -82,8 +89,27 @@ class OfficeHTTPServer(ThreadingHTTPServer):
         self.bus = bus
         self.allure_root = Path(allure_root) if allure_root else None
         self.secrets = tuple(secrets)
+        self.max_sse_clients = max(1, int(max_sse_clients))
         self.quiet = True
         self.stopping = False
+        self._sse_lock = threading.Lock()
+        self._sse_clients = 0
+
+    def try_acquire_sse(self) -> bool:
+        with self._sse_lock:
+            if self._sse_clients >= self.max_sse_clients:
+                return False
+            self._sse_clients += 1
+            return True
+
+    def release_sse(self) -> None:
+        with self._sse_lock:
+            self._sse_clients = max(0, self._sse_clients - 1)
+
+    @property
+    def sse_clients(self) -> int:
+        with self._sse_lock:
+            return self._sse_clients
 
     def shutdown(self) -> None:
         self.stopping = True
@@ -117,6 +143,40 @@ class OfficeRequestHandler(BaseHTTPRequestHandler):
 
     def _send_error_json(self, status: int, message: str) -> None:
         self._send_json({"error": message}, status)
+
+    def _method_not_allowed(self) -> None:
+        body = json.dumps(
+            {"error": "Méthode non supportée : GET uniquement."},
+            ensure_ascii=False,
+        ).encode("utf-8")
+        self.send_response(HTTPStatus.METHOD_NOT_ALLOWED)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self.send_header("Allow", "GET")
+        self.send_header("Cache-Control", "no-store")
+        self._common_headers()
+        self.end_headers()
+        self.wfile.write(body)
+
+    # Toute méthode autre que GET reçoit une réponse claire et les en-têtes de
+    # sécurité, jamais une page d'erreur HTML par défaut.
+    def do_HEAD(self) -> None:  # noqa: N802
+        self._method_not_allowed()
+
+    def do_POST(self) -> None:  # noqa: N802
+        self._method_not_allowed()
+
+    def do_PUT(self) -> None:  # noqa: N802
+        self._method_not_allowed()
+
+    def do_PATCH(self) -> None:  # noqa: N802
+        self._method_not_allowed()
+
+    def do_DELETE(self) -> None:  # noqa: N802
+        self._method_not_allowed()
+
+    def do_OPTIONS(self) -> None:  # noqa: N802
+        self._method_not_allowed()
 
     def _send_file(self, path: Path) -> None:
         try:
@@ -231,19 +291,28 @@ class OfficeRequestHandler(BaseHTTPRequestHandler):
             self._send_error_json(HTTPStatus.NOT_FOUND, "Aucune mission à afficher.")
             return
 
-        self.send_response(HTTPStatus.OK)
-        self.send_header("Content-Type", "text/event-stream; charset=utf-8")
-        self.send_header("Cache-Control", "no-store")
-        self.send_header("X-Accel-Buffering", "no")
-        self._common_headers()
-        self.end_headers()
-        self.close_connection = True
-
-        stream = OfficeEventStream(self.server.store, resolved)
-        if self.server.bus is not None:
-            stream.attach_bus(self.server.bus)
+        if not self.server.try_acquire_sse():
+            self._send_error_json(
+                HTTPStatus.SERVICE_UNAVAILABLE,
+                "Trop de flux SSE ouverts : fermez un onglet puis réessayez.",
+            )
+            return
 
         try:
+            self.send_response(HTTPStatus.OK)
+            self.send_header("Content-Type", "text/event-stream; charset=utf-8")
+            self.send_header("Cache-Control", "no-store")
+            self.send_header("X-Accel-Buffering", "no")
+            self._common_headers()
+            self.end_headers()
+            self.close_connection = True
+            # Un client lent ne doit pas immobiliser un thread indéfiniment.
+            self.connection.settimeout(SSE_WRITE_TIMEOUT_SECONDS)
+
+            stream = OfficeEventStream(self.server.store, resolved)
+            if self.server.bus is not None:
+                stream.attach_bus(self.server.bus)
+
             events = stream.initial()
             self._send_sse(
                 "snapshot",
@@ -259,28 +328,34 @@ class OfficeRequestHandler(BaseHTTPRequestHandler):
 
             while not self.server.stopping:
                 new_events = stream.wait(last_id, timeout=1.0)
-                for event in new_events:
-                    last_id = max(last_id, event.id or 0)
-                    self._send_sse(
-                        "office",
-                        {
-                            "event": serialize_event(
-                                event, secrets=self.server.secrets
-                            ),
-                            "state": build_office_state(
-                                self.server.store,
-                                resolved,
-                                allure_root=self.server.allure_root,
-                                secrets=self.server.secrets,
-                            ),
-                        },
+                if new_events:
+                    # Un seul instantané par lot : plusieurs événements proches
+                    # ne doivent pas déclencher plusieurs reconstructions.
+                    batch_state = build_office_state(
+                        self.server.store,
+                        resolved,
+                        allure_root=self.server.allure_root,
+                        secrets=self.server.secrets,
                     )
+                    for event in new_events:
+                        last_id = max(last_id, event.id or 0)
+                        self._send_sse(
+                            "office",
+                            {
+                                "event": serialize_event(
+                                    event, secrets=self.server.secrets
+                                ),
+                                "state": batch_state,
+                            },
+                        )
                 if time.monotonic() - last_heartbeat >= 15:
                     self.wfile.write(b": keep-alive\n\n")
                     self.wfile.flush()
                     last_heartbeat = time.monotonic()
-        except (BrokenPipeError, ConnectionResetError, OSError):
+        except (BrokenPipeError, ConnectionResetError, TimeoutError, OSError):
             return
+        finally:
+            self.server.release_sse()
 
 
 def create_server(
@@ -292,6 +367,7 @@ def create_server(
     bus=None,
     allure_root: Path | None = None,
     secrets: tuple[str, ...] = (),
+    max_sse_clients: int = MAX_SSE_CLIENTS,
 ) -> OfficeHTTPServer:
     """Crée le serveur local. Refuse toute interface non locale."""
 
@@ -307,4 +383,5 @@ def create_server(
         bus=bus,
         allure_root=allure_root,
         secrets=secrets,
+        max_sse_clients=max_sse_clients,
     )

@@ -2,13 +2,16 @@ from __future__ import annotations
 
 import argparse
 import sys
+from pathlib import Path
 
 from rich.console import Console
 from rich.table import Table
 
 from app.config import get_settings
+from app.orchestrator.doctor import diagnose, summarize
 from app.orchestrator.manager import Manager
 from app.security import validate_mission_id
+from app.store.sqlite_store import SqliteStore, StorageError
 
 # La console Windows héritée utilise parfois cp1252. Les rapports contiennent
 # des caractères UTF-8 (flèches, accents) : on force une sortie UTF-8.
@@ -152,6 +155,70 @@ def cmd_demo(args: argparse.Namespace) -> int:
         manager.close()
 
 
+def cmd_doctor(args: argparse.Namespace) -> int:
+    settings = get_settings()
+    path = Path(settings.mission_db_path)
+    if not path.is_file():
+        console.print(f"Base de pilotage absente : [bold]{path}[/bold]")
+        console.print("Aucune mission enregistrée. Rien n'a été modifié.")
+        return 0
+    try:
+        store = SqliteStore(path, read_only=True)
+    except StorageError as exc:
+        console.print(f"[red]{exc}[/red]")
+        return 1
+
+    report = diagnose(store)
+    console.print(f"[bold]{summarize(report)}[/bold]")
+    console.print(f"Base : {path} (lecture seule)")
+
+    if report["missions_by_status"]:
+        statuses = Table(title="Missions par statut")
+        statuses.add_column("Statut")
+        statuses.add_column("Nombre", justify="right")
+        for status, count in report["missions_by_status"].items():
+            statuses.add_row(status, str(count))
+        console.print(statuses)
+
+    if report["stale_missions"]:
+        stale = Table(title="Missions non terminales (reprise possible)")
+        stale.add_column("Mission")
+        stale.add_column("Statut")
+        stale.add_column("Tâches")
+        stale.add_column("Actives")
+        stale.add_column("Dernière mise à jour")
+        for item in report["stale_missions"]:
+            stale.add_row(
+                item["id"],
+                item["status"],
+                str(item["tasks"]),
+                str(item["active_tasks"]),
+                item["updated_at"],
+            )
+        console.print(stale)
+
+    if report["inconsistent_missions"]:
+        problems = Table(title="Incohérences")
+        problems.add_column("Mission")
+        problems.add_column("Statut")
+        problems.add_column("Détail")
+        for item in report["inconsistent_missions"]:
+            problems.add_row(item["id"], item["status"], item["reason"])
+        console.print(problems)
+
+    for item in report["duplicate_task_keys"]:
+        console.print(
+            f"[yellow]Clé dupliquée[/yellow] {item['mission_id']} / "
+            f"{item['key']} ({item['count']} occurrences)"
+        )
+    if report["orphan_tasks"]:
+        console.print(f"[yellow]Tâches orphelines :[/yellow] {report['orphan_tasks']}")
+    if report["orphan_events"]:
+        console.print(f"[yellow]Événements orphelins :[/yellow] {report['orphan_events']}")
+    console.print("Diagnostic en lecture seule : aucune réparation automatique.")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="football-qa-agents",
@@ -189,6 +256,12 @@ def build_parser() -> argparse.ArgumentParser:
 
     demo = subparsers.add_parser("demo", help="Créer et exécuter une mission de démonstration")
     demo.set_defaults(func=cmd_demo)
+
+    doctor = subparsers.add_parser(
+        "doctor",
+        help="Diagnostiquer la base locale en lecture seule",
+    )
+    doctor.set_defaults(func=cmd_doctor)
 
     return parser
 
