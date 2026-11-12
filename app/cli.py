@@ -8,6 +8,7 @@ from rich.table import Table
 
 from app.config import get_settings
 from app.orchestrator.manager import Manager
+from app.security import validate_mission_id
 
 # La console Windows héritée utilise parfois cp1252. Les rapports contiennent
 # des caractères UTF-8 (flèches, accents) : on force une sortie UTF-8.
@@ -16,6 +17,15 @@ for stream in (sys.stdout, sys.stderr):
         stream.reconfigure(encoding="utf-8")
 
 console = Console()
+
+
+def mission_id_argument(value: str) -> str:
+    """Valide un identifiant fourni en ligne de commande."""
+
+    try:
+        return validate_mission_id(value)
+    except ValueError as exc:
+        raise argparse.ArgumentTypeError(str(exc)) from exc
 
 
 def build_manager() -> Manager:
@@ -154,7 +164,7 @@ def build_parser() -> argparse.ArgumentParser:
     create.set_defaults(func=cmd_create)
 
     run = subparsers.add_parser("run", help="Exécuter une mission")
-    run.add_argument("mission_id")
+    run.add_argument("mission_id", type=mission_id_argument)
     run.add_argument(
         "--approve",
         action="store_true",
@@ -163,15 +173,15 @@ def build_parser() -> argparse.ArgumentParser:
     run.set_defaults(func=cmd_run)
 
     approve = subparsers.add_parser("approve", help="Approuver et exécuter")
-    approve.add_argument("mission_id")
+    approve.add_argument("mission_id", type=mission_id_argument)
     approve.set_defaults(func=cmd_approve)
 
     status = subparsers.add_parser("status", help="Afficher une mission")
-    status.add_argument("mission_id")
+    status.add_argument("mission_id", type=mission_id_argument)
     status.set_defaults(func=cmd_status)
 
     events = subparsers.add_parser("events", help="Afficher le journal d'événements")
-    events.add_argument("mission_id")
+    events.add_argument("mission_id", type=mission_id_argument)
     events.set_defaults(func=cmd_events)
 
     list_cmd = subparsers.add_parser("list", help="Lister les missions")

@@ -19,8 +19,10 @@ from pathlib import Path
 from app.agents.base import BaseAgent
 from app.config import Settings, get_settings
 from app.domain.models import AgentResult, Mission, Task
+from app.security import known_secrets, redact_structure
 from app.tools.allure_report import AllureOutcome, AllureReport, AllureSuite
 from app.tools.devops import DevOpsOutcome, DevOpsPromotion
+from app.tools.redaction import redact_text
 
 logger = logging.getLogger(__name__)
 
@@ -98,6 +100,7 @@ class QAReporterAgent(BaseAgent):
         self.allure = allure or AllureReport(self.settings)
 
     def run(self, task: Task, mission: Mission, context: dict | None = None) -> AgentResult:
+        secrets = known_secrets(self.settings)
         tasks = (context or {}).get("tasks", [])
         probe = self._load_results(mission.id, "api/probe-results.json")
         api_auto = self._load_results(
@@ -251,7 +254,7 @@ class QAReporterAgent(BaseAgent):
         )
         return AgentResult(
             agent=self.name,
-            summary="\n".join(lines),
+            summary=redact_text("\n".join(lines), secrets),
             artifacts=artifacts,
             evidence=evidence,
         )
@@ -451,7 +454,11 @@ class QAReporterAgent(BaseAgent):
             reports_dir.mkdir(parents=True, exist_ok=True)
             path = reports_dir / f"{mission.id}.json"
             path.write_text(
-                json.dumps(payload, indent=2, ensure_ascii=False),
+                json.dumps(
+                    redact_structure(payload, known_secrets(self.settings)),
+                    indent=2,
+                    ensure_ascii=False,
+                ),
                 encoding="utf-8",
             )
             return path

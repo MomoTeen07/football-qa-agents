@@ -21,6 +21,7 @@ from pathlib import Path
 from uuid import NAMESPACE_URL, uuid5
 
 from app.config import Settings, get_settings
+from app.security import known_secrets, redact_structure, validate_mission_id
 from app.tools.redaction import redact_text
 
 
@@ -77,6 +78,8 @@ class AllureReport:
         mission_id: str,
         suites: list[AllureSuite],
     ) -> AllureOutcome:
+        mission_id = validate_mission_id(mission_id)
+        secrets = known_secrets(self.settings)
         cases: list[_Case] = []
         suite_summaries: list[dict] = []
         anomalies: list[dict] = []
@@ -126,7 +129,11 @@ class AllureReport:
             )
             filename = f"{result['uuid']}-result.json"
             (directory / filename).write_text(
-                json.dumps(result, indent=2, ensure_ascii=False),
+                json.dumps(
+                    redact_structure(result, secrets),
+                    indent=2,
+                    ensure_ascii=False,
+                ),
                 encoding="utf-8",
             )
 
@@ -138,7 +145,7 @@ class AllureReport:
         }
         (directory / "environment.properties").write_text(
             "\n".join(
-                f"{_escape_property(key)}={_escape_property(value)}"
+                f"{_escape_property(key)}={_escape_property(redact_text(value, secrets))}"
                 for key, value in environment.items()
             )
             + "\n",
@@ -171,12 +178,19 @@ class AllureReport:
         }
         summary_path = directory / "allure-summary.json"
         summary_path.write_text(
-            json.dumps(summary_payload, indent=2, ensure_ascii=False),
+            json.dumps(
+                redact_structure(summary_payload, secrets),
+                indent=2,
+                ensure_ascii=False,
+            ),
             encoding="utf-8",
         )
         report_path = directory / "allure-report.md"
         report_path.write_text(
-            _markdown(mission_id, totals, suite_summaries, anomalies, directory),
+            redact_text(
+                _markdown(mission_id, totals, suite_summaries, anomalies, directory),
+                secrets,
+            ),
             encoding="utf-8",
         )
 
@@ -425,11 +439,7 @@ class AllureReport:
         )
         start = max(stopped - case.duration_ms, stopped - 86_400_000)
         full_name = f"{mission_id} :: {case.suite} :: {case.name}"
-        secrets = (
-            self.settings.test_user1_password,
-            self.settings.test_user2_password,
-            "QaTest123!",
-        )
+        secrets = (*known_secrets(self.settings), "QaTest123!")
 
         details: dict = {"known": False, "muted": False, "flaky": False}
         if case.message:
