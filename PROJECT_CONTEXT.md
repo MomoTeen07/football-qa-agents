@@ -1,18 +1,19 @@
 # PROJECT_CONTEXT — Football QA Agents
 
 Date du point de reprise : 12 novembre 2026  
-Dernière action terminée : **phase 9 — J2 robustesse runtime** (12 novembre 2026). SQLite passe en WAL avec `busy_timeout` et retry borné, la reprise du graphe est idempotente, le serveur du bureau limite les flux SSE et renvoie des en-têtes de sécurité, et `python -m app.cli doctor` diagnostique la base en lecture seule. Suite : **156 passed**.  
-État global : **phases 1 à 8 terminées ; phase 9 en cours (J2 terminé, J3 à J4 restants)**.
+Dernière action terminée : **phase 9 — J3 qualité, CI et versions** (12 novembre 2026). `ruff` est exécuté avant `pytest` en CI, la version du projet est alignée à **0.9.0** et un test vérifie la cohérence entre `pyproject.toml`, le CHANGELOG, le README et `PROJECT_CONTEXT.md`. Suite : **159 passed**.  
+État global : **phases 1 à 8 terminées ; phase 9 en cours (J3 terminé, J4 restant)**.
 > **Point de reprise — lire ceci en premier**
 >
 > - `main` contient les phases 1 à 8, y compris le **test réel du bot
 >   Telegram** et la **phase 8** (bureau virtuel 2D).
 > - Reprise : `git switch main` puis `git pull --ff-only origin main`.
 > - Puis :
->   1. `.venv\Scripts\python.exe -m pip install -r requirements.txt`
->   2. `.venv\Scripts\python.exe -m pytest` → attendu **`156 passed`**
->   3. `.venv\Scripts\python.exe -m playwright install chromium`
->   4. démarrer la stack `football-qa-test`, puis `.venv\Scripts\python.exe scripts\run_phase6_mission.py`
+>   1. `.venv\Scripts\python.exe -m pip install -r requirements-dev.txt`
+>   2. `.venv\Scripts\python.exe -m ruff check .` → attendu **All checks passed**
+>   3. `.venv\Scripts\python.exe -m pytest` → attendu **`159 passed`**
+>   4. `.venv\Scripts\python.exe -m playwright install chromium`
+>   5. démarrer la stack `football-qa-test`, puis `.venv\Scripts\python.exe scripts\run_phase6_mission.py`
 > - Le projet cible `football-qa`, les clés et la stack de test sont
 >   désormais disponibles sur le PC personnel : les missions réelles y sont
 >   possibles.
@@ -22,7 +23,7 @@ Dernière action terminée : **phase 9 — J2 robustesse runtime** (12 novembre 
 > - **Phase 8** : bureau virtuel avec
 >   `scripts\run_office.py --mission-id <id>` (lecture seule, aucun lancement
 >   de mission).
-> - **Phase 9 (en cours, J2 terminé)** : lire `reports/phase-9-plan.md`
+> - **Phase 9 (en cours, J3 terminé)** : lire `reports/phase-9-plan.md`
 >   avant toute action. C'est la spécification de travail (jalons J0 à J4,
 >   tests, Definition of Done). J0 a confirmé la baseline et écrit les tests
 >   R1 à R4. J1 a livré `app/security.py` (validation des identifiants,
@@ -32,7 +33,9 @@ Dernière action terminée : **phase 9 — J2 robustesse runtime** (12 novembre 
 >   mode `read_only`), la reprise du graphe (aucune tâche ni rapport dupliqué),
 >   le bureau (limite SSE, `503` explicite, en-têtes de sécurité, `405` pour
 >   les méthodes non supportées) et ajouté `python -m app.cli doctor`.
->   J3 (qualité) et J4 (documentation finale) restent à faire.
+>   J3 a ajouté `ruff` en CI (configuration minimale), aligné la version
+>   `0.9.0` et ajouté `tests/test_docs_consistency.py`. J4 (documentation
+>   finale et rapport de durcissement) reste à faire.
 > - Détail et précautions : section **« Reprise sur le PC professionnel »** ci-dessous.
 > - **Documentation** : toute modification met à jour `README.md`,
 >   `PROJECT_CONTEXT.md` et `CHANGELOG.md`.
@@ -111,7 +114,7 @@ Construire un système multi-agents QA local pour l’application `football-qa`,
   installées.
 - `.env` complété : **clés Gemini et Telegram disponibles**,
   `REAL_AGENTS_ENABLED=true`. Les valeurs ne sont jamais affichées.
-- Suite de tests : `.venv\Scripts\python.exe -m pytest` → **156 passed**.
+- Suite de tests : `.venv\Scripts\python.exe -m pytest` → **159 passed**.
 - `playwright==1.64.1` installé et **Chromium présent** dans
   `%LOCALAPPDATA%\ms-playwright` : l’exécution UI réelle fonctionne.
 - Dépôt Git initialisé sur la branche `main` (commit initial `2a3c929`) ;
@@ -135,7 +138,7 @@ on travaille.**
 | Stack de test Docker | opérationnelle | opérationnelle |
 | `.env` | clés Gemini + Telegram présentes | clés Gemini + Telegram présentes |
 | Python | 3.12 avec `.venv` existant | 3.12.10, `.venv` prêt |
-| Tests | 156 après `git pull` sur `main` | **156 passed** |
+| Tests | 159 après `git pull` sur `main` | **159 passed** |
 
 Conséquences :
 
@@ -163,8 +166,9 @@ git status                                  # vérifier l'absence de modificatio
 git switch main
 git pull --ff-only origin main
 
-.venv\Scripts\python.exe -m pip install -r requirements.txt
-.venv\Scripts\python.exe -m pytest          # attendu : 156 passed
+.venv\Scripts\python.exe -m pip install -r requirements-dev.txt
+.venv\Scripts\python.exe -m ruff check .   # attendu : All checks passed
+.venv\Scripts\python.exe -m pytest          # attendu : 159 passed
 .venv\Scripts\python.exe -m playwright install chromium
 ```
 
@@ -321,19 +325,20 @@ Déjà fait :
       huit personnages, six départements, SSE réel (EventBus + journal SQLite),
       fiche agent, passations dérivées des dépendances terminées. **Aucune
       animation aléatoire** ; sans mission, les agents restent disponibles.
-      Suite du système : **156 tests passent**.
+      Suite du système : **159 tests passent**.
 
 ### Phases restantes
 
 - [ ] **Phase 9 — durcissement** : sécurité, robustesse, documentation finale.
-      **En cours, J2 terminé**. J0 (baseline) : constats R1 à R4 couverts par
+      **En cours, J3 terminé**. J0 (baseline) : constats R1 à R4 couverts par
       8 tests dans `tests/test_security.py`. J1 : `app/security.py`
       (identifiants, chemins, références Git, rédaction), branchement dans
       workspace/DevOps/bureau/CLI/scripts/rapports/Allure, garde-fous DevOps
       testés. J2 : SQLite WAL + `busy_timeout` + retry borné + `read_only`,
       reprise idempotente (tâches et rapport), limite SSE, en-têtes de
-      sécurité, `405` explicite, commande `doctor` ; **156 passed**. J3
-      (lint/CI/version) et J4 (documentation finale) restent à livrer.
+      sécurité, `405` explicite, commande `doctor`. J3 : `ruff` en CI,
+      version `0.9.0`, cohérence documentaire testée ; **159 passed**.
+      J4 (documentation finale) reste à livrer.
 
 ---
 
@@ -590,7 +595,7 @@ QA Analyst  Test Designer  API Tester   API Auto +    QA Reporter
 
 ```powershell
 .venv\Scripts\python.exe -m pytest
-# 156 passed
+# 159 passed
 ```
 
 CI : `.github/workflows/tests.yml` rejoue la même suite sur chaque PR et sur
@@ -754,9 +759,16 @@ Le dépôt `football-qa` est resté propre.
   rapport déjà présent. Le bureau accepte au plus **12 flux SSE** (réglable,
   minimum 1) et répond `503` au-delà ; toute méthode autre que `GET` reçoit
   `405` + `Allow: GET`, et chaque réponse porte les en-têtes de sécurité.
+- **Qualité (phase 9, J3)** : `ruff==0.17.4` épinglé dans
+  `requirements-dev.txt` (outil de développement, jamais runtime) et exécuté
+  avant `pytest` en CI. Configuration minimale : ligne 100, `E`, `F`, `I`,
+  `B` ; `scripts/*.py` ignorent `E402` (ajustement de `sys.path`). Version du
+  projet **0.9.0**, alignée sur la première version du CHANGELOG par
+  `tests/test_docs_consistency.py`. `mypy` n'est pas ajouté : décision
+  documentée, le coût d'un typage progressif dépasse le bénéfice immédiat.
 - **Jira/Xray/Squash** : non retenus.
 - **Git** : branche + PR uniquement, jamais de push direct sur `main`. Fusion réalisée par l'agent (décision du 10 novembre 2026, remplace la validation humaine).
-- **CI** : GitHub Actions, `pytest` sur chaque PR et sur `main` (Python 3.12, sans clé). Garde-fou qui remplace la relecture humaine avant fusion.
+- **CI** : GitHub Actions, `ruff check .` puis `pytest` sur chaque PR et sur `main` (Python 3.12, sans clé). Garde-fou qui remplace la relecture humaine avant fusion.
 - **Gemini** : les `429` et `5xx` sont retentés (3 tentatives, backoff 1 s puis 2 s, plafond 8 s) ; erreurs réseau et `4xx` définitifs immédiats ; repli déterministe après échec.
 - **Agents actuels** : agents 1 à 3 réels (phase 5), agents 4 et 5 réels et validés en réel (phase 6), agent 6 (DevOps) et agent 7 (reporter Allure) réels depuis la phase 7. Aucune anomalie inventée.
 - **Automatisation API** : suite pytest générée depuis les GET sûrs de la collection Postman ; JUnit + JSON + Markdown ; cible limitée à `localhost:8002` ; cas injectés en littéraux Python, jamais en JSON.
@@ -795,7 +807,7 @@ dans ce document.
 | `ALLURE_RESULTS_DIR` | `reports/allure-results` (fichiers JSON Allure standard) |
 | `GROQ_API_KEY` / `MISTRAL_API_KEY` | non utilisés |
 
-Sans clé, le système reste utilisable : les 156 tests passent et les agents
+Sans clé, le système reste utilisable : les 159 tests passent et les agents
 réels basculent sur leur repli déterministe.
 
 Historique utile :
@@ -890,7 +902,7 @@ Invoke-WebRequest -UseBasicParsing http://localhost:8002/health
 Invoke-WebRequest -UseBasicParsing http://localhost:5175/
 ```
 
-Attendu : `156 passed` et stack `healthy` sur `8002`, `5434` et `5175`.
+Attendu : `159 passed` et stack `healthy` sur `8002`, `5434` et `5175`.
 Ne jamais sonder `8001` avec les outils du projet.
 
 ### Étape 1 — vérifier l’état livré
@@ -964,7 +976,7 @@ Résultats (détail : `reports/phase-4-telegram.md`) :
 
 **Phase 9 — durcissement** : sécurité, robustesse et documentation finale. Les
 phases 1 à 8 sont terminées ; la phase 8 (bureau virtuel 2D) est livrée et
-couverte par **156 tests**. Le bureau s'ouvre avec
+couverte par **159 tests**. Le bureau s'ouvre avec
 `.venv\Scripts\python.exe scripts\run_office.py --mission-id <id>` ; il est en
 lecture seule et ne déclenche aucune mission.
 
@@ -1085,7 +1097,7 @@ phase 7 (agent DevOps branche + PR, reporting Markdown/JSON et Allure 2) et la
 phase 8 (bureau virtuel isométrique en lecture seule, huit personnages,
 événements réels via SSE, passations dérivées des dépendances) fonctionnent
 dans un environnement Python 3.12.10 natif, le bot Telegram est validé en réel
-(mission `8c568cce0ef4` à 0 anomalie), et les **156 tests passent**. La mission
+(mission `8c568cce0ef4` à 0 anomalie), et les **159 tests passent**. La mission
 de référence `7e30889c18cd` (10 novembre 2026) a réussi 21/21 sondes, 27/27
 tests API et 11/11 scénarios UI avec 0 anomalie ; sa régénération phase 7
 produit **59 résultats Allure** valides et un rendu HTML Allure CLI 2.46.2. Le

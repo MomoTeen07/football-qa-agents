@@ -458,7 +458,11 @@ class ApiProbe:
                     validator=_validate_contains_favorite(favorite_id),
                 )
                 if token2 is None:
-                    self._skip(checks, "Isolation des favoris", "connexion utilisateur 2 impossible")
+                    self._skip(
+                        checks,
+                        "Isolation des favoris",
+                        "connexion utilisateur 2 impossible",
+                    )
                 else:
                     self._request(
                         client, checks, anomalies,

@@ -459,7 +459,7 @@ class DevOpsPromotion:
             f"- Branche : `{branch or 'aucune'}`",
             f"- Commit : `{commit or 'aucun'}`",
             f"- Pull request : {pr_url or 'aucune'}",
-            f"- Fusion automatique : `non`",
+            "- Fusion automatique : `non`",
             "",
             "## Fichiers à promouvoir",
             "",

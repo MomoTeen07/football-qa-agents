@@ -21,7 +21,7 @@ from app.config import Settings, get_settings
 from app.domain.models import AgentResult, Mission, Task
 from app.security import known_secrets, redact_structure
 from app.tools.allure_report import AllureOutcome, AllureReport, AllureSuite
-from app.tools.devops import DevOpsOutcome, DevOpsPromotion
+from app.tools.devops import DevOpsPromotion
 from app.tools.redaction import redact_text
 
 logger = logging.getLogger(__name__)

@@ -23,7 +23,7 @@ from pprint import pformat
 import httpx
 
 from app.config import Settings, get_settings
-from app.tools.api_probe import ensure_test_api_url, UnsafeTargetError
+from app.tools.api_probe import ensure_test_api_url
 from app.tools.redaction import redact_text
 from app.tools.workspace import mission_workspace, write_mission_json, write_mission_text
 

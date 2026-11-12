@@ -155,8 +155,22 @@ def test_probe_runs_real_checks_and_writes_redacted_evidence(tmp_path: Path) -> 
     assert "Le favori n'est pas visible par l'autre utilisateur" in names
     assert favorites == {"user1": [], "user2": []}
 
-    results_path = tmp_path / "workspace" / "missions" / "mission-probe" / "api" / "probe-results.json"
-    report_path = tmp_path / "workspace" / "missions" / "mission-probe" / "api" / "probe-report.md"
+    results_path = (
+        tmp_path
+        / "workspace"
+        / "missions"
+        / "mission-probe"
+        / "api"
+        / "probe-results.json"
+    )
+    report_path = (
+        tmp_path
+        / "workspace"
+        / "missions"
+        / "mission-probe"
+        / "api"
+        / "probe-report.md"
+    )
     assert results_path.is_file()
     assert report_path.is_file()
     text = results_path.read_text(encoding="utf-8")

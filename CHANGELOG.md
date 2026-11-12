@@ -24,7 +24,7 @@ retard. En cas de doute, mettre à jour les trois.
 
 ---
 
-## [Non publié]
+## [0.9.0] - 2026-11-12 - Phase 9 : durcissement
 
 ### En cours — Phase 9 : durcissement
 
@@ -114,11 +114,38 @@ retard. En cas de doute, mettre à jour les trois.
 
 ##### Vérifié
 
-- Suite complète : **156 passed**, hors ligne, sans clé, sans réseau.
+- Suite complète : **159 passed**, hors ligne, sans clé, sans réseau.
+
+#### J3 — qualité, CI et versions (12 novembre 2026)
+
+##### Ajouté
+
+- **`ruff`** épinglé dans `requirements-dev.txt` (outil de développement
+  uniquement, aucune dépendance runtime) avec une configuration minimale dans
+  `pyproject.toml` : ligne 100, erreurs, imports et bugs évidents ;
+  `scripts/*.py` ignorent `E402` car ils ajustent `sys.path` avant les imports.
+- **Étape de lint en CI** : `python -m ruff check .` s'exécute avant `pytest`.
+- **`tests/test_docs_consistency.py`** : la version de `pyproject.toml` correspond
+  à la première version du CHANGELOG, le nombre de tests annoncé est identique
+  dans les trois documents, et la commande `doctor` reste documentée.
+
+##### Modifié
+
+- `pyproject.toml` : version **0.1.0 → 0.9.0**.
+- Imports inutilisés retirés, blocs d'imports triés, ligne trop longue repliée
+  et f-string sans placeholder corrigée.
+- **`mypy` non ajouté** : un typage progressif demanderait un inventaire et des
+  exceptions trop larges pour ce jalon ; la décision est documentée et `ruff`
+  couvre les erreurs évidentes.
+
+##### Vérifié
+
+- `ruff check .` : **aucune erreur**.
+- Suite complète : **159 passed**, hors ligne, sans clé.
 
 ### À venir
 
-- **Phase 9** — jalons J3 (lint/CI/version), J4 (documentation finale).
+- **Phase 9** — jalon J4 (documentation finale et rapport de durcissement).
 
 ### Ajouté
 
