@@ -43,10 +43,46 @@ retard. En cas de doute, mettre à jour les trois.
 - Baseline `main` `0179751` : **103 passed** avant tout ajout.
 - Suite après ajout : **103 passed, 8 xfailed** (aucune régression).
 
+#### J1 — frontières, secrets et garde-fous Git (11 novembre 2026)
+
+##### Ajouté
+
+- **Barrière unique `app/security.py`** : `validate_mission_id` (motif
+  `^[A-Za-z0-9_-]{1,64}$`), `validate_git_ref` (refus de `-`, espaces, `..`,
+  caractères réservés), `ensure_within` (confinement de chemin, liens
+  symboliques compris), `redact_structure` (rédaction récursive) et
+  `known_secrets` (secrets configurés, jamais affichés).
+- **Tests de non-fuite et de confinement** : les 8 tests R1 à R4 passent sans
+  `xfail`, complétés par les refus d'identifiants vides, `../x`, `..\x`,
+  `/abs`, `a/b`, 65 caractères, l'écriture JSON confinée et les références Git
+  hostiles.
+- **Garde-fous DevOps testés** : commandes toujours en listes, jamais de
+  `--force`/`-f`, aucun push vers `main`, `merged` reste `False`, timeouts
+  transmis à `subprocess.run`, `publish=True` seul ne contourne plus
+  `DEVOPS_PUBLISH_ENABLED=false`, configuration Git dangereuse bloquée avant
+  toute commande.
+
+##### Modifié
+
+- `app/tools/workspace.py` : identifiant validé et écritures confinées
+  (`ensure_within`) dans le dossier de mission.
+- `app/tools/devops.py` : identifiant et références Git validés, stderr expurgé
+  (`self._snippet`), rapport JSON/Markdown rédigé, double opt-in de publication.
+- `app/office/state.py` et `app/office/server.py` : rédaction récursive de
+  `/api/state`, du SSE et de `/api/missions`, secrets transmis au serveur.
+- `app/agents/phase7.py` et `app/tools/allure_report.py` : rapport Markdown,
+  synthèse JSON, résultats Allure, propriétés d'environnement et pièces
+  jointes expurgés avec les secrets connus.
+- `app/cli.py` et `scripts/run_office.py`, `scripts/run_phase7_mission.py` :
+  identifiants validés avant tout accès.
+
+##### Vérifié
+
+- Suite complète : **135 passed**, hors ligne, sans clé.
+
 ### À venir
 
-- **Phase 9** — jalons J1 (sécurité des identifiants, chemins, secrets et
-  garde-fous Git), J2 (bureau et persistance), J3 (lint/CI/version), J4
+- **Phase 9** — jalons J2 (bureau et persistance), J3 (lint/CI/version), J4
   (documentation finale).
 
 ### Ajouté

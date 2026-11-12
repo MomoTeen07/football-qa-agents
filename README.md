@@ -20,7 +20,7 @@ Système multi-agents QA pour tester l'application locale `football-qa`.
   **`PROJECT_CONTEXT.md`**. Une PR n'est pas terminée si l'un des trois fichiers
   est en retard.
 - Dernière entrée publiée : **0.8.0 — Phase 8 : bureau virtuel 2D**.
-  Phase 9 en cours : jalon **J0 (baseline)** sur `chore/phase9-baseline`.
+  Phase 9 en cours : jalon **J1 (frontières, secrets, garde-fous Git)**.
 
 ## Intégration continue
 
@@ -53,7 +53,7 @@ tests/                Tests du système multi-agents
 - `.env` complété : **clés Gemini et Telegram disponibles**,
   `REAL_AGENTS_ENABLED=true` → agents réels actifs. Les valeurs ne sont
   jamais affichées ni versionnées.
-- `.venv\Scripts\python.exe -m pytest` → **103 passed**.
+- `.venv\Scripts\python.exe -m pytest` → **135 passed**.
 - `playwright==1.64.1` installé et **Chromium présent** dans
   `%LOCALAPPDATA%\ms-playwright` : l'exécution UI réelle est possible.
 - Projet cible `football-qa` présent à côté du projet QA
@@ -77,7 +77,7 @@ régression : il faut d'abord identifier la machine.
 | Projet cible `football-qa` | présent | présent |
 | Stack de test Docker | opérationnelle | opérationnelle |
 | Clés Gemini / Telegram | présentes dans `.env` | présentes dans `.env` |
-| Tests unitaires | à jour après `git pull` sur `main` | **103 passed** |
+| Tests unitaires | à jour après `git pull` sur `main` | **135 passed** |
 
 Les deux PC permettent désormais les missions réelles. Sur le PC personnel, le
 projet cible est une copie de travail du dépôt `MyFinalProject` ; en cas de
@@ -101,7 +101,7 @@ git switch main
 git pull --ff-only origin main
 
 .venv\Scripts\python.exe -m pip install -r requirements.txt
-.venv\Scripts\python.exe -m pytest          # attendu : 103 passed
+.venv\Scripts\python.exe -m pytest          # attendu : 135 passed
 .venv\Scripts\python.exe -m playwright install chromium
 ```
 
@@ -321,7 +321,7 @@ Validation **en réel** (10 novembre 2026, mission `7e30889c18cd`) :
 | Scénarios Playwright | 11/11, 0 échec |
 | Anomalies applicatives | 0 |
 
-Suite du système : **103 tests passent**. Voir `reports/phase-6-agents-4-5.md`
+Suite du système : **135 tests passent**. Voir `reports/phase-6-agents-4-5.md`
 et `PROJECT_CONTEXT.md` pour le détail des correctifs de cette validation
 (littéraux Python dans la suite générée, scénario de connexion, identifiant
 Postman stable).
@@ -439,7 +439,7 @@ les événements de tâche portent bien leur `key`.
 
 ## État d'avancement
 
-- [x] Environnement local complet sur le PC personnel — Python 3.12.10, `.venv`, `.env` avec clés, Chromium, stack de test, **103 tests passent**
+- [x] Environnement local complet sur le PC personnel — Python 3.12.10, `.venv`, `.env` avec clés, Chromium, stack de test, **135 tests passent**
 - [x] Journal des modifications `CHANGELOG.md` et règle de mise à jour documentaire
 - [x] Phase 1 — baseline de l'application existante
 - [x] Phase 2 — stack de test isolée
@@ -449,4 +449,4 @@ les événements de tâche portent bien leur `key`.
 - [x] Phase 6 — agents 4 et 5 (code + validation hors ligne **et** exécution réelle : 27/27 API, 11/11 UI, 0 anomalie)
 - [x] Phase 7 — agents 6 et 7 (DevOps branche + PR sécurisée, reporting Allure/Markdown/JSON, **90 tests passent**)
 - [x] Phase 8 — bureau virtuel 2D (open space isométrique, 8 personnages, SSE réel, fiche agent, passations dérivées des dépendances, **103 tests passent**)
-- [ ] Phase 9 — durcissement — **en cours (J0)**. Plan : `reports/phase-9-plan.md`. Baseline confirmée (**103 passed**), tests rouges R1–R4 écrits dans `tests/test_security.py` (`xfail` strict tant que les correctifs ne sont pas livrés).
+- [ ] Phase 9 — durcissement — **en cours (J1 terminé)**. Plan : `reports/phase-9-plan.md`. J0 : baseline **103 passed**, tests rouges R1–R4. J1 : barrière `app.security` (identifiants, chemins, références Git), rédaction des secrets dans le bureau, les rapports et Allure, garde-fous DevOps testés ; **135 tests passent**.

@@ -18,6 +18,7 @@ from app.office.catalog import (
     agent_order,
     department_catalog,
 )
+from app.security import redact_structure
 from app.store.sqlite_store import SqliteStore
 
 MISSION_STATUS_LABELS = {
@@ -107,10 +108,14 @@ def _event_dict(event: Event) -> dict:
     }
 
 
-def serialize_event(event: Event) -> dict:
-    """Sérialisation publique d'un événement pour le flux SSE."""
+def serialize_event(event: Event, secrets: tuple[str, ...] = ()) -> dict:
+    """Sérialisation publique d'un événement pour le flux SSE.
 
-    return _event_dict(event)
+    Les payloads journalisés peuvent contenir une valeur sensible : tous les
+    secrets connus sont expurgés avant l'envoi au navigateur.
+    """
+
+    return redact_structure(_event_dict(event), secrets)
 
 
 def _agent_status(
@@ -247,8 +252,13 @@ def build_office_state(
     mission_id: str | None = None,
     *,
     allure_root: Path | None = None,
+    secrets: tuple[str, ...] = (),
 ) -> dict:
-    """Retourne un instantané complet et sérialisable du bureau."""
+    """Retourne un instantané complet et sérialisable du bureau.
+
+    `secrets` liste les valeurs sensibles connues : elles sont expurgées de
+    toute la structure renvoyée (mission, tâches, événements, preuves).
+    """
 
     missions = store.list_missions()
     mission: Mission | None = None
@@ -258,7 +268,7 @@ def build_office_state(
         mission = missions[0]
 
     if mission is None:
-        return _empty_state(mission_id)
+        return redact_structure(_empty_state(mission_id), secrets)
 
     tasks = store.list_tasks(mission.id)
     events = store.list_events(mission.id)
@@ -337,34 +347,41 @@ def build_office_state(
         "progress": progress,
     }
 
-    return {
-        "generated_at": datetime.now().astimezone().isoformat(),
-        "requested_mission_id": mission_id,
-        "mission": {
-            "id": mission.id,
-            "instruction": mission.instruction,
-            "status": mission.status.value,
-            "status_label": MISSION_STATUS_LABELS[mission.status],
-            "requires_approval": mission.requires_approval,
-            "approval_reason": mission.approval_reason,
-            "report_path": mission.report_path,
-            "created_at": _iso(mission.created_at),
-            "updated_at": _iso(mission.updated_at),
-            "progress": progress,
-            "tasks_total": total,
-            "tasks_done": done,
+    return redact_structure(
+        {
+            "generated_at": datetime.now().astimezone().isoformat(),
+            "requested_mission_id": mission_id,
+            "mission": {
+                "id": mission.id,
+                "instruction": mission.instruction,
+                "status": mission.status.value,
+                "status_label": MISSION_STATUS_LABELS[mission.status],
+                "requires_approval": mission.requires_approval,
+                "approval_reason": mission.approval_reason,
+                "report_path": mission.report_path,
+                "created_at": _iso(mission.created_at),
+                "updated_at": _iso(mission.updated_at),
+                "progress": progress,
+                "tasks_total": total,
+                "tasks_done": done,
+            },
+            "agents": agents,
+            "departments": department_catalog(),
+            "tasks": [_task_dict(task) for task in tasks],
+            "events": [_event_dict(event) for event in events[-120:]],
+            "communications": _communications(tasks),
+            "stats": stats,
+            "allure": _allure_summary(allure_root, mission.id),
         },
-        "agents": agents,
-        "departments": department_catalog(),
-        "tasks": [_task_dict(task) for task in tasks],
-        "events": [_event_dict(event) for event in events[-120:]],
-        "communications": _communications(tasks),
-        "stats": stats,
-        "allure": _allure_summary(allure_root, mission.id),
-    }
+        secrets,
+    )
 
 
-def mission_summaries(store: SqliteStore, limit: int = 20) -> list[dict]:
+def mission_summaries(
+    store: SqliteStore,
+    limit: int = 20,
+    secrets: tuple[str, ...] = (),
+) -> list[dict]:
     """Liste compacte des missions récentes pour le panneau « Missions »."""
 
     summaries: list[dict] = []
@@ -385,7 +402,7 @@ def mission_summaries(store: SqliteStore, limit: int = 20) -> list[dict]:
                 "progress": round(done * 100 / total) if total else 0,
             }
         )
-    return summaries
+    return redact_structure(summaries, secrets)
 
 
 def state_for_request(
@@ -393,5 +410,11 @@ def state_for_request(
     mission_id: str | None,
     *,
     allure_root: Path | None = None,
+    secrets: tuple[str, ...] = (),
 ) -> dict[str, Any]:
-    return build_office_state(store, mission_id, allure_root=allure_root)
+    return build_office_state(
+        store,
+        mission_id,
+        allure_root=allure_root,
+        secrets=secrets,
+    )

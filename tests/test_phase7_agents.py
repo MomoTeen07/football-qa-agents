@@ -70,12 +70,14 @@ class FakeGitRunner:
         branch_exists: bool = False,
         push_failure: bool = False,
         pr_failure: bool = False,
+        fetch_stderr: str = "",
     ) -> None:
         self.repo_root = repo_root
         self.dirty = dirty
         self.branch_exists = branch_exists
         self.push_failure = push_failure
         self.pr_failure = pr_failure
+        self.fetch_stderr = fetch_stderr
         self.calls: list[list[str]] = []
 
     def __call__(
@@ -99,7 +101,10 @@ class FakeGitRunner:
         if command[:2] == ["git", "status"]:
             return done(stdout=" M src/app.py\n" if self.dirty else "")
         if command[:2] == ["git", "fetch"]:
-            return done()
+            return done(
+                1 if self.fetch_stderr else 0,
+                stderr=self.fetch_stderr,
+            )
         if command[:2] == ["git", "switch"]:
             return done()
         if command[:2] == ["git", "add"]:
@@ -465,3 +470,122 @@ def test_devops_instruction_requires_explicit_approval() -> None:
     required, reason = mission_requires_approval("Analyse l'application.")
     assert required is False
     assert reason is None
+
+
+# ----------------------------------------------------------------------
+# Garde-fous DevOps renforcés (phase 9, WP4)
+# ----------------------------------------------------------------------
+SENTINEL = "sentinel-phase9-do-not-leak-7f21"
+
+
+def test_devops_commands_are_bounded_lists_without_force(tmp_path: Path) -> None:
+    settings = make_settings(tmp_path, publish=True)
+    mission = make_mission()
+    write_sources(settings, mission.id)
+    runner = FakeGitRunner(settings.devops_repo_dir)
+
+    outcome = DevOpsPromotion(settings, runner=runner).run(mission.id)
+
+    assert outcome.status == "completed"
+    for command in runner.calls:
+        assert isinstance(command, list)
+        assert all(isinstance(argument, str) for argument in command)
+        assert "--force" not in command
+        assert "-f" not in command
+    for command in runner.calls:
+        if command[:2] == ["git", "push"]:
+            assert "main" not in command[2:]
+    push = find_command(runner.calls, ("git", "push"))
+    assert push[-1] == outcome.branch
+
+    payload = json.loads(
+        (
+            settings.workspace_dir
+            / "missions"
+            / mission.id
+            / "devops"
+            / "devops-results.json"
+        ).read_text(encoding="utf-8")
+    )
+    assert payload["merged"] is False
+    assert payload["publish"] is True
+
+
+def test_devops_explicit_publish_requires_configuration_opt_in(
+    tmp_path: Path,
+) -> None:
+    settings = make_settings(tmp_path, publish=False)
+    mission = make_mission()
+    write_sources(settings, mission.id)
+    runner = FakeGitRunner(settings.devops_repo_dir)
+
+    outcome = DevOpsPromotion(settings, runner=runner).run(
+        mission.id, publish=True
+    )
+
+    assert outcome.status == "planned"
+    for command in runner.calls:
+        assert tuple(command[:2]) not in {
+            ("git", "fetch"),
+            ("git", "switch"),
+            ("git", "add"),
+            ("git", "commit"),
+            ("git", "push"),
+            ("gh", "pr"),
+        }
+    assert not any(
+        (settings.devops_repo_dir / "tests" / "generated").rglob("*")
+    )
+
+
+def test_devops_rejects_dangerous_git_configuration(tmp_path: Path) -> None:
+    settings = make_settings(tmp_path, publish=True)
+    settings.devops_base_branch = "--force"
+    mission = make_mission()
+    write_sources(settings, mission.id)
+    runner = FakeGitRunner(settings.devops_repo_dir)
+
+    outcome = DevOpsPromotion(settings, runner=runner).run(mission.id)
+
+    assert outcome.status == "blocked"
+    assert "Configuration Git refusée" in (outcome.blocked_reason or "")
+    assert runner.calls == []
+
+
+def test_devops_redacts_sentinel_from_remote_failure(tmp_path: Path) -> None:
+    settings = make_settings(tmp_path, publish=True)
+    settings.gemini_api_key = SENTINEL
+    settings.devops_remote = SENTINEL
+    mission = make_mission()
+    write_sources(settings, mission.id)
+    runner = FakeGitRunner(
+        settings.devops_repo_dir,
+        fetch_stderr=f"fatal: could not read from {SENTINEL}",
+    )
+
+    outcome = DevOpsPromotion(settings, runner=runner).run(mission.id)
+
+    assert outcome.status == "blocked"
+    assert SENTINEL not in (outcome.blocked_reason or "")
+    assert SENTINEL not in outcome.summary
+    for evidence in outcome.evidence_paths:
+        assert SENTINEL not in Path(evidence).read_text(encoding="utf-8")
+
+
+def test_devops_default_runner_sets_a_timeout(monkeypatch, tmp_path: Path) -> None:
+    settings = make_settings(tmp_path)
+    settings.devops_timeout_seconds = 7.5
+    captured: dict = {}
+
+    def fake_run(command, **kwargs):
+        captured["command"] = command
+        captured.update(kwargs)
+        return subprocess.CompletedProcess(command, 0, "", "")
+
+    monkeypatch.setattr(subprocess, "run", fake_run)
+
+    DevOpsPromotion(settings)._default_runner(["git", "status"], tmp_path)
+
+    assert captured["command"] == ["git", "status"]
+    assert captured["timeout"] == 7.5
+    assert "shell" not in captured

@@ -1,10 +1,8 @@
-"""Constats de sécurité R1 à R4 (phase 9, jalon J0).
+"""Non-fuite et confinement des entrées (phase 9, R1 à R4).
 
-Ces tests décrivent le comportement **attendu** après durcissement. Au jalon
-J0 ils sont marqués `xfail(strict=True)` : ils doivent échouer sur le code
-actuel (défaut confirmé) et le marqueur sera retiré au jalon J1 quand les
-correctifs seront livrés. Un `xfail` strict qui se met à passer casse la suite,
-ce qui force la suppression du marqueur.
+Ces tests décrivent le comportement attendu après durcissement : la barrière
+unique `app.security` valide les identifiants, confine les écritures dans le
+workspace de mission et expurge les secrets connus avant toute sérialisation.
 """
 
 from __future__ import annotations
@@ -43,10 +41,6 @@ def make_settings(tmp_path: Path) -> Settings:
 # ----------------------------------------------------------------------
 # R1 — identifiants de mission non validés hors du serveur du bureau
 # ----------------------------------------------------------------------
-@pytest.mark.xfail(
-    strict=True,
-    reason="R1 : mission_workspace accepte encore une traversée d'identifiant",
-)
 def test_mission_workspace_refuses_traversal(tmp_path: Path) -> None:
     settings = make_settings(tmp_path)
 
@@ -56,10 +50,6 @@ def test_mission_workspace_refuses_traversal(tmp_path: Path) -> None:
     assert not (tmp_path / "workspace" / "evasion").exists()
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="R1 : la promotion DevOps construit un chemin avec l'identifiant brut",
-)
 def test_devops_refuses_a_traversing_mission_id(tmp_path: Path) -> None:
     settings = make_settings(tmp_path)
     (settings.devops_repo_dir / ".git").mkdir(parents=True, exist_ok=True)
@@ -73,10 +63,6 @@ def test_devops_refuses_a_traversing_mission_id(tmp_path: Path) -> None:
 # ----------------------------------------------------------------------
 # R2 — écriture hors du dossier de mission via un chemin relatif
 # ----------------------------------------------------------------------
-@pytest.mark.xfail(
-    strict=True,
-    reason="R2 : write_mission_text accepte encore ../../evasion.txt",
-)
 def test_write_mission_text_stays_inside_the_mission_directory(
     tmp_path: Path,
 ) -> None:
@@ -118,10 +104,6 @@ def office_payload(tmp_path: Path) -> tuple[SqliteStore, Mission]:
     return store, mission
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="R3 : build_office_state ne rédige pas task.result et event.payload",
-)
 def test_office_state_redacts_known_secrets(office_payload) -> None:
     store, mission = office_payload
 
@@ -130,10 +112,6 @@ def test_office_state_redacts_known_secrets(office_payload) -> None:
     assert SENTINEL not in json.dumps(state, ensure_ascii=False)
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="R3 : serialize_event renvoie le payload brut",
-)
 def test_serialize_event_redacts_known_secrets(office_payload) -> None:
     store, mission = office_payload
     event = store.list_events(mission.id)[0]
@@ -146,10 +124,6 @@ def test_serialize_event_redacts_known_secrets(office_payload) -> None:
 # ----------------------------------------------------------------------
 # R4 — aucun test de non-fuite sentinelle dans les rapports
 # ----------------------------------------------------------------------
-@pytest.mark.xfail(
-    strict=True,
-    reason="R4 : le rapport Markdown et la synthèse JSON ne rédigent pas les secrets connus",
-)
 def test_reporter_redacts_known_secrets(tmp_path: Path) -> None:
     from app.agents.phase7 import QAReporterAgent
 
@@ -184,10 +158,6 @@ def test_reporter_redacts_known_secrets(tmp_path: Path) -> None:
     )
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="R4 : les fichiers Allure ne rédigent pas les secrets connus",
-)
 def test_allure_files_redact_known_secrets(tmp_path: Path) -> None:
     from app.agents.phase7 import QAReporterAgent
 
@@ -243,12 +213,75 @@ def test_allure_files_redact_known_secrets(tmp_path: Path) -> None:
 # ----------------------------------------------------------------------
 # Les identifiants réels existants doivent continuer de fonctionner
 # ----------------------------------------------------------------------
-@pytest.mark.xfail(
-    strict=True,
-    reason="R1 : la validation centralisée n'existe pas encore",
-)
 def test_valid_mission_ids_still_work(tmp_path: Path) -> None:
     from app.security import validate_mission_id
 
     assert validate_mission_id("7e30889c18cd") == "7e30889c18cd"
     assert validate_mission_id("mission_test-01") == "mission_test-01"
+
+
+# ----------------------------------------------------------------------
+# Barrière unique : identifiants, chemins, références Git
+# ----------------------------------------------------------------------
+@pytest.mark.parametrize(
+    "value",
+    ["", "../x", "..\\x", "/abs", "a/b", "a" * 65, "a.b", "a b"],
+)
+def test_validate_mission_id_rejects_hostile_values(value: str) -> None:
+    from app.security import validate_mission_id
+
+    with pytest.raises(ValueError):
+        validate_mission_id(value)
+
+
+@pytest.mark.parametrize(
+    "value",
+    ["", "-main", "ma in", "../main", "main..next", "main~1", "main:next"],
+)
+def test_validate_git_ref_rejects_hostile_values(value: str) -> None:
+    from app.security import validate_git_ref
+
+    with pytest.raises(ValueError):
+        validate_git_ref(value)
+
+
+def test_validate_git_ref_accepts_real_refs() -> None:
+    from app.security import validate_git_ref
+
+    assert validate_git_ref("origin") == "origin"
+    assert validate_git_ref("main") == "main"
+    assert validate_git_ref("qa/promotion-7e30889c18cd") == (
+        "qa/promotion-7e30889c18cd"
+    )
+
+
+def test_ensure_within_confines_paths(tmp_path: Path) -> None:
+    from app.security import ensure_within
+
+    base = tmp_path / "missions"
+    base.mkdir()
+    assert ensure_within(base, "mission-ok") == (base / "mission-ok").resolve()
+    with pytest.raises(ValueError):
+        ensure_within(base, "../evasion")
+
+
+def test_write_mission_json_is_confined(tmp_path: Path) -> None:
+    from app.tools.workspace import write_mission_json
+
+    settings = make_settings(tmp_path)
+
+    with pytest.raises(ValueError):
+        write_mission_json(settings, "mission-ok", "../evasion.json", {})
+
+    assert not (tmp_path / "workspace" / "evasion.json").exists()
+
+
+def test_office_summaries_redact_known_secrets(office_payload) -> None:
+    from app.office.state import mission_summaries
+
+    store, _mission = office_payload
+
+    summaries = mission_summaries(store, secrets=(SENTINEL,))
+
+    assert SENTINEL not in json.dumps(summaries, ensure_ascii=False)
+

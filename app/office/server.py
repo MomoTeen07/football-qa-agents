@@ -11,7 +11,6 @@ Il ne démarre aucune mission, ne planifie rien et n'expose aucun secret.
 from __future__ import annotations
 
 import json
-import re
 import time
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -25,9 +24,8 @@ from app.office.state import (
     serialize_event,
 )
 from app.office.stream import OfficeEventStream
+from app.security import validate_mission_id
 from app.store.sqlite_store import SqliteStore
-
-MISSION_ID_PATTERN = re.compile(r"^[A-Za-z0-9_-]{1,64}$")
 
 MIME_TYPES = {
     ".html": "text/html; charset=utf-8",
@@ -55,7 +53,13 @@ SECURITY_HEADERS = {
 
 
 def _valid_mission_id(value: str | None) -> bool:
-    return bool(value) and bool(MISSION_ID_PATTERN.fullmatch(value or ""))
+    if not value:
+        return False
+    try:
+        validate_mission_id(value)
+    except ValueError:
+        return False
+    return True
 
 
 class OfficeHTTPServer(ThreadingHTTPServer):
@@ -70,12 +74,14 @@ class OfficeHTTPServer(ThreadingHTTPServer):
         *,
         bus=None,
         allure_root: Path | None = None,
+        secrets: tuple[str, ...] = (),
     ) -> None:
         super().__init__(address, OfficeRequestHandler)
         self.store = store
         self.static_dir = Path(static_dir).resolve()
         self.bus = bus
         self.allure_root = Path(allure_root) if allure_root else None
+        self.secrets = tuple(secrets)
         self.quiet = True
         self.stopping = False
 
@@ -167,7 +173,10 @@ class OfficeRequestHandler(BaseHTTPRequestHandler):
         if path == "/api/missions":
             self._send_json(
                 {
-                    "missions": mission_summaries(self.server.store),
+                    "missions": mission_summaries(
+                        self.server.store,
+                        secrets=self.server.secrets,
+                    ),
                     "generated_at": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
                 }
             )
@@ -203,6 +212,7 @@ class OfficeRequestHandler(BaseHTTPRequestHandler):
             self.server.store,
             mission_id,
             allure_root=self.server.allure_root,
+            secrets=self.server.secrets,
         )
         self._send_json(state)
 
@@ -241,6 +251,7 @@ class OfficeRequestHandler(BaseHTTPRequestHandler):
                     self.server.store,
                     resolved,
                     allure_root=self.server.allure_root,
+                    secrets=self.server.secrets,
                 ),
             )
             last_id = max((event.id or 0) for event in events) if events else 0
@@ -253,11 +264,14 @@ class OfficeRequestHandler(BaseHTTPRequestHandler):
                     self._send_sse(
                         "office",
                         {
-                            "event": serialize_event(event),
+                            "event": serialize_event(
+                                event, secrets=self.server.secrets
+                            ),
                             "state": build_office_state(
                                 self.server.store,
                                 resolved,
                                 allure_root=self.server.allure_root,
+                                secrets=self.server.secrets,
                             ),
                         },
                     )
@@ -277,6 +291,7 @@ def create_server(
     static_dir: Path | None = None,
     bus=None,
     allure_root: Path | None = None,
+    secrets: tuple[str, ...] = (),
 ) -> OfficeHTTPServer:
     """Crée le serveur local. Refuse toute interface non locale."""
 
@@ -291,4 +306,5 @@ def create_server(
         static,
         bus=bus,
         allure_root=allure_root,
+        secrets=secrets,
     )

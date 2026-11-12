@@ -21,6 +21,7 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from app.config import get_settings
 from app.office.server import create_server
+from app.security import known_secrets, validate_mission_id
 from app.store.sqlite_store import SqliteStore
 
 
@@ -43,6 +44,12 @@ def main() -> int:
     settings = get_settings()
     store = SqliteStore(settings.mission_db_path)
 
+    if args.mission_id:
+        try:
+            validate_mission_id(args.mission_id)
+        except ValueError:
+            print("Identifiant de mission invalide.", file=sys.stderr)
+            return 2
     if args.mission_id and store.get_mission(args.mission_id) is None:
         print(f"Mission introuvable : {args.mission_id}", file=sys.stderr)
         return 2
@@ -54,6 +61,7 @@ def main() -> int:
             port=args.port,
             static_dir=PROJECT_ROOT / "office",
             allure_root=settings.allure_results_dir,
+            secrets=known_secrets(settings),
         )
     except (OSError, ValueError, FileNotFoundError) as exc:
         print(f"Bureau virtuel indisponible : {exc}", file=sys.stderr)
