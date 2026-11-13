@@ -44,6 +44,9 @@ class Settings(BaseSettings):
     postman_dir: Path = PROJECT_ROOT / "postman"
     allure_results_dir: Path = PROJECT_ROOT / "reports" / "allure-results"
 
+    # Bureau virtuel local (phase 8) : lien renvoyé par le bot Telegram.
+    office_url: str = "http://127.0.0.1:5180"
+
     # Agent 6 DevOps (phase 7) : la publication Git est strictement opt-in.
     devops_publish_enabled: bool = False
     devops_repo_dir: Path = PROJECT_ROOT

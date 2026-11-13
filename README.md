@@ -19,8 +19,8 @@ Système multi-agents QA pour tester l'application locale `football-qa`.
 - Toute modification doit aussi mettre à jour **`README.md`** et
   **`PROJECT_CONTEXT.md`**. Une PR n'est pas terminée si l'un des trois fichiers
   est en retard.
-- Dernière entrée publiée : **0.9.0 — Phase 9 : durcissement** (terminée le
-  13 novembre 2026). Jalons J0 à J4 livrés ; rapport final :
+- Dernière entrée publiée : **0.9.1 — Lien du bureau virtuel dans Telegram**
+  (13 novembre 2026). Phase 9 terminée ; rapport final :
   `reports/phase-9-hardening.md`.
 
 ## Intégration continue
@@ -55,7 +55,7 @@ tests/                Tests du système multi-agents
 - `.env` complété : **clés Gemini et Telegram disponibles**,
   `REAL_AGENTS_ENABLED=true` → agents réels actifs. Les valeurs ne sont
   jamais affichées ni versionnées.
-- `.venv\Scripts\python.exe -m pytest` → **159 passed**.
+- `.venv\Scripts\python.exe -m pytest` → **161 passed**.
 - `playwright==1.64.1` installé et **Chromium présent** dans
   `%LOCALAPPDATA%\ms-playwright` : l'exécution UI réelle est possible.
 - Projet cible `football-qa` présent à côté du projet QA
@@ -79,7 +79,7 @@ régression : il faut d'abord identifier la machine.
 | Projet cible `football-qa` | présent | présent |
 | Stack de test Docker | opérationnelle | opérationnelle |
 | Clés Gemini / Telegram | présentes dans `.env` | présentes dans `.env` |
-| Tests unitaires | à jour après `git pull` sur `main` | **159 passed** |
+| Tests unitaires | à jour après `git pull` sur `main` | **161 passed** |
 
 Les deux PC permettent désormais les missions réelles. Sur le PC personnel, le
 projet cible est une copie de travail du dépôt `MyFinalProject` ; en cas de
@@ -104,7 +104,7 @@ git pull --ff-only origin main
 
 .venv\Scripts\python.exe -m pip install -r requirements-dev.txt
 .venv\Scripts\python.exe -m ruff check .   # attendu : All checks passed
-.venv\Scripts\python.exe -m pytest          # attendu : 159 passed
+.venv\Scripts\python.exe -m pytest          # attendu : 161 passed
 .venv\Scripts\python.exe -m playwright install chromium
 ```
 
@@ -335,7 +335,7 @@ Validation **en réel** (10 novembre 2026, mission `7e30889c18cd`) :
 | Scénarios Playwright | 11/11, 0 échec |
 | Anomalies applicatives | 0 |
 
-Suite du système : **159 tests passent**. Voir `reports/phase-6-agents-4-5.md`
+Suite du système : **161 tests passent**. Voir `reports/phase-6-agents-4-5.md`
 et `PROJECT_CONTEXT.md` pour le détail des correctifs de cette validation
 (littéraux Python dans la suite générée, scénario de connexion, identifiant
 Postman stable).
@@ -436,6 +436,13 @@ aucune mission et n'écrit aucune preuve.
 - **Sécurité** : écoute uniquement sur `127.0.0.1` (`localhost`/`::1`), refus
   de toute autre interface, protection contre la traversée de chemins, en-têtes
   de sécurité et CSP sans ressource distante. Aucun secret n'est exposé.
+- **Lien depuis Telegram** : à la création d'une mission (et lors d'un
+  `/approve`), le bot renvoie
+  `http://127.0.0.1:5180/?mission_id=<id>`. Le lien n'est cliquable que sur le
+  PC qui héberge le bureau, puisque celui-ci n'écoute pas sur le réseau. La
+  base du lien se règle avec `OFFICE_URL` (`http://127.0.0.1:5180` par défaut).
+  Une page du bureau suit **une seule mission** : pour une nouvelle mission,
+  ouvrir le lien renvoyé (ou recharger la page une fois la mission créée).
 
 Endpoints locaux :
 
@@ -495,7 +502,7 @@ Les garanties ci-dessous sont vérifiées par les tests (`tests/test_security.py
 
 ## État d'avancement
 
-- [x] Environnement local complet sur le PC personnel — Python 3.12.10, `.venv`, `.env` avec clés, Chromium, stack de test, **159 tests passent**
+- [x] Environnement local complet sur le PC personnel — Python 3.12.10, `.venv`, `.env` avec clés, Chromium, stack de test, **161 tests passent**
 - [x] Journal des modifications `CHANGELOG.md` et règle de mise à jour documentaire
 - [x] Phase 1 — baseline de l'application existante
 - [x] Phase 2 — stack de test isolée
@@ -505,4 +512,4 @@ Les garanties ci-dessous sont vérifiées par les tests (`tests/test_security.py
 - [x] Phase 6 — agents 4 et 5 (code + validation hors ligne **et** exécution réelle : 27/27 API, 11/11 UI, 0 anomalie)
 - [x] Phase 7 — agents 6 et 7 (DevOps branche + PR sécurisée, reporting Allure/Markdown/JSON, **90 tests passent**)
 - [x] Phase 8 — bureau virtuel 2D (open space isométrique, 8 personnages, SSE réel, fiche agent, passations dérivées des dépendances, **103 tests passent**)
-- [x] Phase 9 — durcissement — **terminée le 13 novembre 2026**. J0 : baseline **103 passed** et tests rouges R1–R4. J1 : barrière `app.security` (identifiants, chemins, références Git), rédaction des secrets dans le bureau, les rapports et Allure, garde-fous DevOps testés. J2 : SQLite WAL + `busy_timeout` + retry borné, reprise idempotente du graphe, limite SSE et en-têtes de sécurité, commande `doctor` en lecture seule. J3 : `ruff` en CI, version `0.9.0`, cohérence documentaire testée. J4 : rapport `reports/phase-9-hardening.md`, runbook, checklist sécurité et rapport de phase 8 ; **159 tests passent**.
+- [x] Phase 9 — durcissement — **terminée le 13 novembre 2026**. J0 : baseline **103 passed** et tests rouges R1–R4. J1 : barrière `app.security` (identifiants, chemins, références Git), rédaction des secrets dans le bureau, les rapports et Allure, garde-fous DevOps testés. J2 : SQLite WAL + `busy_timeout` + retry borné, reprise idempotente du graphe, limite SSE et en-têtes de sécurité, commande `doctor` en lecture seule. J3 : `ruff` en CI, version `0.9.0`, cohérence documentaire testée. J4 : rapport `reports/phase-9-hardening.md`, runbook, checklist sécurité et rapport de phase 8 ; **161 tests passent**.
