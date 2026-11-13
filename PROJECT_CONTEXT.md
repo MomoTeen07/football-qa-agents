@@ -1,8 +1,8 @@
 # PROJECT_CONTEXT — Football QA Agents
 
-Date du point de reprise : 12 novembre 2026  
-Dernière action terminée : **phase 9 — J3 qualité, CI et versions** (12 novembre 2026). `ruff` est exécuté avant `pytest` en CI, la version du projet est alignée à **0.9.0** et un test vérifie la cohérence entre `pyproject.toml`, le CHANGELOG, le README et `PROJECT_CONTEXT.md`. Suite : **159 passed**.  
-État global : **phases 1 à 8 terminées ; phase 9 en cours (J3 terminé, J4 restant)**.
+Date du point de reprise : 13 novembre 2026  
+Dernière action terminée : **phase 9 — J4 documentation finale** (13 novembre 2026). La phase 9 est **terminée** : rapport `reports/phase-9-hardening.md`, runbook, checklist sécurité, rapport de phase 8, README et CHANGELOG clôturés en `0.9.0`. Suite : **159 passed**, `ruff check .` sans erreur.  
+État global : **phases 1 à 9 terminées**.
 > **Point de reprise — lire ceci en premier**
 >
 > - `main` contient les phases 1 à 8, y compris le **test réel du bot
@@ -23,19 +23,20 @@ Dernière action terminée : **phase 9 — J3 qualité, CI et versions** (12 nov
 > - **Phase 8** : bureau virtuel avec
 >   `scripts\run_office.py --mission-id <id>` (lecture seule, aucun lancement
 >   de mission).
-> - **Phase 9 (en cours, J3 terminé)** : lire `reports/phase-9-plan.md`
->   avant toute action. C'est la spécification de travail (jalons J0 à J4,
->   tests, Definition of Done). J0 a confirmé la baseline et écrit les tests
->   R1 à R4. J1 a livré `app/security.py` (validation des identifiants,
->   confinement des chemins, validation des références Git, rédaction
->   récursive), branché partout (workspace, DevOps, bureau, CLI, scripts,
->   rapports, Allure). J2 a durci SQLite (WAL, `busy_timeout`, retry borné,
->   mode `read_only`), la reprise du graphe (aucune tâche ni rapport dupliqué),
->   le bureau (limite SSE, `503` explicite, en-têtes de sécurité, `405` pour
->   les méthodes non supportées) et ajouté `python -m app.cli doctor`.
->   J3 a ajouté `ruff` en CI (configuration minimale), aligné la version
->   `0.9.0` et ajouté `tests/test_docs_consistency.py`. J4 (documentation
->   finale et rapport de durcissement) reste à faire.
+> - **Phase 9 (terminée)** : spécification dans `reports/phase-9-plan.md`,
+>   bilan dans `reports/phase-9-hardening.md`. J0 a confirmé la baseline et
+>   écrit les tests R1 à R4. J1 a livré `app/security.py` (validation des
+>   identifiants, confinement des chemins, validation des références Git,
+>   rédaction récursive), branché partout (workspace, DevOps, bureau, CLI,
+>   scripts, rapports, Allure). J2 a durci SQLite (WAL, `busy_timeout`, retry
+>   borné, mode `read_only`), la reprise du graphe (aucune tâche ni rapport
+>   dupliqué), le bureau (limite SSE, `503` explicite, en-têtes de sécurité,
+>   `405` pour les méthodes non supportées) et ajouté
+>   `python -m app.cli doctor`. J3 a ajouté `ruff` en CI (configuration
+>   minimale), aligné la version `0.9.0` et ajouté
+>   `tests/test_docs_consistency.py`. J4 a produit le rapport de durcissement,
+>   le runbook, la checklist sécurité et le rapport de phase 8 ; phase 9
+>   **terminée**.
 > - Détail et précautions : section **« Reprise sur le PC professionnel »** ci-dessous.
 > - **Documentation** : toute modification met à jour `README.md`,
 >   `PROJECT_CONTEXT.md` et `CHANGELOG.md`.
@@ -329,16 +330,19 @@ Déjà fait :
 
 ### Phases restantes
 
-- [ ] **Phase 9 — durcissement** : sécurité, robustesse, documentation finale.
-      **En cours, J3 terminé**. J0 (baseline) : constats R1 à R4 couverts par
-      8 tests dans `tests/test_security.py`. J1 : `app/security.py`
-      (identifiants, chemins, références Git, rédaction), branchement dans
+- [x] **Phase 9 — durcissement** : **terminée le 13 novembre 2026**. J0
+      (baseline) : constats R1 à R4 couverts par 8 tests dans
+      `tests/test_security.py`. J1 : `app/security.py` (identifiants, chemins,
+      références Git, rédaction), branchement dans
       workspace/DevOps/bureau/CLI/scripts/rapports/Allure, garde-fous DevOps
       testés. J2 : SQLite WAL + `busy_timeout` + retry borné + `read_only`,
       reprise idempotente (tâches et rapport), limite SSE, en-têtes de
       sécurité, `405` explicite, commande `doctor`. J3 : `ruff` en CI,
-      version `0.9.0`, cohérence documentaire testée ; **159 passed**.
-      J4 (documentation finale) reste à livrer.
+      version `0.9.0`, cohérence documentaire testée. J4 : rapport
+      `reports/phase-9-hardening.md`, runbook, checklist sécurité,
+      `reports/phase-8-office.md` ; **159 passed**.
+- Aucune phase suivante n'est planifiée. Les risques résiduels acceptés
+  (R5, R12, R13) sont documentés dans `reports/phase-9-hardening.md`.
 
 ---
 
@@ -626,8 +630,8 @@ Mission réelle de référence (10 novembre 2026) :
 | `.env.test.example` | Modèle de configuration de test |
 | `.env` | Configuration locale réelle, **ignorée par Git** |
 | `requirements.txt` | Dépendances Python, Telegram et Playwright inclus |
-| `pyproject.toml` | Configuration pytest |
-| `.github/workflows/tests.yml` | CI GitHub Actions : pytest sur chaque PR et sur `main` |
+| `pyproject.toml` | Configuration pytest et ruff, version du projet |
+| `.github/workflows/tests.yml` | CI GitHub Actions : `ruff check .` puis `pytest` sur chaque PR et sur `main` |
 | `PROJECT_CONTEXT.md` | Ce point de reprise |
 | `CHANGELOG.md` | Historique daté des modifications et règle de mise à jour |
 | `app/__init__.py` | Package principal |
@@ -656,6 +660,7 @@ Mission réelle de référence (10 novembre 2026) :
 | `app/orchestrator/planner.py` | Planification déterministe et détection d’approbation |
 | `app/orchestrator/state.py` | `MissionState` LangGraph |
 | `app/orchestrator/graph.py` | Graphe plan → execute → review → report → finalize |
+| `app/orchestrator/doctor.py` | Diagnostic en lecture seule : missions bloquées, incohérences, doublons, orphelins |
 | `app/orchestrator/manager.py` | Manager, cycle de mission, approbation, annulation, agents réels |
 | `app/cli.py` | CLI `create`, `run`, `approve`, `status`, `events`, `list`, `demo` |
 | `app/office/__init__.py` | Façade du bureau virtuel (phase 8) |
@@ -686,6 +691,10 @@ Mission réelle de référence (10 novembre 2026) :
 | `tests/test_phase7_agents.py` | 17 tests DevOps (garde-fous, rédaction, timeouts), reporter enrichi et approbation Git/PR |
 | `tests/test_office.py` | 13 tests du bureau : catalogue, état, passations, SSE, serveur, garanties frontend |
 | `tests/test_security.py` | 27 tests de non-fuite : identifiants, chemins, références Git, secrets sentinelles (bureau, rapports, Allure) |
+| `tests/test_office_security.py` | 5 tests de la surface HTTP du bureau : méthodes, en-têtes, limite SSE |
+| `tests/test_store_robustness.py` | 10 tests SQLite : verrou, corruption, WAL, `read_only`, retry |
+| `tests/test_manager_recovery.py` | 6 tests de reprise idempotente : tâches et rapport non dupliqués |
+| `tests/test_docs_consistency.py` | 3 tests de cohérence version, nombre de tests et commandes |
 | `infra/docker-compose.test.yml` | Stack de test isolée |
 | `scripts/seed_test_data.py` | Création des comptes de test |
 | `scripts/run_phase5_mission.py` | Lanceur explicite d’une mission phase 5 |
@@ -701,7 +710,9 @@ Mission réelle de référence (10 novembre 2026) :
 | `reports/phase-5-agents-1-3.md` | Validation phase 5 |
 | `reports/phase-6-agents-4-5.md` | Validation phase 6 (hors ligne + réel) |
 | `reports/phase-7-agents-6-7.md` | Validation phase 7 (Allure + DevOps) |
-| `reports/phase-9-plan.md` | Plan détaillé de la phase 9 (J0–J2 livrés) |
+| `reports/phase-8-office.md` | Bilan de la phase 8 : bureau virtuel, garanties, limites |
+| `reports/phase-9-plan.md` | Plan détaillé de la phase 9 (spécification, jalons, DoD) |
+| `reports/phase-9-hardening.md` | Rapport final de la phase 9 : constats R1–R14, correctifs, runbook, checklist, DoD |
 | `reports/missions/4e1c01636615.md` | Rapport de mission de démonstration (local, ignoré par Git) |
 | `reports/missions/b745b4a199b7.md` | Rapport de la mission phase 5 de référence (local) |
 | `reports/missions/7e30889c18cd.md` | Rapport de la mission phase 6 validée en réel (local) |
@@ -766,6 +777,16 @@ Le dépôt `football-qa` est resté propre.
   projet **0.9.0**, alignée sur la première version du CHANGELOG par
   `tests/test_docs_consistency.py`. `mypy` n'est pas ajouté : décision
   documentée, le coût d'un typage progressif dépasse le bénéfice immédiat.
+- **Documentation finale (phase 9, J4)** : un rapport unique
+  `reports/phase-9-hardening.md` centralise les constats R1 à R14, les
+  correctifs, le runbook et la Definition of Done ; `reports/phase-8-office.md`
+  comble l'absence de rapport de phase 8 (constat R14). Trois risques sont
+  **acceptés et documentés** plutôt que corrigés : **R5** (un handler de log
+  ajouté après l'installation du filtre de rédaction reste hors périmètre),
+  **R12** (texte Telegram entrant non borné avant persistance, allowlist d'un
+  seul utilisateur) et **R13** (pas de rotation automatique des logs, rotation
+  manuelle documentée). Aucun de ces risques n'expose de secret hors du poste
+  local.
 - **Jira/Xray/Squash** : non retenus.
 - **Git** : branche + PR uniquement, jamais de push direct sur `main`. Fusion réalisée par l'agent (décision du 10 novembre 2026, remplace la validation humaine).
 - **CI** : GitHub Actions, `ruff check .` puis `pytest` sur chaque PR et sur `main` (Python 3.12, sans clé). Garde-fou qui remplace la relecture humaine avant fusion.
