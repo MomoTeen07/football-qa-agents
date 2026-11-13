@@ -54,7 +54,8 @@ HELP_TEXT = (
     "/missions — afficher les 10 missions les plus récentes\n"
     "/status <mission_id> — statut, tâches et dernier événement\n"
     "/approve <mission_id> — approuver explicitement puis exécuter\n"
-    "/stop <mission_id> — demander l'annulation\n\n"
+    "/stop <mission_id> — demander l'annulation\n"
+    "Bureau virtuel : le lien local est renvoyé à la création d'une mission.\n\n"
     "Texte libre : crée une mission puis l'exécute. Si une approbation est "
     "nécessaire, la mission n'est pas exécutée et le motif est affiché.\n\n"
     "Aucune mission n'est lancée sans message explicite. Aucun planificateur "
@@ -266,7 +267,14 @@ class TelegramGateway:
             await self._reply(update, "Usage : /approve <mission_id>")
             return
 
-        await self._reply(update, _waiting_text(mission_id, "approuvée"))
+        await self._reply(
+            update,
+            _waiting_text(
+                mission_id,
+                "approuvée",
+                office_url=self.settings.office_url,
+            ),
+        )
         try:
             mission, duration_s = await self._run_mission_with_feedback(
                 update,
@@ -339,17 +347,31 @@ class TelegramGateway:
         mission = await asyncio.to_thread(manager.create_mission, instruction)
 
         if mission.requires_approval:
-            await self._reply(
-                update,
+            approval = (
                 f"Mission {mission.id} créée.\n"
                 f"Approbation requise : "
                 f"{mission.approval_reason or 'action sensible'}.\n"
                 f"La mission n'a pas été exécutée. Utilisez "
-                f"/approve {mission.id} pour l'autoriser.",
+                f"/approve {mission.id} pour l'autoriser."
+            )
+            await self._reply(
+                update,
+                _with_office_link(
+                    approval,
+                    mission.id,
+                    office_url=self.settings.office_url,
+                ),
             )
             return
 
-        await self._reply(update, _waiting_text(mission.id, "créée"))
+        await self._reply(
+            update,
+            _waiting_text(
+                mission.id,
+                "créée",
+                office_url=self.settings.office_url,
+            ),
+        )
         mission, duration_s = await self._run_mission_with_feedback(
             update,
             mission.id,
@@ -523,14 +545,35 @@ def _first_argument(context: ContextTypes.DEFAULT_TYPE | None) -> str:
     return context.args[0].strip()
 
 
-def _waiting_text(mission_id: str, state: str) -> str:
+def _office_link(office_url: str, mission_id: str) -> str:
+    """Lien local du bureau virtuel pour une mission donnée."""
+    base = (office_url or "").strip().rstrip("/")
+    if not base:
+        return ""
+    return f"{base}/?mission_id={mission_id}"
+
+
+def _with_office_link(text: str, mission_id: str, *, office_url: str) -> str:
+    link = _office_link(office_url, mission_id)
+    if not link:
+        return text
+    return f"{text}\n🖥️ Bureau virtuel : {link}"
+
+
+def _waiting_text(
+    mission_id: str,
+    state: str,
+    *,
+    office_url: str = "",
+) -> str:
     """Message d'attente envoyé immédiatement, avant l'exécution."""
-    return (
+    text = (
         f"Mission {mission_id} {state}.\n"
         "⏳ Exécution en cours… le résultat sera envoyé ici dès la fin.\n"
         "Vous n'avez rien à renvoyer : l'indicateur d'activité reste affiché "
         "pendant tout le traitement."
     )
+    return _with_office_link(text, mission_id, office_url=office_url)
 
 
 def _mission_result_text(

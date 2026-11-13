@@ -245,6 +245,40 @@ async def test_free_text_creates_then_runs_exactly_one_mission(
 
 
 @pytest.mark.asyncio
+async def test_free_text_reply_contains_the_office_link(
+    tmp_path: Path,
+) -> None:
+    mission = Mission(instruction="Analyse l'application et propose un plan.")
+    gateway = make_gateway(tmp_path, FakeManager(mission))
+    update = FakeUpdate(text=mission.instruction)
+
+    await gateway._free_text(update, None)  # type: ignore[arg-type]
+
+    waiting = update.effective_message.replies[0]
+    assert f"http://127.0.0.1:5180/?mission_id={mission.id}" in waiting
+    assert "Bureau virtuel" in waiting
+
+
+@pytest.mark.asyncio
+async def test_approval_reply_contains_the_office_link(
+    tmp_path: Path,
+) -> None:
+    mission = Mission(
+        instruction="Lance un test de sécurité intrusif sur l'API.",
+        requires_approval=True,
+        approval_reason="test de sécurité intrusif",
+    )
+    gateway = make_gateway(tmp_path, FakeManager(mission))
+    update = FakeUpdate(text=mission.instruction)
+
+    await gateway._free_text(update, None)  # type: ignore[arg-type]
+
+    reply = update.effective_message.replies[-1]
+    assert f"http://127.0.0.1:5180/?mission_id={mission.id}" in reply
+    assert "Approbation requise" in reply
+
+
+@pytest.mark.asyncio
 async def test_free_text_requiring_approval_is_not_executed(
     tmp_path: Path,
 ) -> None:

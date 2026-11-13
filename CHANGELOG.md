@@ -24,6 +24,29 @@ retard. En cas de doute, mettre à jour les trois.
 
 ---
 
+## [0.9.1] - 2026-11-13 - Lien du bureau virtuel dans Telegram
+
+### Ajouté
+
+- **Lien du bureau virtuel dans les réponses Telegram** : à la création d'une
+  mission (exécution immédiate ou approbation requise) et lors d'un
+  `/approve`, le bot ajoute
+  `🖥️ Bureau virtuel : http://127.0.0.1:5180/?mission_id=<id>`. Cliquer sur le
+  lien sur le PC affiche directement la mission concernée. Le bureau restant
+  limité à la boucle locale, le lien n'est pas utilisable depuis un téléphone.
+- **Réglage `OFFICE_URL`** (`app/config.py`, `.env.example`) : base du lien,
+  `http://127.0.0.1:5180` par défaut. Une valeur vide désactive l'ajout du
+  lien.
+- **Tests** : lien présent dans la réponse de création et dans la réponse
+  d'approbation requise (`tests/test_telegram_gateway.py`).
+
+### Vérifié
+
+- `ruff check .` : aucune erreur.
+- Suite complète : **161 passed**, hors ligne, sans clé.
+
+---
+
 ## [0.9.0] - 2026-11-13 - Phase 9 : durcissement
 
 ### Phase 9 : durcissement
@@ -187,7 +210,7 @@ retard. En cas de doute, mettre à jour les trois.
 ##### Vérifié
 
 - `ruff check .` : **aucune erreur**.
-- Suite complète : **159 passed**, hors ligne, sans clé.
+- Suite complète : **161 passed**, hors ligne, sans clé.
 - CI verte sur la PR J4 avant fusion.
 
 ##### Écarté (risques résiduels acceptés)
