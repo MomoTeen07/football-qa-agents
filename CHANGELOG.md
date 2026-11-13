@@ -24,9 +24,26 @@ retard. En cas de doute, mettre à jour les trois.
 
 ---
 
-## [0.9.0] - 2026-11-12 - Phase 9 : durcissement
+## [0.9.0] - 2026-11-13 - Phase 9 : durcissement
 
-### En cours — Phase 9 : durcissement
+### Phase 9 : durcissement
+
+#### Préparation — plan de phase 9 (11 novembre 2026)
+
+##### Ajouté
+
+- **Plan détaillé de la phase 9** (`reports/phase-9-plan.md`) : audit initial
+  des écarts (identifiants/chemins, secrets, SSE, SQLite, reprise, garde-fous
+  Git, CI, documentation), six lots de travail priorisés, jalons J0 à J4, plan
+  de tests et Definition of Done. Ce document sert de spécification de la
+  phase.
+
+##### Modifié
+
+- **Politique de fusion Git** (10 novembre 2026) : la validation humaine des
+  pull requests n'est plus requise. L'agent ouvre la PR, vérifie les tests et
+  la fusionne lui-même. Le principe « branche + PR, pas de push direct sur
+  `main` » est conservé. Documenté dans `README.md` et `PROJECT_CONTEXT.md`.
 
 #### J0 — baseline (11 novembre 2026)
 
@@ -143,25 +160,45 @@ retard. En cas de doute, mettre à jour les trois.
 - `ruff check .` : **aucune erreur**.
 - Suite complète : **159 passed**, hors ligne, sans clé.
 
-### À venir
+#### J4 — documentation finale et clôture (13 novembre 2026)
 
-- **Phase 9** — jalon J4 (documentation finale et rapport de durcissement).
+##### Ajouté
 
-### Ajouté
+- **`reports/phase-9-hardening.md`** : rapport final de la phase 9 — jalons
+  livrés, constats R1 à R14 (corrigés ou écartés avec justification), correctifs
+  par lot, inventaire des tests, runbook d'exploitation, checklist sécurité et
+  Definition of Done.
+- **`reports/phase-8-office.md`** : rapport manquant de la phase 8 (constat R14),
+  avec objectif, livrables, garanties et limites.
+- **`README.md`** : section « Sécurité et garanties (phase 9) » et tableau de
+  dépannage rapide (base verrouillée, `StorageError`, `503` SSE, `405`, `ruff`,
+  publication DevOps bloquée, rotation des logs).
 
-- **Plan détaillé de la phase 9** (`reports/phase-9-plan.md`, 11 novembre
-  2026) : audit initial des écarts (identifiants/chemins, secrets, SSE,
-  SQLite, reprise, garde-fous Git, CI, documentation), six lots de travail
-  priorisés, jalons J0 à J4, plan de tests et Definition of Done. **La phase 9
-  n'est pas commencée** : ce document sert de spécification à la session
-  suivante.
+##### Modifié
 
-### Modifié
+- **`PROJECT_CONTEXT.md`** : point de reprise daté du 13 novembre 2026, phase 9
+  marquée terminée, décisions du jalon J4, risques résiduels R5/R12/R13 et
+  tableau des fichiers complété (`app/security.py`,
+  `app/orchestrator/doctor.py`, nouveaux tests et rapports).
+- **`README.md`** : Phase 9 marquée terminée, entrée publiée `0.9.0` datée du
+  13 novembre 2026.
+- **`CHANGELOG.md`** : section `0.9.0` clôturée (plus de « À venir »).
 
-- **Politique de fusion Git** (10 novembre 2026) : la validation humaine des
-  pull requests n'est plus requise. L'agent ouvre la PR, vérifie les tests et
-  la fusionne lui-même. Le principe « branche + PR, pas de push direct sur
-  `main` » est conservé. Documenté dans `README.md` et `PROJECT_CONTEXT.md`.
+##### Vérifié
+
+- `ruff check .` : **aucune erreur**.
+- Suite complète : **159 passed**, hors ligne, sans clé.
+- CI verte sur la PR J4 avant fusion.
+
+##### Écarté (risques résiduels acceptés)
+
+- **R5** : un handler de log ajouté après l'installation du filtre de rédaction
+  reste hors de son périmètre. Mitigations : `logs/` ignoré par Git, jeton
+  régénérable, aucun log publié.
+- **R12** : le texte Telegram entrant n'est pas borné avant persistance
+  (allowlist d'un seul utilisateur, gateway local, prompt déjà tronqué).
+- **R13** : pas de rotation automatique des logs ; rotation manuelle documentée
+  dans le runbook.
 
 ---
 

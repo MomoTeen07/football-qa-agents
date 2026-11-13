@@ -19,12 +19,14 @@ Système multi-agents QA pour tester l'application locale `football-qa`.
 - Toute modification doit aussi mettre à jour **`README.md`** et
   **`PROJECT_CONTEXT.md`**. Une PR n'est pas terminée si l'un des trois fichiers
   est en retard.
-- Dernière entrée publiée : **0.9.0 — Phase 9 : durcissement** (en cours).
-  Jalons J0–J3 terminés ; J4 (documentation finale) reste à livrer.
+- Dernière entrée publiée : **0.9.0 — Phase 9 : durcissement** (terminée le
+  13 novembre 2026). Jalons J0 à J4 livrés ; rapport final :
+  `reports/phase-9-hardening.md`.
 
 ## Intégration continue
 
-`.github/workflows/tests.yml` exécute `python -m pytest` sur chaque pull
+`.github/workflows/tests.yml` exécute `python -m ruff check .` puis
+`python -m pytest` sur chaque pull
 request et sur chaque push vers `main` (Python 3.12, sans clé, sans réseau).
 Comme les PR sont fusionnées par l'agent, ce workflow est le garde-fou avant
 fusion ; il peut aussi être lancé manuellement (`workflow_dispatch`).
@@ -449,6 +451,48 @@ produisent les seules passations affichées, le flux déduplique les événement
 le frontend ne contient ni `Math.random`, ni `setInterval`, ni URL externe, et
 les événements de tâche portent bien leur `key`.
 
+## Sécurité et garanties (phase 9)
+
+Les garanties ci-dessous sont vérifiées par les tests (`tests/test_security.py`,
+`tests/test_office_security.py`, `tests/test_store_robustness.py`,
+`tests/test_phase7_agents.py`) et détaillées dans
+`reports/phase-9-hardening.md`.
+
+- **Secrets** : aucun secret dans les logs, rapports, artefacts Allure,
+  `/api/state` ou le SSE. Les valeurs connues sont remplacées par
+  `[redacted]` au moment de la sérialisation ; les tests utilisent uniquement
+  une sentinelle factice.
+- **Identifiants et chemins** : barrière unique `app/security.py`
+  (`validate_mission_id`, `validate_git_ref`, `ensure_within`). Toute écriture
+  reste confinée au dossier de mission.
+- **Réseau** : API/UI limitées à `localhost:8002` / `localhost:5175` ; le
+  bureau et son flux SSE écoutent uniquement la boucle locale. Aucune ressource
+  distante dans le frontend.
+- **Bureau** : 12 flux SSE simultanés au maximum (`503` au-delà), timeout
+  d'écriture, en-têtes de sécurité sur toutes les réponses, `405` pour les
+  méthodes autres que `GET`.
+- **Persistance** : SQLite en WAL, `busy_timeout=5000`, retry borné, erreur
+  explicite si la base est corrompue, lecture seule pour le diagnostic.
+- **Reprise** : une mission `running` interrompue reprend sans dupliquer les
+  tâches ni régénérer le rapport.
+- **Git** : commandes en listes, sans shell, sans `--force`, jamais de push sur
+  `main`, jamais de fusion automatique ; publication DevOps opt-in.
+- **Pilotage** : aucun scheduler, aucune mission automatique, aucune action
+  destructive sans approbation explicite.
+
+### Dépannage rapide
+
+| Symptôme | Cause probable | Action |
+|---|---|---|
+| `StorageError` « base illisible ou corrompue » | fichier SQLite endommagé | sauvegarder `workspace/missions.db`, restaurer une copie ; `doctor` ne répare jamais |
+| base verrouillée | écriture concurrente | attendre ; WAL + retry absorbent les verrous courts |
+| `503` sur `/events` | plus de 12 onglets SSE | fermer un onglet |
+| `405` sur une route | méthode autre que `GET` | utiliser `GET` |
+| `ruff` échoue en local | outil absent | `.venv\Scripts\python.exe -m pip install -r requirements-dev.txt` |
+| `All checks passed` mais tests lents | `REAL_AGENTS_ENABLED=true` | les tests forcent le repli hors ligne |
+| publication DevOps `blocked` | arbre non propre, branche existante ou ref invalide | corriger puis relancer |
+| log volumineux | pas de rotation automatique | arrêter le gateway, archiver puis vider `logs/telegram-gateway.log` |
+
 ## État d'avancement
 
 - [x] Environnement local complet sur le PC personnel — Python 3.12.10, `.venv`, `.env` avec clés, Chromium, stack de test, **159 tests passent**
@@ -461,4 +505,4 @@ les événements de tâche portent bien leur `key`.
 - [x] Phase 6 — agents 4 et 5 (code + validation hors ligne **et** exécution réelle : 27/27 API, 11/11 UI, 0 anomalie)
 - [x] Phase 7 — agents 6 et 7 (DevOps branche + PR sécurisée, reporting Allure/Markdown/JSON, **90 tests passent**)
 - [x] Phase 8 — bureau virtuel 2D (open space isométrique, 8 personnages, SSE réel, fiche agent, passations dérivées des dépendances, **103 tests passent**)
-- [ ] Phase 9 — durcissement — **en cours (J3 terminé, J4 restant)**. Plan : `reports/phase-9-plan.md`. J0 : baseline **103 passed**, tests rouges R1–R4. J1 : barrière `app.security` (identifiants, chemins, références Git), rédaction des secrets dans le bureau, les rapports et Allure, garde-fous DevOps testés. J2 : SQLite WAL + `busy_timeout` + retry borné, reprise idempotente du graphe, limite SSE et en-têtes de sécurité, commande `doctor` en lecture seule. J3 : `ruff` en CI, version `0.9.0`, test de cohérence documentaire ; **159 tests passent**.
+- [x] Phase 9 — durcissement — **terminée le 13 novembre 2026**. J0 : baseline **103 passed** et tests rouges R1–R4. J1 : barrière `app.security` (identifiants, chemins, références Git), rédaction des secrets dans le bureau, les rapports et Allure, garde-fous DevOps testés. J2 : SQLite WAL + `busy_timeout` + retry borné, reprise idempotente du graphe, limite SSE et en-têtes de sécurité, commande `doctor` en lecture seule. J3 : `ruff` en CI, version `0.9.0`, cohérence documentaire testée. J4 : rapport `reports/phase-9-hardening.md`, runbook, checklist sécurité et rapport de phase 8 ; **159 tests passent**.
