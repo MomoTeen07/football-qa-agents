@@ -19,7 +19,7 @@ services:
 
   backend:
     build:
-      context: ../../football-qa/backend
+      context: ../../MyFinalProject/backend
     environment:
       DATABASE_URL: postgresql+psycopg://football:football@db:5432/footballqa_test
       JWT_SECRET: test-only-jwt-secret-football-qa-2026
@@ -39,7 +39,7 @@ services:
 
   frontend:
     build:
-      context: ../../football-qa/frontend
+      context: ../../MyFinalProject/frontend
     ports:
       - "127.0.0.1:5175:80"
     depends_on:
