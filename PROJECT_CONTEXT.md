@@ -92,11 +92,11 @@ Construire un système multi-agents QA local pour l’application `football-qa`,
 | Base | `footballqa` | `footballqa_test` |
 | Projet Compose | `football-qa` | `football-qa-test` |
 
-- Le projet QA actuel est dans `C:\Users\MAbdo\Desktop\Football-Agent\football-qa-agents`.
+- Le projet QA actuel est dans `C:\Users\MAbdo\Desktop\Football\football-qa-agents`.
 - Le projet cible est présent sur cette machine :
-  `C:\Users\MAbdo\Desktop\Football-Agent\football-qa` (copie de travail de
-  `C:\Users\MAbdo\Desktop\Football-QA\MyFinalProject`). C’est le chemin
-  attendu par `infra/docker-compose.test.yml` (`../../football-qa/...`).
+  `C:\Users\MAbdo\Desktop\Football\MyFinalProject` (dépôt `MyFinalProject`,
+  `main` = V3). C'est le chemin attendu par `infra/docker-compose.test.yml`
+  (`../../MyFinalProject/...`) depuis le 24/11/2026.
 - Le dossier `C:\Users\MAbdo\Desktop\Football-project\MyFinalProject` reste à
   ne pas utiliser.
 - Docker Desktop est installé (`%LOCALAPPDATA%\Programs\DockerDesktop`) et le
@@ -136,8 +136,8 @@ on travaille.**
 | Élément | PC professionnel | PC personnel |
 |---|---|---|
 | Utilisateur Windows | `stgadmin` | `MAbdo` |
-| Projet QA | `C:\Users\stgadmin\Desktop\football-qa-agents` | `C:\Users\MAbdo\Desktop\Football-Agent\football-qa-agents` |
-| Projet cible `football-qa` | présent (`C:\Users\stgadmin\Desktop\football-qa`) | présent (`...\Football-Agent\football-qa`) |
+| Projet QA | `C:\Users\stgadmin\Desktop\football-qa-agents` | `C:\Users\MAbdo\Desktop\Football\football-qa-agents` |
+| Projet cible `football-qa` | présent (`C:\Users\stgadmin\Desktop\football-qa`) | présent (`C:\Users\MAbdo\Desktop\Football\MyFinalProject`) |
 | Stack de test Docker | opérationnelle | opérationnelle |
 | `.env` | clés Gemini + Telegram présentes | clés Gemini + Telegram présentes |
 | Python | 3.12 avec `.venv` existant | 3.12.10, `.venv` prêt |
@@ -890,7 +890,7 @@ clés disponibles) ; `MAbdo` = PC personnel (projet cible, clés, Chromium et
 stack de test également disponibles depuis le 10 novembre 2026).
 
 ```powershell
-cd C:\Users\MAbdo\Desktop\Football-Agent\football-qa-agents
+cd C:\Users\MAbdo\Desktop\Football\football-qa-agents
 
 # Tests du système QA
 .venv\Scripts\python.exe -m pytest
@@ -919,10 +919,10 @@ Si la stack n’est pas démarrée :
 docker compose -f infra/docker-compose.test.yml -p football-qa-test up --build -d --wait
 ```
 
-> **Prérequis** : le projet cible doit être présent dans un dossier
-> `football-qa` voisin (le compose référence `../../football-qa/backend` et
-> `../../football-qa/frontend`). Sur cette machine, il est présent en
-> `C:\Users\MAbdo\Desktop\Football-Agent\football-qa`.
+> **Prérequis** : le projet cible doit être présent dans le dossier voisin
+> `MyFinalProject` (le compose référence `../../MyFinalProject/backend` et
+> `../../MyFinalProject/frontend`). Sur cette machine, il est présent en
+> `C:\Users\MAbdo\Desktop\Football\MyFinalProject`.
 
 Vérifier :
 
@@ -1101,7 +1101,7 @@ allure serve reports\allure-results\<mission_id>
 - Les sondes refusent toute cible autre que `localhost:8002`.
 - Le projet `football-qa-agents` est initialisé en Git sur `main` (commit initial `2a3c929`).
 - Le travail se fait sur **deux PC** : PC professionnel (`stgadmin`) et PC personnel (`MAbdo`, actuel). Les deux disposent désormais du projet cible, des clés et de la stack de test.
-- Le projet cible utilisé sur le PC personnel est `Football-Agent\football-qa`, copie de `Football-QA\MyFinalProject`. `Football-project\MyFinalProject` reste à ne pas utiliser.
+- Le projet cible utilisé sur le PC personnel est `C:\Users\MAbdo\Desktop\Football\MyFinalProject` (dépôt `MyFinalProject`, `main` = V3), voisin de `football-qa-agents`. `Football-project\MyFinalProject` reste à ne pas utiliser.
 - `.env` contient les clés Gemini et Telegram et `REAL_AGENTS_ENABLED=true` ; ne jamais afficher ces valeurs.
 - Les agents 4 et 5 (API Automation, UI Automation) sont réels et validés **en réel** (27/27 API, 11/11 UI, 0 anomalie, mission `7e30889c18cd`).
 - Les agents 6 (DevOps) et 7 (reporter) sont réels depuis la phase 7. Le DevOps ne pousse jamais sur `main`, ne force jamais un push et ne fusionne jamais : il ouvre une PR. Le mode préparation est le comportement par défaut.

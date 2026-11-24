@@ -59,7 +59,7 @@ tests/                Tests du système multi-agents
 - `playwright==1.64.1` installé et **Chromium présent** dans
   `%LOCALAPPDATA%\ms-playwright` : l'exécution UI réelle est possible.
 - Projet cible `football-qa` présent à côté du projet QA
-  (`C:\Users\MAbdo\Desktop\Football-Agent\football-qa`).
+  (`C:\Users\MAbdo\Desktop\Football\MyFinalProject`).
 - Stack de test `football-qa-test` construite et saine (`8002`/`5175`/`5434`).
 - **GitHub CLI** `gh` 2.103.3 installé via winget et authentifié via le
   navigateur ; le jeton reste dans le keyring Windows, jamais dans le projet.
@@ -143,11 +143,10 @@ Précautions :
 
 ## Prérequis pour les missions réelles
 
-Le compose de test référence `../../football-qa/backend` et
-`../../football-qa/frontend`, c'est-à-dire un dossier `football-qa` **voisin**
-de `football-qa-agents`. Sur le PC personnel, la copie de travail se trouve en
-`C:\Users\MAbdo\Desktop\Football-Agent\football-qa` (copiée depuis
-`C:\Users\MAbdo\Desktop\Football-QA\MyFinalProject`).
+Le compose de test référence `../../MyFinalProject/backend` et
+`../../MyFinalProject/frontend`, c'est-à-dire le dépôt `MyFinalProject`
+**voisin** de `football-qa-agents`. Sur le PC personnel, il se trouve en
+`C:\Users\MAbdo\Desktop\Football\MyFinalProject`.
 
 Sans ce dossier, la stack `8002`/`5175` ne peut pas être construite et les
 missions réelles sont bloquées. Le compose ne modifie jamais la base réelle :
