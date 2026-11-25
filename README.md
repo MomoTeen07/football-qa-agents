@@ -34,7 +34,7 @@ flowchart LR
   AN --> AT[API Tester]
   TD --> AA[API Automation]
   TD --> UI[UI Automation]
-  AA --> SUT[(Stack de test isolée<br/>8002 / 5175)]
+  AA --> SUT[("Stack de test isolée<br/>8002 / 5175")]
   AT --> SUT
   UI --> SUT
   AA --> REP[QA Reporter]
@@ -42,7 +42,7 @@ flowchart LR
   UI --> REP
   AA --> DV[DevOps]
   DV --> REP
-  REP --> OUT[Rapports<br/>Markdown · JSON · Allure]
+  REP --> OUT["Rapports<br/>Markdown · JSON · Allure"]
 ```
 
 Vue simplifiée : 7 agents spécialisés autour d'un manager. Le code de chaque agent est dans
